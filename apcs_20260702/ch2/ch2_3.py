@@ -1,0 +1,5 @@
+print("A","B","C",sep="")
+print("W",end="")
+print("X",end="")
+print("Y",end="")
+print("Z")
