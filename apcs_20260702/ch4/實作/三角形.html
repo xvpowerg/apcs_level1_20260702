@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三角形辨別｜白話一步一步動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 142px;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --line: #d7dee9;
+      --text: #172033;
+      --muted: #5f6b7a;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --yellow: #b45309;
+      --yellow-soft: #fef3c7;
+      --red: #dc2626;
+      --red-soft: #fee2e2;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --code-bg: #111827;
+      --code-line: #1f2937;
+      --code-active: #3b4a69;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    button, select {
+      font-family: inherit;
+      font-size: 16px;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      padding: 10px 14px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      color: #0f172a;
+    }
+
+    .title .subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      padding: 7px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      min-height: 38px;
+      transition: 0.15s ease;
+      font-weight: 700;
+    }
+
+    .btn:hover { background: #f8fafc; transform: translateY(-1px); }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #ffffff; }
+    .btn.danger { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .btn.green { background: #ecfdf5; color: #15803d; border-color: #bbf7d0; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .example-select {
+      min-height: 38px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      background: #ffffff;
+      color: #0f172a;
+      min-width: 230px;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 170px 1fr 1.25fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .status-box {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 8px 10px;
+      min-height: 54px;
+      overflow: hidden;
+    }
+
+    .status-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .status-value {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .status-message {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    .main {
+      padding-top: var(--toolbar-h);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .split-layout {
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      overflow: hidden;
+      min-height: 300px;
+    }
+
+    .left-pane,
+    .right-pane {
+      min-width: 300px;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .left-pane {
+      width: 58%;
+      background: #f6f9ff;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-pane {
+      flex: 1;
+      background: var(--code-bg);
+      color: #e5e7eb;
+    }
+
+    .resizer {
+      width: 9px;
+      flex: 0 0 9px;
+      cursor: col-resize;
+      background: linear-gradient(90deg, #e2e8f0, #cbd5e1, #e2e8f0);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+    }
+
+    .card h2 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      line-height: 1.3;
+      color: #0f172a;
+    }
+
+    .card h3 {
+      margin: 12px 0 8px 0;
+      font-size: 18px;
+      line-height: 1.3;
+      color: #111827;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .data-table th,
+    .data-table td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .data-table th {
+      background: #f8fafc;
+      color: #334155;
+      width: 30%;
+      white-space: nowrap;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      min-width: 44px;
+      min-height: 34px;
+      font-size: 17px;
+    }
+
+    .pill.raw { background: #f1f5f9; }
+    .pill.sorted { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+    .pill.a { background: #ecfeff; border-color: #a5f3fc; color: #0e7490; }
+    .pill.b { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+    .pill.c { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+    .pill.output { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+
+    .formula-box {
+      border: 1px solid #e2e8f0;
+      background: #fbfdff;
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 90px;
+      overflow: auto;
+      max-height: 210px;
+      font-size: 17px;
+    }
+
+    .formula-line {
+      margin: 5px 0;
+      font-weight: 800;
+    }
+
+    .compare-result {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .compare-result.wait { background: #f1f5f9; color: #475569; }
+    .compare-result.yes { background: var(--green-soft); color: #166534; }
+    .compare-result.no { background: var(--red-soft); color: #991b1b; }
+    .compare-result.info { background: var(--primary-soft); color: #1d4ed8; }
+
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 70px;
+      gap: 10px;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .bar-track {
+      background: #e2e8f0;
+      border-radius: 999px;
+      height: 28px;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+    }
+
+    .bar-fill {
+      height: 100%;
+      min-width: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #bfdbfe, #60a5fa);
+      transition: width 0.25s ease;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      height: 430px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    svg.flow-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .flow-edge {
+      stroke: #94a3b8;
+      stroke-width: 3;
+      fill: none;
+    }
+
+    .edge-label {
+      font-size: 17px;
+      fill: #475569;
+      font-weight: 900;
+    }
+
+    .node rect {
+      fill: #ffffff;
+      stroke: #cbd5e1;
+      stroke-width: 3;
+      rx: 16;
+      ry: 16;
+      transition: 0.18s ease;
+    }
+
+    .node text {
+      fill: #0f172a;
+      font-size: 18px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .node .subtext {
+      font-size: 14px;
+      fill: #475569;
+      font-weight: 800;
+    }
+
+    .node.pending rect { fill: #ffffff; stroke: #cbd5e1; }
+    .node.done rect { fill: var(--green-soft); stroke: #22c55e; }
+    .node.active rect { fill: var(--yellow-soft); stroke: #f59e0b; filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.25)); }
+    .node.result rect { fill: var(--purple-soft); stroke: #8b5cf6; }
+    .node.skipped rect { fill: #f8fafc; stroke: #cbd5e1; stroke-dasharray: 6 4; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 15px;
+      color: #334155;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #e2e8f0;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+    }
+    .dot.active { background: var(--yellow-soft); border-color: #f59e0b; }
+    .dot.done { background: var(--green-soft); border-color: #22c55e; }
+    .dot.result { background: var(--purple-soft); border-color: #8b5cf6; }
+
+    .output-box {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 72px;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 18px;
+      white-space: pre-wrap;
+      overflow: auto;
+      border: 1px solid #334155;
+    }
+
+    .code-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #0b1220;
+      border-bottom: 1px solid #334155;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .code-header h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #f8fafc;
+    }
+
+    .code-hint {
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .code-list {
+      margin: 0;
+      padding: 12px 0 24px 0;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 17px;
+      line-height: 1.65;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 10px;
+      padding: 2px 14px 2px 0;
+      border-left: 5px solid transparent;
+      min-height: 30px;
+    }
+
+    .code-line .ln {
+      text-align: right;
+      color: #94a3b8;
+      user-select: none;
+      padding-left: 6px;
+    }
+
+    .code-line .src { color: #e5e7eb; }
+    .code-line.comment .src { color: #a7f3d0; }
+    .code-line.active {
+      background: var(--code-active);
+      border-left-color: #f59e0b;
+    }
+    .code-line.active .ln { color: #facc15; font-weight: 900; }
+    .code-line.active .src { color: #ffffff; font-weight: 900; }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(15, 23, 42, 0.45);
+      padding: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(980px, 94vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 25px 80px rgba(15, 23, 42, 0.35);
+      padding: 18px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .topic-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fbfdff;
+    }
+
+    .topic-section h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+
+    .topic-section p,
+    .topic-section li {
+      font-size: 17px;
+      margin: 6px 0;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .example-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px;
+      background: #ffffff;
+      font-size: 16px;
+    }
+
+    .example-card strong { display: block; margin-bottom: 6px; }
+    .mono {
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: inline-block;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .main { height: auto; overflow: visible; }
+      .split-layout { height: auto; min-height: 0; flex-direction: column; overflow: visible; }
+      .left-pane, .right-pane { width: 100% !important; min-width: 0; height: auto; max-height: none; }
+      .right-pane { min-height: 520px; }
+      .resizer { display: none; }
+      .status-row { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .example-grid { grid-template-columns: 1fr; }
+      .svg-wrap { height: 360px; }
+      body { overflow-x: hidden; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" id="toolbar">
+    <div class="title-row">
+      <div class="title">
+        <h1>三角形辨別</h1>
+        <span class="subtitle">白話一步一步動畫</span>
+      </div>
+      <div class="controls">
+        <button class="btn" id="topicBtn">題目說明</button>
+        <select class="example-select" id="exampleSelect" aria-label="選擇範例"></select>
+        <button class="btn" id="prevBtn">上一步</button>
+        <button class="btn primary" id="nextBtn">下一步</button>
+        <button class="btn green" id="playBtn">播放</button>
+        <button class="btn danger" id="pauseBtn">暫停</button>
+        <button class="btn" id="resetBtn">重設</button>
+      </div>
+    </div>
+    <div class="status-row">
+      <div class="status-box">
+        <span class="status-label">目前步驟</span>
+        <span class="status-value" id="stepCounter">步驟 1 / 1</span>
+      </div>
+      <div class="status-box">
+        <span class="status-label">目前答案或狀態</span>
+        <span class="status-value" id="resultStatus">準備開始</span>
+      </div>
+      <div class="status-box">
+        <span class="status-label">本步驟說明</span>
+        <span class="status-message" id="stepMessage">按「下一步」開始。</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="split-layout" id="splitLayout">
+      <section class="left-pane" id="leftPane" aria-label="左側視覺化區">
+        <section class="card">
+          <h2>目前資料</h2>
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <th>原始輸入</th>
+                <td><div class="pill-row" id="rawValues"></div></td>
+              </tr>
+              <tr>
+                <th>排序後</th>
+                <td><div class="pill-row" id="sortedValues"></div></td>
+              </tr>
+              <tr>
+                <th>a、b、c</th>
+                <td id="abcMeaning" class="small-note">尚未排序，所以還不能確定誰是最大邊。</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2>程式流程圖</h2>
+          <div class="svg-wrap">
+            <svg class="flow-svg" viewBox="0 0 860 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三角形判斷流程圖">
+              <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"></path>
+                </marker>
+              </defs>
+
+              <path class="flow-edge" d="M210 70 H300" marker-end="url(#arrow)"></path>
+              <path class="flow-edge" d="M470 70 H560" marker-end="url(#arrow)"></path>
+              <path class="flow-edge" d="M650 100 V150 H485" marker-end="url(#arrow)"></path>
+              <path class="flow-edge" d="M565 190 H645" marker-end="url(#arrow)"></path>
+              <text class="edge-label" x="595" y="178">成立</text>
+              <path class="flow-edge" d="M430 225 V285" marker-end="url(#arrow)"></path>
+              <text class="edge-label" x="442" y="260">不成立</text>
+              <path class="flow-edge" d="M430 365 C430 390 170 390 170 420" marker-end="url(#arrow)"></path>
+              <text class="edge-label" x="235" y="392">小於</text>
+              <path class="flow-edge" d="M430 365 V420" marker-end="url(#arrow)"></path>
+              <text class="edge-label" x="444" y="395">等於</text>
+              <path class="flow-edge" d="M430 365 C430 390 690 390 690 420" marker-end="url(#arrow)"></path>
+              <text class="edge-label" x="610" y="392">大於</text>
+
+              <g class="node pending" id="node-read" transform="translate(30,40)">
+                <rect width="180" height="60"></rect>
+                <text x="90" y="25">讀資料</text>
+                <text class="subtext" x="90" y="45">input().split()</text>
+              </g>
+
+              <g class="node pending" id="node-sort" transform="translate(300,40)">
+                <rect width="170" height="60"></rect>
+                <text x="85" y="25">排序</text>
+                <text class="subtext" x="85" y="45">小 → 大</text>
+              </g>
+
+              <g class="node pending" id="node-printSorted" transform="translate(560,40)">
+                <rect width="180" height="60"></rect>
+                <text x="90" y="25">輸出排序</text>
+                <text class="subtext" x="90" y="45">第一行答案</text>
+              </g>
+
+              <g class="node pending" id="node-canTriangle" transform="translate(295,150)">
+                <rect width="270" height="76"></rect>
+                <text x="135" y="28">能不能成三角形？</text>
+                <text class="subtext" x="135" y="54">判斷 a + b ≤ c</text>
+              </g>
+
+              <g class="node pending" id="node-noResult" transform="translate(645,155)">
+                <rect width="170" height="66"></rect>
+                <text x="85" y="28">No</text>
+                <text class="subtext" x="85" y="50">不能成三角形</text>
+              </g>
+
+              <g class="node pending" id="node-angleCompare" transform="translate(295,285)">
+                <rect width="270" height="80"></rect>
+                <text x="135" y="28">判斷角度</text>
+                <text class="subtext" x="135" y="55">比較 a²+b² 與 c²</text>
+              </g>
+
+              <g class="node pending" id="node-obtuseResult" transform="translate(70,420)">
+                <rect width="200" height="66"></rect>
+                <text x="100" y="28">Obtuse</text>
+                <text class="subtext" x="100" y="50">鈍角</text>
+              </g>
+
+              <g class="node pending" id="node-rightResult" transform="translate(330,420)">
+                <rect width="200" height="66"></rect>
+                <text x="100" y="28">Right</text>
+                <text class="subtext" x="100" y="50">直角</text>
+              </g>
+
+              <g class="node pending" id="node-acuteResult" transform="translate(590,420)">
+                <rect width="200" height="66"></rect>
+                <text x="100" y="28">Acute</text>
+                <text class="subtext" x="100" y="50">銳角</text>
+              </g>
+            </svg>
+          </div>
+          <div class="legend" aria-label="節點狀態說明">
+            <span class="legend-item"><span class="dot active"></span>目前正在處理</span>
+            <span class="legend-item"><span class="dot done"></span>已處理完成</span>
+            <span class="legend-item"><span class="dot result"></span>最後輸出</span>
+            <span class="legend-item"><span class="dot"></span>尚未處理</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>邊長視覺化</h2>
+          <div class="bar-list" id="barList"></div>
+          <p class="small-note" style="margin-bottom:0;">重點：排序後，c 一定是最長邊，所以只要用 c 當最大邊來判斷。</p>
+        </section>
+
+        <section class="card">
+          <h2>目前判斷</h2>
+          <div class="grid-2">
+            <div class="formula-box" id="triangleFormula"></div>
+            <div class="formula-box" id="angleFormula"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>輸出區</h2>
+          <div class="output-box" id="outputBox"></div>
+        </section>
+      </section>
+
+      <div class="resizer" id="resizer" title="拖曳調整左右寬度"></div>
+
+      <section class="right-pane" id="rightPane" aria-label="右側程式碼區">
+        <div class="code-header">
+          <h2>完整 Python 程式碼</h2>
+          <div class="code-hint">目前行會同步高亮；可以用方向鍵控制步驟</div>
+        </div>
+        <pre class="code-list" id="codeList" aria-label="Python 程式碼"></pre>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="topicModal" role="dialog" aria-modal="true" aria-label="題目說明視窗">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>題目說明：三角形辨別</h2>
+        <button class="btn danger" id="closeModalBtn">關閉</button>
+      </div>
+
+      <section class="topic-section">
+        <h3>問題描述</h3>
+        <p>給你三個線段長度，先判斷它們能不能組成三角形。</p>
+        <p>如果可以組成三角形，再判斷它是鈍角三角形、直角三角形，還是銳角三角形。</p>
+      </section>
+
+      <section class="topic-section">
+        <h3>核心規則</h3>
+        <p>先把三個邊長由小到大排序，得到 \(a \le b \le c\)。這樣 c 就是最大邊。</p>
+        <p>如果 \(a + b \le c\)，表示兩條短邊接起來還不夠長，所以不能組成三角形。</p>
+        <p>如果可以組成三角形，再比較 \(a^2 + b^2\) 和 \(c^2\)：</p>
+        <ul>
+          <li>若 \(a^2 + b^2 < c^2\)，輸出 <span class="mono">Obtuse</span>。</li>
+          <li>若 \(a^2 + b^2 = c^2\)，輸出 <span class="mono">Right</span>。</li>
+          <li>若 \(a^2 + b^2 > c^2\)，輸出 <span class="mono">Acute</span>。</li>
+        </ul>
+      </section>
+
+      <section class="topic-section">
+        <h3>輸入格式</h3>
+        <p>輸入只有一行，包含三個正整數。兩個數字中間用一個空白隔開。</p>
+      </section>
+
+      <section class="topic-section">
+        <h3>輸出格式</h3>
+        <p>輸出共有兩行。</p>
+        <p>第一行：把三個整數由小到大印出。</p>
+        <p>第二行：輸出三角形類型：<span class="mono">No</span>、<span class="mono">Obtuse</span>、<span class="mono">Right</span> 或 <span class="mono">Acute</span>。</p>
+      </section>
+
+      <section class="topic-section">
+        <h3>範例</h3>
+        <div class="example-grid">
+          <div class="example-card">
+            <strong>範例一</strong>
+            <div class="mono">輸入\n3 4 5\n\n輸出\n3 4 5\nRight</div>
+          </div>
+          <div class="example-card">
+            <strong>範例二</strong>
+            <div class="mono">輸入\n101 100 99\n\n輸出\n99 100 101\nAcute</div>
+          </div>
+          <div class="example-card">
+            <strong>範例三</strong>
+            <div class="mono">輸入\n10 100 10\n\n輸出\n10 10 100\nNo</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      "a,b,c = list(map(int, input().split()))",
+      "a,b,c = sorted([a,b,c]) #排序",
+      "print(a,b,c)",
+      "",
+      "#驗證三角形",
+      "if a + b <= c:          #a+b<=c     ：無法構成三角形，印出 No",
+      "    print('No')",
+      "elif a**2+b**2<c**2:    #a*a+b*b<c*c：構成鈍角三角形，印出 Obtuse",
+      "    print('Obtuse')    ",
+      "elif a**2+b**2==c**2:   #a*a+b*b=c*c：構成直角三角形，印出 Right",
+      "    print('Right')",
+      "else:                   #a*a+b*b>c*c：構成銳角三角形，印出 Acute",
+      "    print('Acute')"
+    ];
+
+    const examples = [
+      {
+        name: "範例一：3 4 5 → Right",
+        input: [3, 4, 5],
+        note: "3、4、5 是常見的直角三角形。"
+      },
+      {
+        name: "範例二：101 100 99 → Acute",
+        input: [101, 100, 99],
+        note: "排序後是 99、100、101，會走到銳角判斷。"
+      },
+      {
+        name: "範例三：10 100 10 → No",
+        input: [10, 100, 10],
+        note: "兩條短邊 10 + 10 還是不夠長，所以不是三角形。"
+      },
+      {
+        name: "補充：2 3 4 → Obtuse",
+        input: [2, 3, 4],
+        note: "用來補看鈍角三角形的分支。"
+      }
+    ];
+
+    const nodeIds = [
+      'read', 'sort', 'printSorted', 'canTriangle', 'noResult',
+      'angleCompare', 'obtuseResult', 'rightResult', 'acuteResult'
+    ];
+
+    let currentExampleIndex = 0;
+    let steps = [];
+    let currentStep = 0;
+    let playTimer = null;
+
+    const els = {
+      toolbar: document.getElementById('toolbar'),
+      exampleSelect: document.getElementById('exampleSelect'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      topicBtn: document.getElementById('topicBtn'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      topicModal: document.getElementById('topicModal'),
+      stepCounter: document.getElementById('stepCounter'),
+      resultStatus: document.getElementById('resultStatus'),
+      stepMessage: document.getElementById('stepMessage'),
+      rawValues: document.getElementById('rawValues'),
+      sortedValues: document.getElementById('sortedValues'),
+      abcMeaning: document.getElementById('abcMeaning'),
+      barList: document.getElementById('barList'),
+      triangleFormula: document.getElementById('triangleFormula'),
+      angleFormula: document.getElementById('angleFormula'),
+      outputBox: document.getElementById('outputBox'),
+      codeList: document.getElementById('codeList'),
+      splitLayout: document.getElementById('splitLayout'),
+      leftPane: document.getElementById('leftPane'),
+      resizer: document.getElementById('resizer')
+    };
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function updateToolbarHeight() {
+      const h = els.toolbar.offsetHeight;
+      document.documentElement.style.setProperty('--toolbar-h', h + 'px');
+    }
+
+    function renderCode() {
+      els.codeList.innerHTML = codeLines.map((line, i) => {
+        const n = i + 1;
+        const comment = line.trim().startsWith('#') ? ' comment' : '';
+        return `<div class="code-line${comment}" data-line="${n}"><span class="ln">${n}</span><span class="src">${escapeHtml(line) || '&nbsp;'}</span></div>`;
+      }).join('');
+    }
+
+    function makePills(values, cls, prefix = '') {
+      return values.map(v => `<span class="pill ${cls}">${prefix}${v}</span>`).join('');
+    }
+
+    function outputText(lines) {
+      if (!lines || lines.length === 0) return '尚未輸出';
+      return lines.join('\n');
+    }
+
+    function baseState(ex) {
+      const sorted = [...ex.input].sort((x, y) => x - y);
+      const [a, b, c] = sorted;
+      const sumAB = a + b;
+      const leftSq = a*a + b*b;
+      const rightSq = c*c;
+      return { raw: ex.input, sorted, a, b, c, sumAB, leftSq, rightSq };
+    }
+
+    function status(active, done = [], result = [], skipped = []) {
+      const s = {};
+      nodeIds.forEach(id => s[id] = 'pending');
+      done.forEach(id => s[id] = 'done');
+      skipped.forEach(id => s[id] = 'skipped');
+      result.forEach(id => s[id] = 'result');
+      if (active) s[active] = 'active';
+      return s;
+    }
+
+    function buildSteps(ex) {
+      const st = baseState(ex);
+      const sortedLine = st.sorted.join(' ');
+      const outputSorted = [sortedLine];
+      const common = { ...st, output: [], triangleChecked: false, angleChecked: false };
+      const arr = [];
+
+      arr.push({
+        activeLine: 1,
+        message: '準備讀入三個邊長，先把輸入切開並轉成整數。',
+        result: '尚未輸出',
+        state: { ...common, rawRead: false, sortedReady: false },
+        nodes: status('read'),
+      });
+
+      arr.push({
+        activeLine: 1,
+        message: `讀到原始資料：${st.raw.join('、')}。現在 a、b、c 暫時還是原本順序。`,
+        result: '已讀取輸入',
+        state: { ...common, rawRead: true, sortedReady: false },
+        nodes: status('read'),
+      });
+
+      arr.push({
+        activeLine: 2,
+        message: `把三個數字排序成：${st.sorted.join('、')}。排序後 c 才一定是最大邊。`,
+        result: `排序後：${sortedLine}`,
+        state: { ...common, rawRead: true, sortedReady: true },
+        nodes: status('sort', ['read']),
+      });
+
+      arr.push({
+        activeLine: 3,
+        message: `先輸出第一行排序結果：${sortedLine}。`,
+        result: `輸出第一行：${sortedLine}`,
+        state: { ...common, rawRead: true, sortedReady: true, output: outputSorted },
+        nodes: status('printSorted', ['read', 'sort']),
+      });
+
+      const canNo = st.sumAB <= st.c;
+      arr.push({
+        activeLine: 6,
+        message: `檢查能不能成三角形：a + b = ${st.a} + ${st.b} = ${st.sumAB}，拿來跟 c = ${st.c} 比。`,
+        result: canNo ? '判斷：不能成三角形' : '判斷：可以成三角形',
+        state: { ...common, rawRead: true, sortedReady: true, output: outputSorted, triangleChecked: true },
+        nodes: status('canTriangle', ['read', 'sort', 'printSorted']),
+      });
+
+      if (canNo) {
+        arr.push({
+          activeLine: 7,
+          message: `${st.sumAB} ≤ ${st.c} 成立，所以兩條短邊接起來還不夠長，輸出 No。`,
+          result: `最後輸出：${sortedLine} / No`,
+          state: { ...common, rawRead: true, sortedReady: true, output: [...outputSorted, 'No'], triangleChecked: true, finalType: 'No' },
+          nodes: status('noResult', ['read', 'sort', 'printSorted', 'canTriangle'], ['noResult'], ['angleCompare', 'obtuseResult', 'rightResult', 'acuteResult']),
+        });
+        return arr;
+      }
+
+      const isObtuse = st.leftSq < st.rightSq;
+      const isRight = st.leftSq === st.rightSq;
+      const finalType = isObtuse ? 'Obtuse' : (isRight ? 'Right' : 'Acute');
+
+      arr.push({
+        activeLine: 8,
+        message: `已經確定是三角形。接著比較 a²+b² = ${st.leftSq} 和 c² = ${st.rightSq}。`,
+        result: isObtuse ? '判斷：鈍角三角形' : '判斷：不是鈍角，繼續檢查',
+        state: { ...common, rawRead: true, sortedReady: true, output: outputSorted, triangleChecked: true, angleChecked: true, angleStage: 'obtuseCheck' },
+        nodes: status('angleCompare', ['read', 'sort', 'printSorted', 'canTriangle']),
+      });
+
+      if (isObtuse) {
+        arr.push({
+          activeLine: 9,
+          message: `${st.leftSq} < ${st.rightSq} 成立，所以輸出 Obtuse。`,
+          result: `最後輸出：${sortedLine} / Obtuse`,
+          state: { ...common, rawRead: true, sortedReady: true, output: [...outputSorted, 'Obtuse'], triangleChecked: true, angleChecked: true, finalType },
+          nodes: status('obtuseResult', ['read', 'sort', 'printSorted', 'canTriangle', 'angleCompare'], ['obtuseResult'], ['rightResult', 'acuteResult']),
+        });
+        return arr;
+      }
+
+      arr.push({
+        activeLine: 10,
+        message: `檢查是不是直角：${st.leftSq} 是否等於 ${st.rightSq}。`,
+        result: isRight ? '判斷：直角三角形' : '判斷：不是直角，會走到 else',
+        state: { ...common, rawRead: true, sortedReady: true, output: outputSorted, triangleChecked: true, angleChecked: true, angleStage: 'rightCheck' },
+        nodes: status('angleCompare', ['read', 'sort', 'printSorted', 'canTriangle']),
+      });
+
+      if (isRight) {
+        arr.push({
+          activeLine: 11,
+          message: `${st.leftSq} = ${st.rightSq} 成立，所以輸出 Right。`,
+          result: `最後輸出：${sortedLine} / Right`,
+          state: { ...common, rawRead: true, sortedReady: true, output: [...outputSorted, 'Right'], triangleChecked: true, angleChecked: true, finalType },
+          nodes: status('rightResult', ['read', 'sort', 'printSorted', 'canTriangle', 'angleCompare'], ['rightResult'], ['obtuseResult', 'acuteResult']),
+        });
+        return arr;
+      }
+
+      arr.push({
+        activeLine: 12,
+        message: `${st.leftSq} 不是小於 ${st.rightSq}，也不是等於 ${st.rightSq}，所以只剩下大於。`,
+        result: '判斷：銳角三角形',
+        state: { ...common, rawRead: true, sortedReady: true, output: outputSorted, triangleChecked: true, angleChecked: true, angleStage: 'acuteElse' },
+        nodes: status('angleCompare', ['read', 'sort', 'printSorted', 'canTriangle']),
+      });
+
+      arr.push({
+        activeLine: 13,
+        message: `${st.leftSq} > ${st.rightSq}，所以輸出 Acute。`,
+        result: `最後輸出：${sortedLine} / Acute`,
+        state: { ...common, rawRead: true, sortedReady: true, output: [...outputSorted, 'Acute'], triangleChecked: true, angleChecked: true, finalType },
+        nodes: status('acuteResult', ['read', 'sort', 'printSorted', 'canTriangle', 'angleCompare'], ['acuteResult'], ['obtuseResult', 'rightResult']),
+      });
+
+      return arr;
+    }
+
+    function renderValues(step) {
+      const s = step.state;
+      els.rawValues.innerHTML = s.rawRead ? makePills(s.raw, 'raw') : '<span class="small-note">準備讀取輸入</span>';
+      els.sortedValues.innerHTML = s.sortedReady ? makePills(s.sorted, 'sorted') : '<span class="small-note">尚未排序</span>';
+      if (s.sortedReady) {
+        els.abcMeaning.innerHTML = `
+          <div class="pill-row">
+            <span class="pill a">a = ${s.a}</span>
+            <span class="pill b">b = ${s.b}</span>
+            <span class="pill c">c = ${s.c}</span>
+          </div>
+          <div class="small-note" style="margin-top:8px;">a 是最短邊，b 是中間邊，c 是最大邊。</div>
+        `;
+      } else {
+        els.abcMeaning.textContent = '尚未排序，所以還不能確定誰是最大邊。';
+      }
+    }
+
+    function renderBars(step) {
+      const s = step.state;
+      const values = s.sortedReady ? [
+        { label: 'a 最短', value: s.a, cls: 'a' },
+        { label: 'b 中間', value: s.b, cls: 'b' },
+        { label: 'c 最長', value: s.c, cls: 'c' },
+      ] : s.raw.map((v, idx) => ({ label: `第 ${idx + 1} 個`, value: v, cls: 'raw' }));
+      const maxV = Math.max(...values.map(x => x.value), 1);
+      els.barList.innerHTML = values.map(item => {
+        const width = Math.max(8, Math.round(item.value / maxV * 100));
+        return `
+          <div class="bar-row">
+            <div>${item.label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+            <div>${item.value}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function relationSymbol(left, right) {
+      if (left < right) return '&lt;';
+      if (left > right) return '&gt;';
+      return '=';
+    }
+
+    function renderFormula(step) {
+      const s = step.state;
+      if (!s.sortedReady) {
+        els.triangleFormula.innerHTML = `
+          <h3>第一關：能不能成三角形</h3>
+          <div class="compare-result wait">先排序，才知道最大邊 c 是誰。</div>
+        `;
+        els.angleFormula.innerHTML = `
+          <h3>第二關：判斷角度</h3>
+          <div class="compare-result wait">還沒有進入角度判斷。</div>
+        `;
+        return;
+      }
+
+      if (!s.triangleChecked) {
+        els.triangleFormula.innerHTML = `
+          <h3>第一關：能不能成三角形</h3>
+          <div class="formula-line">要檢查：\(a + b \le c\)</div>
+          <div class="formula-line">目前：\(${s.a} + ${s.b}\) 和 \(${s.c}\)</div>
+          <div class="compare-result wait">準備檢查。</div>
+        `;
+      } else {
+        const noTriangle = s.sumAB <= s.c;
+        els.triangleFormula.innerHTML = `
+          <h3>第一關：能不能成三角形</h3>
+          <div class="formula-line">\(a + b = ${s.a} + ${s.b} = ${s.sumAB}\)</div>
+          <div class="formula-line">\(c = ${s.c}\)</div>
+          <div class="compare-result ${noTriangle ? 'no' : 'yes'}">
+            ${s.sumAB} ${noTriangle ? '≤' : '>'} ${s.c}，${noTriangle ? '不能成三角形' : '可以成三角形'}。
+          </div>
+        `;
+      }
+
+      if (!s.angleChecked) {
+        els.angleFormula.innerHTML = `
+          <h3>第二關：判斷角度</h3>
+          <div class="formula-line">能成三角形後，才需要比較：</div>
+          <div class="formula-line">\(a^2 + b^2\) 和 \(c^2\)</div>
+          <div class="compare-result wait">尚未進入角度判斷。</div>
+        `;
+      } else {
+        const rel = relationSymbol(s.leftSq, s.rightSq);
+        let typeText = '';
+        if (s.leftSq < s.rightSq) typeText = '鈍角 Obtuse';
+        else if (s.leftSq === s.rightSq) typeText = '直角 Right';
+        else typeText = '銳角 Acute';
+        els.angleFormula.innerHTML = `
+          <h3>第二關：判斷角度</h3>
+          <div class="formula-line">\(a^2 + b^2 = ${s.a}^2 + ${s.b}^2 = ${s.leftSq}\)</div>
+          <div class="formula-line">\(c^2 = ${s.c}^2 = ${s.rightSq}\)</div>
+          <div class="compare-result info">${s.leftSq} ${rel} ${s.rightSq}，所以是 ${typeText}。</div>
+        `;
+      }
+    }
+
+    function renderOutput(step) {
+      els.outputBox.textContent = outputText(step.state.output);
+    }
+
+    function renderNodes(step) {
+      nodeIds.forEach(id => {
+        const el = document.getElementById(`node-${id}`);
+        if (!el) return;
+        el.classList.remove('pending', 'active', 'done', 'result', 'skipped');
+        el.classList.add(step.nodes[id] || 'pending');
+      });
+    }
+
+    function renderCodeHighlight(activeLine) {
+      document.querySelectorAll('.code-line').forEach(line => {
+        line.classList.toggle('active', Number(line.dataset.line) === activeLine);
+      });
+      const active = document.querySelector(`.code-line[data-line="${activeLine}"]`);
+      if (active) {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    function typesetMath() {
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([els.triangleFormula, els.angleFormula, document.getElementById('topicModal')]).catch(() => {});
+      }
+    }
+
+    function renderStep() {
+      const step = steps[currentStep];
+      els.stepCounter.textContent = `步驟 ${currentStep + 1} / ${steps.length}`;
+      els.resultStatus.textContent = step.result;
+      els.stepMessage.textContent = step.message;
+      els.prevBtn.disabled = currentStep === 0;
+      els.nextBtn.disabled = currentStep === steps.length - 1;
+
+      renderValues(step);
+      renderBars(step);
+      renderFormula(step);
+      renderOutput(step);
+      renderNodes(step);
+      renderCodeHighlight(step.activeLine);
+      typesetMath();
+    }
+
+    function loadExample(index) {
+      pause();
+      currentExampleIndex = index;
+      steps = buildSteps(examples[currentExampleIndex]);
+      currentStep = 0;
+      renderStep();
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        renderStep();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep -= 1;
+        renderStep();
+      }
+    }
+
+    function reset() {
+      pause();
+      currentStep = 0;
+      renderStep();
+    }
+
+    function play() {
+      if (playTimer) return;
+      playTimer = setInterval(nextStep, 1100);
+    }
+
+    function pause() {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+    }
+
+    function initExamples() {
+      els.exampleSelect.innerHTML = examples.map((ex, idx) => `<option value="${idx}">${escapeHtml(ex.name)}</option>`).join('');
+      els.exampleSelect.addEventListener('change', e => loadExample(Number(e.target.value)));
+    }
+
+    function initButtons() {
+      els.prevBtn.addEventListener('click', prevStep);
+      els.nextBtn.addEventListener('click', nextStep);
+      els.playBtn.addEventListener('click', play);
+      els.pauseBtn.addEventListener('click', pause);
+      els.resetBtn.addEventListener('click', reset);
+      els.topicBtn.addEventListener('click', () => {
+        els.topicModal.classList.add('open');
+        typesetMath();
+      });
+      els.closeModalBtn.addEventListener('click', () => els.topicModal.classList.remove('open'));
+      els.topicModal.addEventListener('click', e => {
+        if (e.target === els.topicModal) els.topicModal.classList.remove('open');
+      });
+    }
+
+    function initKeyboard() {
+      document.addEventListener('keydown', e => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          if (playTimer) pause(); else play();
+        } else if (e.key === 'Escape') {
+          els.topicModal.classList.remove('open');
+        }
+      });
+    }
+
+    function initResizer() {
+      let dragging = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      els.resizer.addEventListener('mousedown', e => {
+        dragging = true;
+        startX = e.clientX;
+        startWidth = els.leftPane.getBoundingClientRect().width;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const rect = els.splitLayout.getBoundingClientRect();
+        const newWidth = startWidth + (e.clientX - startX);
+        const minLeft = 340;
+        const minRight = 360;
+        const clamped = Math.min(Math.max(newWidth, minLeft), rect.width - minRight - els.resizer.offsetWidth);
+        els.leftPane.style.width = clamped + 'px';
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    }
+
+    function init() {
+      renderCode();
+      initExamples();
+      initButtons();
+      initKeyboard();
+      initResizer();
+      updateToolbarHeight();
+      window.addEventListener('resize', () => {
+        updateToolbarHeight();
+        renderStep();
+      });
+      loadExample(0);
+      setTimeout(updateToolbarHeight, 250);
+      setTimeout(typesetMath, 900);
+    }
+
+    init();
+  </script>
+</body>
+</html>

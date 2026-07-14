@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>第 1 題 秘密差｜一步一步動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 128px;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --line: #d6dde8;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --amber: #b45309;
+      --amber-soft: #fef3c7;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --gray-soft: #f1f5f9;
+      --code-bg: #0f172a;
+      --code-ink: #e5e7eb;
+      --code-line: #94a3b8;
+      --code-active: #334155;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+      --radius: 14px;
+      --font-main: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      --font-mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-main);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button, select, input {
+      font-family: inherit;
+      font-size: 16px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #f8fafc; border-color: #b7c3d5; }
+    button:active { transform: translateY(1px); }
+    button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    button.primary:hover { background: #1d4ed8; }
+    button.warn { background: var(--amber-soft); border-color: #f59e0b; color: #7c2d12; }
+
+    .toolbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      min-height: var(--toolbar-h);
+      background: rgba(255,255,255,0.98);
+      border-bottom: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      z-index: 20;
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: .03em;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill strong { color: var(--ink); }
+
+    .message-bar {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(120px, auto) 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .status-box, .message-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 8px 12px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-box {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0f172a;
+      justify-content: center;
+    }
+
+    .message-box {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    #main {
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .pane {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    #leftPane {
+      width: 58%;
+      min-width: 360px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #rightPane {
+      flex: 1;
+      min-width: 320px;
+      padding: 14px;
+      background: #111827;
+      color: var(--code-ink);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .resizer {
+      flex: 0 0 8px;
+      cursor: col-resize;
+      background: linear-gradient(to right, #cbd5e1 0, #e2e8f0 45%, #94a3b8 50%, #e2e8f0 55%, #cbd5e1 100%);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      flex-shrink: 0;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, .06);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .card-header small {
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card-body { padding: 12px 14px; }
+
+    .visual-card .card-body {
+      padding: 8px 10px 12px;
+    }
+
+    .svg-wrap {
+      position: relative;
+      height: 320px;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border: 1px solid #e2e8f0;
+    }
+
+    #digitSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2px solid #94a3b8;
+      background: #fff;
+    }
+    .dot.current { background: var(--primary-soft); border-color: var(--primary); }
+    .dot.a { background: var(--green-soft); border-color: var(--green); }
+    .dot.b { background: var(--amber-soft); border-color: var(--amber); }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .state-cell {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      min-height: 72px;
+    }
+
+    .state-label {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .state-value {
+      font-size: 20px;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .state-value.small { font-size: 17px; font-weight: 800; }
+
+    .sum-area {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .bucket {
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 130px;
+      background: #fff;
+    }
+
+    .bucket.a { border-color: #86efac; background: #f0fdf4; }
+    .bucket.b { border-color: #fcd34d; background: #fffbeb; }
+
+    .bucket-title {
+      font-weight: 900;
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bucket-title span:last-child {
+      color: #0f172a;
+      background: #fff;
+      border: 1px solid rgba(15, 23, 42, .12);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .chips {
+      min-height: 38px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 2px solid #cbd5e1;
+      background: #fff;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .bucket.a .chip { border-color: var(--green); }
+    .bucket.b .chip { border-color: var(--amber); }
+
+    .formula {
+      color: #334155;
+      font-weight: 800;
+      font-size: 17px;
+      word-break: break-word;
+    }
+
+    .notice {
+      border-left: 6px solid var(--primary);
+      background: #eff6ff;
+      color: #1e3a8a;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .notice strong { color: #172554; }
+
+    .code-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #fff;
+      font-weight: 900;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .code-title small {
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    #codeBox {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      background: var(--code-bg);
+      padding: 10px 0;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 10px;
+      padding: 1px 14px 1px 0;
+      min-height: 26px;
+      white-space: pre;
+      border-left: 5px solid transparent;
+    }
+
+    .code-line.active {
+      background: var(--code-active);
+      border-left-color: #60a5fa;
+    }
+
+    .line-no {
+      text-align: right;
+      color: var(--code-line);
+      user-select: none;
+      padding-right: 4px;
+    }
+
+    .line-code { color: var(--code-ink); }
+    .comment { color: #93c5fd; }
+    .keyword { color: #f472b6; }
+    .number { color: #fde68a; }
+    .string { color: #86efac; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .48);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(900px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      padding: 18px;
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .modal-body h3 {
+      margin: 18px 0 8px;
+      font-size: 20px;
+    }
+
+    .modal-body p { margin: 8px 0; }
+    .modal-body pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 12px 14px;
+      border-radius: 12px;
+      overflow: auto;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .kbd {
+      font-family: var(--font-mono);
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 14px;
+      color: #334155;
+    }
+
+    .input-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    #customInput {
+      width: 160px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .sample-select {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      max-width: 230px;
+    }
+
+    .mini-help {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-h: 174px; }
+      #main { flex-direction: column; }
+      #leftPane, #rightPane { width: 100%; min-width: 0; height: 50%; }
+      .resizer { display: none; }
+      .state-grid { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+      .sum-area { grid-template-columns: 1fr; }
+      .message-bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" role="banner">
+    <div class="toolbar-row">
+      <div class="title">第 1 題：秘密差｜一步一步動畫</div>
+      <button id="problemBtn" class="warn">題目說明</button>
+      <select id="sampleSelect" class="sample-select" aria-label="切換範例"></select>
+      <span class="input-row">
+        <input id="customInput" inputmode="numeric" pattern="[0-9]*" placeholder="自訂正整數" />
+        <button id="applyInputBtn">套用</button>
+      </span>
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary">下一步</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn">暫停</button>
+      <button id="resetBtn">重設</button>
+      <span class="pill">步驟 <strong id="stepText">0 / 0</strong></span>
+      <span class="pill">輸入 <strong id="inputText">-</strong></span>
+    </div>
+    <div class="message-bar">
+      <div class="status-box" id="statusText">狀態：尚未開始</div>
+      <div class="message-box" id="messageText">請按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="leftPane" class="pane" aria-label="視覺化動畫區">
+      <section class="card visual-card">
+        <div class="card-header">
+          <span>數字視覺化：從右邊個位數開始讀</span>
+          <small>目前處理的節點會放大高亮</small>
+        </div>
+        <div class="card-body">
+          <div class="svg-wrap">
+            <svg id="digitSvg" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet" aria-label="位數節點 SVG"></svg>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="dot current"></span>目前讀到的位數</span>
+            <span class="legend-item"><span class="dot a"></span>已加到程式 A</span>
+            <span class="legend-item"><span class="dot b"></span>已加到程式 B</span>
+            <span class="legend-item"><span class="dot"></span>還沒處理</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <span>目前狀態</span>
+          <small>每一步都對應右邊的程式碼行</small>
+        </div>
+        <div class="card-body">
+          <div class="state-grid">
+            <div class="state-cell">
+              <div class="state-label">目前 i</div>
+              <div class="state-value" id="stateI">-</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">目前讀到</div>
+              <div class="state-value" id="stateDigit">-</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">i % 2</div>
+              <div class="state-value" id="stateMod">-</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">本步驟動作</div>
+              <div class="state-value small" id="stateAction">-</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">程式 A</div>
+              <div class="state-value" id="stateA">0</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">程式 B</div>
+              <div class="state-value" id="stateB">0</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">秘密差</div>
+              <div class="state-value" id="stateX">尚未計算</div>
+            </div>
+            <div class="state-cell">
+              <div class="state-label">目前計算式</div>
+              <div class="state-value small" id="stateCalc">-</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <span>兩個加總桶</span>
+          <small>先分堆，最後做差</small>
+        </div>
+        <div class="card-body">
+          <div class="sum-area">
+            <div class="bucket a">
+              <div class="bucket-title"><span>程式 A：奇數位（i % 2 != 0）</span><span id="bucketATotal">0</span></div>
+              <div class="chips" id="bucketAChips"></div>
+              <div class="formula" id="bucketAFormula">目前沒有數字</div>
+            </div>
+            <div class="bucket b">
+              <div class="bucket-title"><span>程式 B：偶數位（else）</span><span id="bucketBTotal">0</span></div>
+              <div class="chips" id="bucketBChips"></div>
+              <div class="formula" id="bucketBFormula">目前沒有數字</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <span>觀念提醒</span>
+          <small>這題最容易混淆的地方</small>
+        </div>
+        <div class="card-body">
+          <div class="notice">
+            <strong>位數要從右邊開始數。</strong>
+            題目例子 263541 的右邊第 1、3、5 位是 1、5、6。
+            這份 Python 程式用負索引從 -1、-2、-3 往左讀。因為 Python 裡 <strong>-1 % 2 = 1</strong>，所以右邊第 1 位會符合 <strong>i % 2 != 0</strong>，加到 A；右邊第 2 位的索引是 -2，而 <strong>-2 % 2 = 0</strong>，所以會走 else，加到 B。這樣 A 就是奇數位總和，B 就是偶數位總和。
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="resizer" id="resizer" aria-label="拖曳調整左右寬度"></div>
+
+    <section id="rightPane" class="pane" aria-label="Python 程式碼區">
+      <div class="code-title">
+        <span>完整 Python 程式碼</span>
+        <small>支援同步高亮與自動捲動</small>
+      </div>
+      <div id="codeBox" aria-label="程式碼"></div>
+      <div class="mini-help">鍵盤：<span class="kbd">←</span> 上一步、<span class="kbd">→</span> 下一步、<span class="kbd">Space</span> 播放 / 暫停</div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">題目說明：秘密差</div>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <h3>問題描述</h3>
+        <p>給定一個十進位正整數 \(X\)。</p>
+        <p>從右邊個位數開始數：第 1 位、第 3 位、第 5 位……叫做奇數位；第 2 位、第 4 位、第 6 位……叫做偶數位。</p>
+        <p>把奇數位的數字加起來稱為 \(A\)，把偶數位的數字加起來稱為 \(B\)。秘密差就是 \(|A-B|\)。</p>
+        <h3>例子</h3>
+        <p>例如 \(263541\)：</p>
+        <p>奇數位是 \(1, 5, 6\)，所以 \(A = 1 + 5 + 6 = 12\)。</p>
+        <p>偶數位是 \(4, 3, 2\)，所以 \(B = 4 + 3 + 2 = 9\)。</p>
+        <p>秘密差是 \(|12-9| = 3\)。</p>
+        <h3>範例輸入與輸出</h3>
+        <pre>範例輸入
+263541
+
+範例輸出
+3</pre>
+        <h3>評分說明</h3>
+        <p>第 1 子題組：\(X\) 一定恰好四位數。</p>
+        <p>第 2 子題組：\(X\) 的位數不超過 9。</p>
+        <p>第 3 子題組：\(X\) 的位數不超過 1000。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeText = `#讀取輸入數值字串 X
+numStr = input()
+
+#取得奇數位數值和 A 及取得偶數位數值和 B
+A, B = 0, 0
+numLen = len(numStr)
+for i in range(-1, -numLen-1, -1):
+    if(i%2!=0): 
+        A = A + int(numStr[i])
+    else:       
+        B = B + int(numStr[i])
+
+# 計算秘密差並列印
+x = abs(A-B)
+print(x)`;
+
+    const samples = [
+      { label: '題目範例：263541', value: '263541' },
+      { label: '四位數：1234', value: '1234' },
+      { label: '全部相同：111111', value: '111111' },
+      { label: '單一位數：7', value: '7' },
+      { label: '九位數：987654321', value: '987654321' }
+    ];
+
+    let steps = [];
+    let currentStep = 0;
+    let playing = false;
+    let playTimer = null;
+    let currentInput = samples[0].value;
+
+    const el = {
+      sampleSelect: document.getElementById('sampleSelect'),
+      customInput: document.getElementById('customInput'),
+      applyInputBtn: document.getElementById('applyInputBtn'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      stepText: document.getElementById('stepText'),
+      inputText: document.getElementById('inputText'),
+      statusText: document.getElementById('statusText'),
+      messageText: document.getElementById('messageText'),
+      digitSvg: document.getElementById('digitSvg'),
+      codeBox: document.getElementById('codeBox'),
+      stateI: document.getElementById('stateI'),
+      stateDigit: document.getElementById('stateDigit'),
+      stateMod: document.getElementById('stateMod'),
+      stateAction: document.getElementById('stateAction'),
+      stateA: document.getElementById('stateA'),
+      stateB: document.getElementById('stateB'),
+      stateX: document.getElementById('stateX'),
+      stateCalc: document.getElementById('stateCalc'),
+      bucketATotal: document.getElementById('bucketATotal'),
+      bucketBTotal: document.getElementById('bucketBTotal'),
+      bucketAChips: document.getElementById('bucketAChips'),
+      bucketBChips: document.getElementById('bucketBChips'),
+      bucketAFormula: document.getElementById('bucketAFormula'),
+      bucketBFormula: document.getElementById('bucketBFormula'),
+      problemBtn: document.getElementById('problemBtn'),
+      problemModal: document.getElementById('problemModal'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      leftPane: document.getElementById('leftPane'),
+      resizer: document.getElementById('resizer')
+    };
+
+    function pyMod(a, b) {
+      return ((a % b) + b) % b;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function lightSyntax(line) {
+      let html = escapeHtml(line);
+      if (html.trim().startsWith('#')) return `<span class="comment">${html}</span>`;
+      html = html.replace(/\b(for|if|else|in|range|print|input|int|len|abs)\b/g, '<span class="keyword">$1</span>');
+      html = html.replace(/(-?\d+)/g, '<span class="number">$1</span>');
+      return html;
+    }
+
+    function renderCode() {
+      const lines = codeText.split('\n');
+      el.codeBox.innerHTML = lines.map((line, idx) => {
+        const lineNo = idx + 1;
+        return `<div class="code-line" data-line="${lineNo}"><span class="line-no">${lineNo}</span><span class="line-code">${lightSyntax(line) || ' '}</span></div>`;
+      }).join('');
+    }
+
+    function setActiveLine(lineNo) {
+      document.querySelectorAll('.code-line').forEach(node => node.classList.remove('active'));
+      const active = document.querySelector(`.code-line[data-line="${lineNo}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    function cloneState(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function makeFormula(arr) {
+      if (!arr.length) return '目前沒有數字';
+      return arr.join(' + ') + ' = ' + arr.reduce((a, b) => a + b, 0);
+    }
+
+    function generateSteps(numStr) {
+      const n = numStr.length;
+      const state = {
+        digitStates: Array(n).fill('none'),
+        A: 0,
+        B: 0,
+        x: null,
+        aDigits: [],
+        bDigits: [],
+        currentIndex: null,
+        currentI: null,
+        currentDigit: null,
+        mod: null,
+        action: '準備讀取輸入',
+        calc: '-',
+        result: '狀態：尚未開始'
+      };
+
+      const out = [];
+      function push(activeLine, message, patch = {}) {
+        const snap = cloneState({ ...state, ...patch });
+        out.push({ activeLine, message, ...snap });
+      }
+
+      push(2, `讀入 numStr = "${numStr}"。程式把整個數字先當成字串，這樣才能一位一位讀。`, {
+        action: '讀入輸入',
+        result: '狀態：讀入 X'
+      });
+
+      state.A = 0;
+      state.B = 0;
+      state.aDigits = [];
+      state.bDigits = [];
+      push(5, '建立兩個加總桶：A = 0，B = 0。現在兩邊都還沒有放任何數字。', {
+        action: '初始化 A、B',
+        calc: 'A = 0，B = 0',
+        result: '狀態：A=0，B=0'
+      });
+
+      push(6, `計算 numLen = len(numStr) = ${n}。也就是這個數字共有 ${n} 位。`, {
+        action: '取得位數長度',
+        calc: `numLen = ${n}`,
+        result: `狀態：共有 ${n} 位`
+      });
+
+      for (let i = -1; i >= -n; i--) {
+        const idx = n + i;
+        const digit = Number(numStr[idx]);
+        const rightPos = -i;
+        const mod = pyMod(i, 2);
+        state.currentIndex = idx;
+        state.currentI = i;
+        state.currentDigit = digit;
+        state.mod = mod;
+        state.action = `讀 numStr[${i}]`;
+        state.calc = `numStr[${i}] = ${digit}`;
+
+        push(7, `進入下一圈迴圈：i = ${i}。numStr[${i}] 是從右邊數第 ${rightPos} 位，數字是 ${digit}。`, {
+          result: `狀態：讀到 ${digit}`
+        });
+
+        push(8, `判斷 i % 2。這次 ${i} % 2 = ${mod}。如果不等於 0 就加到 A，否則走 else 加到 B。`, {
+          action: '判斷要放哪一桶',
+          calc: `${i} % 2 = ${mod}`,
+          result: mod !== 0 ? '狀態：準備加到 A' : '狀態：準備加到 B'
+        });
+
+        if (mod !== 0) {
+          const old = state.A;
+          state.A += digit;
+          state.aDigits.push(digit);
+          state.digitStates[idx] = 'A';
+          state.action = '加到程式 A';
+          state.calc = `A = ${old} + ${digit} = ${state.A}`;
+          push(9, `因為 i % 2 不等於 0，所以把 ${digit} 加到 A：${old} + ${digit} = ${state.A}。`, {
+            result: `狀態：A 更新為 ${state.A}`
+          });
+        } else {
+          push(10, 'i % 2 等於 0，所以進入 else。', {
+            action: '走 else',
+            calc: `${i} % 2 = ${mod}，等於 0`,
+            result: '狀態：進入 else'
+          });
+          const old = state.B;
+          state.B += digit;
+          state.bDigits.push(digit);
+          state.digitStates[idx] = 'B';
+          state.action = '加到程式 B';
+          state.calc = `B = ${old} + ${digit} = ${state.B}`;
+          push(11, `把 ${digit} 加到 B：${old} + ${digit} = ${state.B}。`, {
+            result: `狀態：B 更新為 ${state.B}`
+          });
+        }
+      }
+
+      state.currentIndex = null;
+      state.currentI = null;
+      state.currentDigit = null;
+      state.mod = null;
+      const diff = Math.abs(state.A - state.B);
+      state.x = diff;
+      state.action = '計算秘密差';
+      state.calc = `x = abs(${state.A} - ${state.B}) = ${diff}`;
+      push(14, `迴圈結束。計算 x = abs(A - B) = abs(${state.A} - ${state.B}) = ${diff}。`, {
+        result: `答案：${diff}`
+      });
+
+      push(15, `輸出答案 ${diff}。這就是秘密差。`, {
+        action: '輸出答案',
+        result: `答案：${diff}`
+      });
+      return out;
+    }
+
+    function svgEl(tag, attrs = {}, text = '') {
+      const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+      if (text !== '') node.textContent = text;
+      return node;
+    }
+
+    function renderSvg(step) {
+      const svg = el.digitSvg;
+      const s = currentInput;
+      const n = s.length;
+      const gap = 18;
+      const cellW = 64;
+      const startX = 24;
+      const viewW = Math.max(760, startX * 2 + n * cellW + (n - 1) * gap);
+      const viewH = 300;
+      svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+      svg.innerHTML = '';
+
+      svg.appendChild(svgEl('text', {
+        x: 20, y: 28, 'font-size': 18, 'font-weight': 900, fill: '#334155'
+      }, 'numStr：由左到右顯示；程式實際會從右邊 -1 開始往左讀'));
+
+      const y = 74;
+      for (let idx = 0; idx < n; idx++) {
+        const x = startX + idx * (cellW + gap);
+        const digit = s[idx];
+        const negIndex = idx - n;
+        const rightPos = n - idx;
+        const done = step.digitStates[idx];
+        const isCurrent = step.currentIndex === idx;
+
+        let fill = '#ffffff';
+        let stroke = '#94a3b8';
+        let strokeW = 2;
+        if (done === 'A') { fill = '#dcfce7'; stroke = '#15803d'; strokeW = 3; }
+        if (done === 'B') { fill = '#fef3c7'; stroke = '#b45309'; strokeW = 3; }
+        if (isCurrent) { fill = '#dbeafe'; stroke = '#2563eb'; strokeW = 5; }
+
+        const g = svgEl('g', { transform: `translate(${x}, ${y})` });
+        if (isCurrent) {
+          g.appendChild(svgEl('rect', {
+            x: -8, y: -8, width: cellW + 16, height: 88,
+            rx: 18, fill: '#eff6ff', stroke: '#93c5fd', 'stroke-width': 2
+          }));
+        }
+        g.appendChild(svgEl('rect', {
+          x: 0, y: 0, width: cellW, height: cellW,
+          rx: 16, fill, stroke, 'stroke-width': strokeW
+        }));
+        g.appendChild(svgEl('text', {
+          x: cellW / 2, y: 40, 'text-anchor': 'middle',
+          'font-size': 30, 'font-weight': 900, fill: '#0f172a'
+        }, digit));
+        g.appendChild(svgEl('text', {
+          x: cellW / 2, y: 86, 'text-anchor': 'middle',
+          'font-size': 15, 'font-weight': 800, fill: '#475569'
+        }, `i=${negIndex}`));
+        g.appendChild(svgEl('text', {
+          x: cellW / 2, y: 108, 'text-anchor': 'middle',
+          'font-size': 14, 'font-weight': 800, fill: '#64748b'
+        }, `右${rightPos}位`));
+        if (done === 'A' || done === 'B') {
+          g.appendChild(svgEl('text', {
+            x: cellW / 2, y: -15, 'text-anchor': 'middle',
+            'font-size': 15, 'font-weight': 900, fill: done === 'A' ? '#15803d' : '#b45309'
+          }, `已進 ${done}`));
+        }
+        svg.appendChild(g);
+      }
+
+      const baseY = 230;
+      svg.appendChild(svgEl('line', {
+        x1: 24, y1: baseY, x2: viewW - 24, y2: baseY,
+        stroke: '#cbd5e1', 'stroke-width': 3, 'stroke-linecap': 'round'
+      }));
+      svg.appendChild(svgEl('text', {
+        x: 28, y: baseY + 34, 'font-size': 17, 'font-weight': 900, fill: '#334155'
+      }, '讀取順序：右邊開始，i = -1, -2, -3 ...'));
+      if (step.currentIndex !== null) {
+        const cx = startX + step.currentIndex * (cellW + gap) + cellW / 2;
+        svg.appendChild(svgEl('line', {
+          x1: cx, y1: y + cellW + 50, x2: cx, y2: baseY - 8,
+          stroke: '#2563eb', 'stroke-width': 4, 'stroke-dasharray': '8 6', 'stroke-linecap': 'round'
+        }));
+        svg.appendChild(svgEl('text', {
+          x: cx, y: baseY - 18, 'text-anchor': 'middle',
+          'font-size': 17, 'font-weight': 900, fill: '#1d4ed8'
+        }, '目前'));
+      }
+    }
+
+    function renderChips(container, arr) {
+      container.innerHTML = arr.map(v => `<span class="chip">${v}</span>`).join('');
+    }
+
+    function updateStep() {
+      if (!steps.length) return;
+      const step = steps[currentStep];
+      el.stepText.textContent = `${currentStep + 1} / ${steps.length}`;
+      el.inputText.textContent = currentInput;
+      el.statusText.textContent = step.result;
+      el.messageText.textContent = step.message;
+      el.stateI.textContent = step.currentI === null ? '-' : step.currentI;
+      el.stateDigit.textContent = step.currentDigit === null ? '-' : step.currentDigit;
+      el.stateMod.textContent = step.mod === null ? '-' : step.mod;
+      el.stateAction.textContent = step.action || '-';
+      el.stateA.textContent = step.A;
+      el.stateB.textContent = step.B;
+      el.stateX.textContent = step.x === null ? '尚未計算' : step.x;
+      el.stateCalc.textContent = step.calc || '-';
+      el.bucketATotal.textContent = step.A;
+      el.bucketBTotal.textContent = step.B;
+      renderChips(el.bucketAChips, step.aDigits);
+      renderChips(el.bucketBChips, step.bDigits);
+      el.bucketAFormula.textContent = makeFormula(step.aDigits);
+      el.bucketBFormula.textContent = makeFormula(step.bDigits);
+      renderSvg(step);
+      setActiveLine(step.activeLine);
+      el.prevBtn.disabled = currentStep === 0;
+      el.nextBtn.disabled = currentStep === steps.length - 1;
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        updateStep();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep -= 1;
+        updateStep();
+      }
+    }
+
+    function resetSteps() {
+      stopPlay();
+      currentStep = 0;
+      updateStep();
+    }
+
+    function startPlay() {
+      if (playing) return;
+      playing = true;
+      el.playBtn.textContent = '播放中';
+      playTimer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          stopPlay();
+        } else {
+          nextStep();
+        }
+      }, 950);
+    }
+
+    function stopPlay() {
+      playing = false;
+      el.playBtn.textContent = '播放';
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+    }
+
+    function rebuild(inputValue) {
+      const clean = String(inputValue).trim();
+      if (!/^\d+$/.test(clean) || Number(clean) <= 0) {
+        alert('請輸入十進位正整數，只能包含 0 到 9。');
+        return;
+      }
+      currentInput = clean;
+      steps = generateSteps(currentInput);
+      currentStep = 0;
+      stopPlay();
+      updateStep();
+    }
+
+    function setupSamples() {
+      el.sampleSelect.innerHTML = samples.map((s, idx) => `<option value="${idx}">${s.label}</option>`).join('');
+      el.sampleSelect.addEventListener('change', () => {
+        const idx = Number(el.sampleSelect.value);
+        el.customInput.value = '';
+        rebuild(samples[idx].value);
+      });
+    }
+
+    function setupModal() {
+      el.problemBtn.addEventListener('click', () => {
+        el.problemModal.classList.add('open');
+        if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+      });
+      el.closeModalBtn.addEventListener('click', () => el.problemModal.classList.remove('open'));
+      el.problemModal.addEventListener('click', e => {
+        if (e.target === el.problemModal) el.problemModal.classList.remove('open');
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') el.problemModal.classList.remove('open');
+      });
+    }
+
+    function setupControls() {
+      el.prevBtn.addEventListener('click', prevStep);
+      el.nextBtn.addEventListener('click', nextStep);
+      el.resetBtn.addEventListener('click', resetSteps);
+      el.playBtn.addEventListener('click', () => playing ? stopPlay() : startPlay());
+      el.pauseBtn.addEventListener('click', stopPlay);
+      el.applyInputBtn.addEventListener('click', () => rebuild(el.customInput.value));
+      el.customInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') rebuild(el.customInput.value);
+      });
+      document.addEventListener('keydown', e => {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+        if (e.key === 'ArrowRight') nextStep();
+        if (e.key === 'ArrowLeft') prevStep();
+        if (e.code === 'Space') {
+          e.preventDefault();
+          playing ? stopPlay() : startPlay();
+        }
+      });
+    }
+
+    function setupResizer() {
+      let dragging = false;
+      el.resizer.addEventListener('pointerdown', e => {
+        dragging = true;
+        el.resizer.setPointerCapture(e.pointerId);
+        document.body.style.cursor = 'col-resize';
+      });
+      window.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const mainRect = document.getElementById('main').getBoundingClientRect();
+        let newW = e.clientX - mainRect.left;
+        const minLeft = 360;
+        const minRight = 320;
+        newW = Math.max(minLeft, Math.min(newW, mainRect.width - minRight));
+        el.leftPane.style.width = `${newW}px`;
+      });
+      window.addEventListener('pointerup', () => {
+        dragging = false;
+        document.body.style.cursor = '';
+      });
+    }
+
+    function init() {
+      renderCode();
+      setupSamples();
+      setupControls();
+      setupModal();
+      setupResizer();
+      rebuild(currentInput);
+    }
+
+    init();
+  </script>
+</body>
+</html>
