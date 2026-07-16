@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>j428.1 巴士站牌｜白話教學動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+      chtml: { scale: 1 }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      --toolbar-height: 142px;
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --border: #d8dee9;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --prev: #2563eb;
+      --current: #f59e0b;
+      --done: #16a34a;
+      --pending: #9ca3af;
+      --returning: #a855f7;
+      --danger: #dc2626;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+      --code-muted: #93a4b8;
+      --code-active: #334155;
+      --shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .toolbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: var(--toolbar-height);
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.97);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow: hidden;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-right: auto;
+      white-space: nowrap;
+    }
+
+    .btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 12px;
+      padding: 8px 14px;
+      cursor: pointer;
+      min-width: 82px;
+      min-height: 38px;
+    }
+
+    .btn:hover { background: #f8fafc; }
+    .btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn.warn { background: #fff7ed; border-color: #f59e0b; color: #92400e; }
+
+    .select-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #dbe3ee;
+      border-radius: 999px;
+      background: #f8fafc;
+      padding: 6px 10px 6px 12px;
+      white-space: nowrap;
+    }
+
+    .select-wrap select {
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: #fff;
+      padding: 7px 40px 7px 12px;
+      min-width: 220px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #d7dce5;
+      border-radius: 999px;
+      background: #f8fafc;
+      padding: 7px 12px;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .step-pill { min-width: 116px; justify-content: center; }
+
+    .status-pill {
+      min-width: 210px;
+      justify-content: center;
+      color: #0f172a;
+      font-weight: 900;
+      background: #ecfeff;
+      border-color: #a5f3fc;
+    }
+
+    .message-pill {
+      flex: 1 1 520px;
+      min-width: 280px;
+      justify-content: flex-start;
+      font-size: 18px;
+      font-weight: 900;
+      color: #111827;
+      background: #fff7ed;
+      border-color: #fed7aa;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .app {
+      margin-top: var(--toolbar-height);
+      height: calc(100vh - var(--toolbar-height));
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .pane {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .left-pane {
+      flex: 0 0 58%;
+      min-width: 420px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+    }
+
+    .divider {
+      flex: 0 0 10px;
+      width: 10px;
+      background: linear-gradient(to right, #e5e7eb, #cbd5e1, #e5e7eb);
+      cursor: col-resize;
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .divider.dragging { background: #93c5fd; }
+
+    .right-pane {
+      flex: 1 1 auto;
+      min-width: 360px;
+      padding: 16px 16px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      background: #eef2f7;
+    }
+
+    .card {
+      position: relative;
+      flex: 0 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      overflow: visible;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 10px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .small-note {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .status-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .focus-box {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      border-radius: 14px;
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .focus-main {
+      font-size: 21px;
+      line-height: 1.35;
+      font-weight: 900;
+      color: #1d4ed8;
+      margin-bottom: 8px;
+    }
+
+    .focus-detail {
+      font-size: 17px;
+      color: #1f2937;
+      overflow-wrap: anywhere;
+    }
+
+    .focus-note {
+      margin-top: 8px;
+      font-size: 15px;
+      color: #475569;
+    }
+
+    .var-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .var-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 8px 10px;
+      min-height: 58px;
+      min-width: 0;
+    }
+
+    .var-label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+
+    .var-value {
+      font-size: 19px;
+      font-weight: 900;
+      color: #111827;
+      overflow-wrap: anywhere;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #fff;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      background: var(--pending);
+      flex: 0 0 auto;
+    }
+
+    .dot.prev { background: var(--prev); }
+    .dot.current { background: var(--current); }
+    .dot.done { background: var(--done); }
+    .dot.pending { background: var(--pending); }
+    .dot.returning { background: var(--returning); }
+
+    .route-svg-wrap {
+      width: 100%;
+      height: clamp(240px, 34vh, 320px);
+      min-height: 240px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fbfdff;
+      overflow: hidden;
+    }
+
+    #routeSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .route-grid { stroke: #e8eef7; stroke-width: 1; }
+    .axis-line { stroke: #cbd5e1; stroke-width: 1.5; }
+    .seg { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .seg.pending { stroke: #cbd5e1; stroke-dasharray: 8 8; }
+    .seg.done { stroke: #22c55e; }
+    .seg.active { stroke: #ef4444; stroke-width: 6; }
+    .manhattan-helper { fill: none; stroke: #ef4444; stroke-width: 3.5; stroke-dasharray: 8 7; stroke-linecap: round; stroke-linejoin: round; }
+    .node-circle { stroke: white; stroke-width: 4; }
+    .node-circle.pending { fill: var(--pending); }
+    .node-circle.done { fill: var(--done); }
+    .node-circle.prev { fill: var(--prev); }
+    .node-circle.current { fill: var(--current); }
+    .node-circle.returning { fill: var(--returning); }
+    .node-label { font-size: 19px; font-weight: 900; fill: #0f172a; paint-order: stroke; stroke: white; stroke-width: 4px; stroke-linejoin: round; }
+    .coord-label { font-size: 15px; font-weight: 800; fill: #475569; paint-order: stroke; stroke: white; stroke-width: 4px; stroke-linejoin: round; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .formula-box,
+    .compare-box {
+      min-width: 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fcfcfd;
+      padding: 12px;
+    }
+
+    .mini-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .calc-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: #fff;
+      min-height: 46px;
+    }
+
+    .calc-row.active {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      box-shadow: inset 0 0 0 2px rgba(245, 158, 11, 0.15);
+    }
+
+    .calc-label {
+      font-weight: 900;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .calc-value {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0f172a;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      background: white;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      border: 1px solid #e5e7eb;
+      padding: 7px 6px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .compare-table th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 900;
+    }
+
+    .compare-table tr.active-row td {
+      background: #fffbeb;
+      font-weight: 900;
+    }
+
+    .change-tag {
+      display: inline-flex;
+      justify-content: center;
+      min-width: 56px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 14px;
+      font-weight: 900;
+      border: 1px solid #e5e7eb;
+    }
+
+    .change-tag.changed { color: #166534; background: #dcfce7; border-color: #86efac; }
+    .change-tag.same { color: #475569; background: #f1f5f9; border-color: #cbd5e1; }
+
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .mini-table-wrap {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+    }
+
+    table.mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      background: white;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .mini-table th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 900;
+      z-index: 1;
+    }
+
+    .mini-table tr.row-active td { background: #fffbeb; font-weight: 900; }
+    .mini-table tr.row-prev td { background: #eff6ff; font-weight: 900; }
+    .mini-table tr.row-done td { background: #f0fdf4; }
+    .mini-table tr.row-pending td { color: #94a3b8; }
+
+    .role-badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 13px;
+      font-weight: 900;
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+
+    .role-prev { color: #1d4ed8; background: #dbeafe; border-color: #93c5fd; }
+    .role-current { color: #92400e; background: #fef3c7; border-color: #fbbf24; }
+    .role-done { color: #166534; background: #dcfce7; border-color: #86efac; }
+    .role-pending { color: #64748b; background: #f1f5f9; border-color: #cbd5e1; }
+
+    .code-card {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      flex: 0 0 auto;
+      padding: 12px 14px;
+      border-bottom: 1px solid #1f2937;
+      background: #111827;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .code-header-title { font-size: 18px; font-weight: 900; }
+    .code-hint { font-size: 15px; color: #cbd5e1; }
+
+    .code-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      background: var(--code-bg);
+      padding: 10px 0;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px max-content;
+      gap: 12px;
+      min-height: 36px;
+      align-items: center;
+      padding: 0 16px 0 0;
+      color: var(--code-text);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .code-line .ln {
+      color: var(--code-muted);
+      text-align: right;
+      user-select: none;
+      padding-right: 4px;
+    }
+
+    .code-line.active {
+      background: var(--code-active);
+      box-shadow: inset 5px 0 0 #f59e0b;
+      color: #ffffff;
+    }
+
+    .code-line.active .ln { color: #fde68a; font-weight: 900; }
+
+    .line-explain {
+      flex: 0 0 auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      max-height: 170px;
+      overflow: auto;
+    }
+
+    .line-explain-title {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      color: #0f172a;
+    }
+
+    .line-explain-body { font-size: 17px; color: #1f2937; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+      padding: 18px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title { font-size: 20px; font-weight: 900; color: #0f172a; }
+
+    .problem-content {
+      font-size: 16px;
+      line-height: 1.65;
+      color: #1f2937;
+    }
+
+    .problem-content h3 {
+      font-size: 18px;
+      margin: 16px 0 8px;
+      color: #0f172a;
+    }
+
+    .problem-content mjx-container { font-size: 100% !important; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .problem-box {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #f8fafc;
+    }
+
+    .problem-content pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 10px 12px;
+      border-radius: 10px;
+      overflow: auto;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1100px) {
+      .status-card,
+      .info-grid,
+      .tables-grid,
+      .problem-grid { grid-template-columns: 1fr; }
+      .select-wrap select { min-width: 170px; }
+    }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-height: 188px; }
+      .toolbar-title { font-size: 20px; }
+      .app { flex-direction: column; overflow: hidden; }
+      .left-pane { flex: 1 1 55%; min-width: 0; width: 100%; }
+      .divider { height: 10px; width: 100%; flex: 0 0 10px; cursor: row-resize; }
+      .right-pane { flex: 1 1 45%; min-width: 0; width: 100%; }
+      .route-svg-wrap { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" aria-label="控制列">
+    <div class="toolbar-row">
+      <div class="toolbar-title">j428.1 巴士站牌｜白話教學動畫</div>
+      <button class="btn warn" id="openProblemBtn">題目說明</button>
+      <label class="select-wrap" for="exampleSelect">範例
+        <select id="exampleSelect" aria-label="切換範例"></select>
+      </label>
+      <button class="btn" id="prevBtn">上一步</button>
+      <button class="btn primary" id="nextBtn">下一步</button>
+      <button class="btn" id="playBtn">播放</button>
+      <button class="btn" id="resetBtn">重設</button>
+    </div>
+    <div class="toolbar-row">
+      <span class="pill step-pill" id="stepCounter">步驟 1 / 1</span>
+      <span class="pill status-pill" id="currentResult">目前狀態</span>
+      <span class="message-pill" id="stepMessage">本步驟說明</span>
+      <span class="pill">鍵盤：← →，Space 播放/暫停</span>
+    </div>
+  </header>
+
+  <main class="app" id="app">
+    <section class="pane left-pane" id="leftPane" aria-label="視覺化區域">
+      <section class="card">
+        <div class="card-title">目前正在做什麼</div>
+        <div class="status-card">
+          <div class="focus-box">
+            <div class="focus-main" id="focusMain">準備開始</div>
+            <div class="focus-detail" id="focusDetail">請按「下一步」開始。</div>
+            <div class="focus-note" id="focusNote">這題每次只看「前一站」和「目前站」。</div>
+          </div>
+          <div class="var-grid" id="varGrid"></div>
+        </div>
+        <div class="legend" aria-label="圖例">
+          <span class="legend-item"><span class="dot prev"></span>前一站 xp, yp</span>
+          <span class="legend-item"><span class="dot current"></span>目前站 xc, yc</span>
+          <span class="legend-item"><span class="dot done"></span>已讀過 / 已算完</span>
+          <span class="legend-item"><span class="dot pending"></span>還沒讀到</span>
+          <span class="legend-item"><span class="dot returning"></span>接棒後的新前一站</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">站牌路線圖</div>
+        <div class="route-svg-wrap">
+          <svg id="routeSvg" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="巴士站牌路線視覺化"></svg>
+        </div>
+        <div class="small-note">紅色線段是目前正在計算的相鄰兩站。紅色虛線 L 形線表示「左右差 + 上下差」。</div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">距離公式拆解與最大最小更新</div>
+        <div class="info-grid">
+          <div class="formula-box">
+            <div class="mini-title">距離怎麼算</div>
+            <div id="formulaPanel"></div>
+            <div class="small-note">距離用 \(|x_c-x_p|+|y_c-y_p|\)，座標是負數也可以，因為 abs() 會取正距離。</div>
+          </div>
+          <div class="compare-box">
+            <div class="mini-title">minD / maxD 怎麼更新</div>
+            <div id="comparePanel"></div>
+            <div class="small-note">每次算出新的 dis，就拿它跟目前答案比較。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">站牌清單與已算距離</div>
+        <div class="tables-grid">
+          <div>
+            <div class="small-note" style="margin-bottom:8px;">站牌狀態</div>
+            <div class="mini-table-wrap">
+              <table class="mini-table">
+                <thead><tr><th>站牌</th><th>座標</th><th>狀態</th></tr></thead>
+                <tbody id="stationTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="small-note" style="margin-bottom:8px;">相鄰距離</div>
+            <div class="mini-table-wrap">
+              <table class="mini-table">
+                <thead><tr><th>線段</th><th>距離</th><th>狀態</th></tr></thead>
+                <tbody id="segmentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="divider" id="divider" aria-hidden="true"></div>
+
+    <section class="pane right-pane" aria-label="程式碼區域">
+      <section class="code-card card">
+        <div class="code-header">
+          <div class="code-header-title">完整 Python 程式碼</div>
+          <div class="code-hint">目前執行行會同步高亮</div>
+        </div>
+        <div class="code-scroll" id="codeScroll">
+          <div id="codeLines"></div>
+        </div>
+      </section>
+      <section class="line-explain">
+        <div class="line-explain-title">這一行在做什麼？</div>
+        <div class="line-explain-body" id="lineExplainBody">準備開始。</div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="problemTitle">題目說明：j428.1 巴士站牌</div>
+        <button class="btn" id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="problem-content">
+        <h3>題目內容</h3>
+        <p>平面上有 \(n\) 個巴士站牌，第 \(i\) 個巴士站牌的位置可以用座標 \((x_i,y_i)\) 表示。</p>
+        <p>兩個站牌之間的距離定義為：</p>
+        <p>\[ |x_1-x_2| + |y_1-y_2| \]</p>
+        <p>巴士從第 1 站開始，依序經過第 2 站、第 3 站，一直到第 \(n\) 站。請計算所有相鄰兩站距離中的最大值與最小值。</p>
+
+        <div class="problem-grid">
+          <div class="problem-box">
+            <h3>輸入說明</h3>
+            <p>第 1 行有一個正整數 \(n\)，表示站牌數量。</p>
+            <p>接下來有 \(n\) 行，每行兩個整數，表示每支站牌的 \(x_i\) 和 \(y_i\)。</p>
+          </div>
+          <div class="problem-box">
+            <h3>輸出說明</h3>
+            <p>輸出兩個整數，以空白分開。</p>
+            <p>第一個是相鄰兩站距離的最大值，第二個是相鄰兩站距離的最小值。</p>
+          </div>
+        </div>
+
+        <div class="problem-grid">
+          <div class="problem-box">
+            <h3>範例輸入 #1</h3>
+            <pre>4
+1 1
+1 3
+4 5
+2 6</pre>
+            <h3>範例輸出 #1</h3>
+            <pre>5 2</pre>
+          </div>
+          <div class="problem-box">
+            <h3>範例輸入 #2</h3>
+            <pre>4
+1 2
+-1 -1
+1 3
+0 0</pre>
+            <h3>範例輸出 #2</h3>
+            <pre>6 4</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const code = [
+      "n = int(input())  # 讀取站牌數量",
+      "minD, maxD = 10000, 0  # 儲存最短距離、最長距離用的變數",
+      "xp, yp = map(int, input().split())  # 讀取第1支站牌的位置",
+      "",
+      "for _ in range(1, n):",
+      "    xc, yc = map(int, input().split())  # 依序讀取第2到n支站牌的位置",
+      "    dis = abs(xc - xp) + abs(yc - yp)  # 計算這支站牌與前一支站牌的距離",
+      "    minD = min(minD, dis)  # 更新最短距離",
+      "    maxD = max(maxD, dis)  # 更新最長距離",
+      "    xp, yp = xc, yc  # 更新前一支站牌的位置",
+      "",
+      "print(f\"{maxD} {minD}\")  # 印出答案"
+    ];
+
+    const lineExplain = {
+      1: "讀入站牌總數 n。後面會有 n 行座標。",
+      2: "先準備兩個變數：minD 放最短距離，maxD 放最長距離。minD 先放很大，方便第一段距離把它更新掉。",
+      3: "先讀第 1 站。因為要算相鄰距離，所以第 1 站會先當作『前一站』。",
+      5: "進入迴圈。第 1 站已經讀過了，所以迴圈只負責讀第 2 站到第 n 站，共 n - 1 次。",
+      6: "讀目前這一站的座標，放進 xc, yc。現在就有前一站 xp, yp 和目前站 xc, yc。",
+      7: "計算兩站距離：左右差幾格加上上下差幾格。abs() 會把差距變成正數，所以負座標也能處理。",
+      8: "用目前這段距離 dis 跟舊的 minD 比較，留下比較小的那個。",
+      9: "用目前這段距離 dis 跟舊的 maxD 比較，留下比較大的那個。",
+      10: "接棒：目前站變成下一輪的前一站。這樣下一輪才能算『這一站到下一站』。",
+      12: "所有相鄰距離都算完後，印出最大距離和最小距離。"
+    };
+
+    const examples = [
+      {
+        name: "範例 1",
+        output: "5 2",
+        points: [
+          { x: 1, y: 1 },
+          { x: 1, y: 3 },
+          { x: 4, y: 5 },
+          { x: 2, y: 6 }
+        ]
+      },
+      {
+        name: "範例 2（含負座標）",
+        output: "6 4",
+        points: [
+          { x: 1, y: 2 },
+          { x: -1, y: -1 },
+          { x: 1, y: 3 },
+          { x: 0, y: 0 }
+        ]
+      }
+    ];
+
+    let currentExampleIndex = 0;
+    let steps = [];
+    let currentStepIndex = 0;
+    let playTimer = null;
+    let isPlaying = false;
+    let isDragging = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function pointText(p) {
+      if (!p) return "—";
+      return `(${p.x}, ${p.y})`;
+    }
+
+    function valueText(v) {
+      return v === null || v === undefined ? "—" : String(v);
+    }
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function initialVisualState(example) {
+      return {
+        n: null,
+        readUntil: 0,
+        prevIndex: null,
+        curIndex: null,
+        activeNode: null,
+        returningNode: null,
+        activeSegment: null,
+        completedSegments: 0,
+        xp: null,
+        yp: null,
+        xc: null,
+        yc: null,
+        calcPrev: null,
+        calcCur: null,
+        xDiff: null,
+        yDiff: null,
+        dis: null,
+        minD: null,
+        maxD: null,
+        minBefore: null,
+        minAfter: null,
+        minChanged: null,
+        maxBefore: null,
+        maxAfter: null,
+        maxChanged: null,
+        compareFocus: null,
+        formulaFocus: null,
+        focusMain: "準備開始",
+        focusDetail: "請按下一步，先讀站牌數量 n。",
+        focusNote: "核心觀念：每次只看前一站和目前站。",
+        segments: Array.from({ length: example.points.length - 1 }, () => ({
+          distance: null,
+          formula: "尚未計算",
+          status: "pending"
+        }))
+      };
+    }
+
+    function addStep(list, activeLine, message, result, state) {
+      list.push({ activeLine, message, result, visualState: clone(state) });
+    }
+
+    function buildSteps(example) {
+      const pts = example.points;
+      const n = pts.length;
+      const s = initialVisualState(example);
+      const list = [];
+
+      addStep(list, 1, "先準備讀取站牌數量 n。", "尚未讀取", s);
+
+      s.n = n;
+      s.focusMain = `讀到 n = ${n}`;
+      s.focusDetail = `代表總共有 ${n} 支站牌。`;
+      s.focusNote = `第 1 站會先讀，迴圈只處理後面 ${n - 1} 支站牌。`;
+      addStep(list, 1, `讀到 n = ${n}，知道總共有 ${n} 支站牌。`, `n = ${n}`, s);
+
+      s.minD = 10000;
+      s.maxD = 0;
+      s.focusMain = "初始化最短與最長距離";
+      s.focusDetail = "minD 先放很大，maxD 先放 0，等一下用每段距離來更新。";
+      s.focusNote = "這只是先放一個起始值，還不是真正答案。";
+      addStep(list, 2, "先放起始值：minD = 10000，maxD = 0。", `minD=${s.minD}，maxD=${s.maxD}`, s);
+
+      const first = pts[0];
+      s.xp = first.x;
+      s.yp = first.y;
+      s.prevIndex = 0;
+      s.activeNode = 0;
+      s.readUntil = 1;
+      s.focusMain = `第 1 站先當前一站`;
+      s.focusDetail = `xp, yp = ${pointText(first)}。後面讀到第 2 站時，就可以開始算距離。`;
+      s.focusNote = "xp, yp 的意思就是：上一支站牌的位置。";
+      addStep(list, 3, `讀取第 1 站 ${pointText(first)}，先當作前一站。`, `前一站=${pointText(first)}`, s);
+      s.activeNode = null;
+
+      for (let i = 1; i < n; i += 1) {
+        const prev = pts[i - 1];
+        const cur = pts[i];
+        const segIndex = i - 1;
+        const xRaw = cur.x - prev.x;
+        const yRaw = cur.y - prev.y;
+        const dx = Math.abs(xRaw);
+        const dy = Math.abs(yRaw);
+        const dis = dx + dy;
+
+        s.curIndex = null;
+        s.xc = null;
+        s.yc = null;
+        s.calcPrev = null;
+        s.calcCur = null;
+        s.xDiff = null;
+        s.yDiff = null;
+        s.dis = null;
+        s.minBefore = null;
+        s.minAfter = null;
+        s.minChanged = null;
+        s.maxBefore = null;
+        s.maxAfter = null;
+        s.maxChanged = null;
+        s.compareFocus = null;
+        s.formulaFocus = null;
+        s.activeSegment = null;
+        s.returningNode = null;
+        s.focusMain = `準備讀第 ${i + 1} 站`;
+        s.focusDetail = `第 1 站已經讀過，所以迴圈現在讀第 ${i + 1} 站。`;
+        s.focusNote = `這一輪要算：第 ${i} 站 → 第 ${i + 1} 站。`;
+        addStep(list, 5, `進入迴圈，準備讀第 ${i + 1} 支站牌。`, `已讀 ${s.readUntil} / ${n}`, s);
+
+        s.xc = cur.x;
+        s.yc = cur.y;
+        s.curIndex = i;
+        s.activeNode = i;
+        s.readUntil = i + 1;
+        s.focusMain = `讀到目前站：第 ${i + 1} 站`;
+        s.focusDetail = `xc, yc = ${pointText(cur)}。現在有前一站 ${pointText(prev)} 和目前站 ${pointText(cur)}。`;
+        s.focusNote = "xc, yc 的意思就是：目前這支站牌的位置。";
+        addStep(list, 6, `讀到第 ${i + 1} 站 ${pointText(cur)}，它就是目前站。`, `目前站=${pointText(cur)}`, s);
+
+        s.activeNode = null;
+        s.calcPrev = { x: prev.x, y: prev.y };
+        s.calcCur = { x: cur.x, y: cur.y };
+        s.activeSegment = segIndex;
+        s.segments[segIndex].status = "active";
+        s.focusMain = `確認要算哪兩站`;
+        s.focusDetail = `現在要算：第 ${i} 站 ${pointText(prev)} → 第 ${i + 1} 站 ${pointText(cur)}。`;
+        s.focusNote = "距離只算相鄰兩站，不是所有站互相比。";
+        addStep(list, 7, `確認前一站與目前站，準備拆距離公式。`, `第 ${i} 站 → 第 ${i + 1} 站`, s);
+
+        s.xDiff = dx;
+        s.formulaFocus = "x";
+        s.focusMain = "先算左右差距";
+        s.focusDetail = `x 差距 = |${cur.x} - ${prev.x}| = |${xRaw}| = ${dx}。`;
+        s.focusNote = "abs() 會把負數變正數，所以距離不會是負的。";
+        addStep(list, 7, `先算 x 方向差距：|${cur.x} - ${prev.x}| = ${dx}。`, `x差=${dx}`, s);
+
+        s.yDiff = dy;
+        s.formulaFocus = "y";
+        s.focusMain = "再算上下差距";
+        s.focusDetail = `y 差距 = |${cur.y} - ${prev.y}| = |${yRaw}| = ${dy}。`;
+        s.focusNote = "地圖上只能左右與上下走，所以要把兩個差距加起來。";
+        addStep(list, 7, `再算 y 方向差距：|${cur.y} - ${prev.y}| = ${dy}。`, `y差=${dy}`, s);
+
+        s.dis = dis;
+        s.formulaFocus = "dis";
+        s.segments[segIndex].distance = dis;
+        s.segments[segIndex].formula = `|${cur.x}-${prev.x}| + |${cur.y}-${prev.y}| = ${dx}+${dy} = ${dis}`;
+        s.focusMain = "把左右差和上下差加起來";
+        s.focusDetail = `dis = ${dx} + ${dy} = ${dis}。這就是第 ${i} 段距離。`;
+        s.focusNote = "dis 是目前這一段距離，還不是最後答案。";
+        addStep(list, 7, `左右差 ${dx} 加上下差 ${dy}，得到 dis = ${dis}。`, `dis=${dis}`, s);
+
+        const oldMin = s.minD;
+        const newMin = Math.min(oldMin, dis);
+        s.minBefore = oldMin;
+        s.minAfter = newMin;
+        s.minChanged = newMin !== oldMin;
+        s.compareFocus = "min";
+        s.focusMain = "更新最短距離 minD";
+        s.focusDetail = `min(${oldMin}, ${dis}) = ${newMin}。${s.minChanged ? "這次有變小，所以更新。" : "這次沒有更小，所以不變。"}`;
+        s.focusNote = "minD 永遠記住目前看過最短的那一段。";
+        addStep(list, 8, `比較最短距離：min(${oldMin}, ${dis}) = ${newMin}。`, `minD=${newMin}`, s);
+        s.minD = newMin;
+
+        const oldMax = s.maxD;
+        const newMax = Math.max(oldMax, dis);
+        s.maxBefore = oldMax;
+        s.maxAfter = newMax;
+        s.maxChanged = newMax !== oldMax;
+        s.compareFocus = "max";
+        s.focusMain = "更新最長距離 maxD";
+        s.focusDetail = `max(${oldMax}, ${dis}) = ${newMax}。${s.maxChanged ? "這次有變大，所以更新。" : "這次沒有更大，所以不變。"}`;
+        s.focusNote = "maxD 永遠記住目前看過最長的那一段。";
+        addStep(list, 9, `比較最長距離：max(${oldMax}, ${dis}) = ${newMax}。`, `maxD=${newMax}`, s);
+        s.maxD = newMax;
+
+        s.compareFocus = null;
+        s.formulaFocus = null;
+        s.completedSegments = i;
+        s.segments[segIndex].status = "done";
+        s.prevIndex = i;
+        s.curIndex = null;
+        s.xp = cur.x;
+        s.yp = cur.y;
+        s.xc = null;
+        s.yc = null;
+        s.returningNode = i;
+        s.activeSegment = null;
+        s.focusMain = "目前站接棒，變成下一輪前一站";
+        s.focusDetail = `xp, yp 更新成 ${pointText(cur)}。下一輪會用它去跟下一站比較。`;
+        s.focusNote = "這就是 xp, yp = xc, yc 的意思。";
+        addStep(list, 10, `接棒：第 ${i + 1} 站變成下一輪的前一站。`, `前一站=${pointText(cur)}`, s);
+        s.returningNode = null;
+      }
+
+      s.activeNode = null;
+      s.activeSegment = null;
+      s.curIndex = null;
+      s.xc = null;
+      s.yc = null;
+      s.formulaFocus = null;
+      s.compareFocus = null;
+      s.focusMain = "全部相鄰距離都算完了";
+      s.focusDetail = `最後輸出：最大距離 ${s.maxD}，最小距離 ${s.minD}。`;
+      s.focusNote = "輸出順序是：最大值 maxD 在前，最小值 minD 在後。";
+      addStep(list, 12, `全部距離算完，印出最大值 ${s.maxD} 和最小值 ${s.minD}。`, `輸出：${s.maxD} ${s.minD}`, s);
+
+      return list;
+    }
+
+    function initCode() {
+      const container = $("codeLines");
+      container.innerHTML = code.map((line, index) => {
+        const lineNo = index + 1;
+        return `<div class="code-line" data-line="${lineNo}" id="codeLine${lineNo}"><span class="ln">${lineNo}</span><span>${escapeHtml(line || " ")}</span></div>`;
+      }).join("");
+    }
+
+    function initExamples() {
+      const select = $("exampleSelect");
+      select.innerHTML = examples.map((ex, index) => `<option value="${index}">${escapeHtml(ex.name)}</option>`).join("");
+    }
+
+    function renderVarGrid(s) {
+      const progress = s.n ? `${s.readUntil} / ${s.n}` : "—";
+      const vars = [
+        ["n / 已讀", progress],
+        ["前一站 xp, yp", s.prevIndex === null ? "—" : pointText({ x: s.xp, y: s.yp })],
+        ["目前站 xc, yc", s.curIndex === null ? "—" : pointText({ x: s.xc, y: s.yc })],
+        ["dis", valueText(s.dis)],
+        ["minD", valueText(s.minD)],
+        ["maxD", valueText(s.maxD)]
+      ];
+      $("varGrid").innerHTML = vars.map(([label, value]) => `
+        <div class="var-item">
+          <span class="var-label">${escapeHtml(label)}</span>
+          <div class="var-value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderFormula(s) {
+      const cp = s.calcPrev;
+      const cc = s.calcCur;
+      const xRow = !cp || !cc
+        ? "等待目前站"
+        : s.xDiff === null
+          ? `|${cc.x} - ${cp.x}|`
+          : `|${cc.x} - ${cp.x}| = ${s.xDiff}`;
+      const yRow = !cp || !cc
+        ? "等待目前站"
+        : s.yDiff === null
+          ? `|${cc.y} - ${cp.y}|`
+          : `|${cc.y} - ${cp.y}| = ${s.yDiff}`;
+      const disRow = s.dis === null
+        ? "x差 + y差"
+        : `${s.xDiff} + ${s.yDiff} = ${s.dis}`;
+      const rows = [
+        ["左右差 x", xRow, "x"],
+        ["上下差 y", yRow, "y"],
+        ["總距離 dis", disRow, "dis"]
+      ];
+      $("formulaPanel").innerHTML = rows.map(([label, value, key]) => `
+        <div class="calc-row ${s.formulaFocus === key ? "active" : ""}">
+          <span class="calc-label">${escapeHtml(label)}</span>
+          <span class="calc-value">${escapeHtml(value)}</span>
+        </div>
+      `).join("");
+    }
+
+    function compareFormula(kind, s) {
+      if (s.dis === null) return "等待 dis";
+      if (kind === "min") {
+        if (s.minBefore === null) return `min(${s.minD}, ${s.dis})`;
+        return `min(${s.minBefore}, ${s.dis}) = ${s.minAfter}`;
+      }
+      if (s.maxBefore === null) return `max(${s.maxD}, ${s.dis})`;
+      return `max(${s.maxBefore}, ${s.dis}) = ${s.maxAfter}`;
+    }
+
+    function renderCompare(s) {
+      const minResult = s.minChanged === null ? "—" : `<span class="change-tag ${s.minChanged ? "changed" : "same"}">${s.minChanged ? "更新" : "不變"}</span>`;
+      const maxResult = s.maxChanged === null ? "—" : `<span class="change-tag ${s.maxChanged ? "changed" : "same"}">${s.maxChanged ? "更新" : "不變"}</span>`;
+      $("comparePanel").innerHTML = `
+        <table class="compare-table">
+          <thead><tr><th>項目</th><th>比較</th><th>結果</th></tr></thead>
+          <tbody>
+            <tr class="${s.compareFocus === "min" ? "active-row" : ""}">
+              <td>minD</td><td>${escapeHtml(compareFormula("min", s))}</td><td>${minResult}</td>
+            </tr>
+            <tr class="${s.compareFocus === "max" ? "active-row" : ""}">
+              <td>maxD</td><td>${escapeHtml(compareFormula("max", s))}</td><td>${maxResult}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderTables(example, s) {
+      const stationRows = example.points.map((p, index) => {
+        let status = "尚未讀到";
+        let cls = "row-pending";
+        let badge = "role-pending";
+        if (index < s.readUntil) { status = "已讀過"; cls = "row-done"; badge = "role-done"; }
+        if (index === s.prevIndex) { status = "前一站 xp, yp"; cls = "row-prev"; badge = "role-prev"; }
+        if (index === s.curIndex) { status = "目前站 xc, yc"; cls = "row-active"; badge = "role-current"; }
+        if (index === s.returningNode) { status = "接棒後的新前一站"; cls = "row-active"; badge = "role-current"; }
+        return `<tr class="${cls}"><td>第 ${index + 1} 站</td><td>${escapeHtml(pointText(p))}</td><td><span class="role-badge ${badge}">${escapeHtml(status)}</span></td></tr>`;
+      }).join("");
+      $("stationTableBody").innerHTML = stationRows;
+
+      const segmentRows = s.segments.map((seg, index) => {
+        let status = "尚未計算";
+        let cls = "row-pending";
+        if (seg.status === "done") { status = "已算完"; cls = "row-done"; }
+        if (seg.status === "active") { status = "正在算"; cls = "row-active"; }
+        const distance = seg.distance === null ? "—" : String(seg.distance);
+        return `<tr class="${cls}"><td>第 ${index + 1} 站 → 第 ${index + 2} 站</td><td>${escapeHtml(distance)}</td><td>${escapeHtml(status)}</td></tr>`;
+      }).join("");
+      $("segmentTableBody").innerHTML = segmentRows;
+    }
+
+    function svgNode(tag, attrs = {}, text = "") {
+      const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+      if (text !== "") node.textContent = text;
+      return node;
+    }
+
+    function mapRoutePoints(points) {
+      const xs = points.map(p => p.x);
+      const ys = points.map(p => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const padX = 95;
+      const padY = 72;
+      const width = 900;
+      const height = 360;
+      const spanX = maxX - minX || 1;
+      const spanY = maxY - minY || 1;
+      return points.map(p => ({
+        x: padX + ((p.x - minX) / spanX) * (width - padX * 2),
+        y: height - padY - ((p.y - minY) / spanY) * (height - padY * 2)
+      }));
+    }
+
+    function renderSvg(example, s) {
+      const svg = $("routeSvg");
+      const points = example.points;
+      const mapped = mapRoutePoints(points);
+      svg.innerHTML = "";
+      svg.appendChild(svgNode("rect", { x: 0, y: 0, width: 900, height: 360, fill: "#fbfdff" }));
+
+      for (let x = 60; x <= 840; x += 78) {
+        svg.appendChild(svgNode("line", { x1: x, y1: 35, x2: x, y2: 330, class: "route-grid" }));
+      }
+      for (let y = 50; y <= 310; y += 52) {
+        svg.appendChild(svgNode("line", { x1: 45, y1: y, x2: 855, y2: y, class: "route-grid" }));
+      }
+
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = mapped[i];
+        const b = mapped[i + 1];
+        const seg = s.segments[i];
+        const cls = seg.status === "done" ? "seg done" : seg.status === "active" ? "seg active" : "seg pending";
+        svg.appendChild(svgNode("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls }));
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        const label = seg.distance === null ? `第${i + 1}段` : `第${i + 1}段=${seg.distance}`;
+        svg.appendChild(svgNode("rect", {
+          x: midX - 44, y: midY - 17, width: 88, height: 28, rx: 10,
+          fill: "#ffffff", stroke: seg.status === "active" ? "#ef4444" : "#cbd5e1", "stroke-width": 2
+        }));
+        svg.appendChild(svgNode("text", {
+          x: midX, y: midY - 3, "text-anchor": "middle", "dominant-baseline": "middle",
+          "font-size": 17, "font-weight": 900, fill: "#334155"
+        }, label));
+      }
+
+      if (s.activeSegment !== null) {
+        const a = mapped[s.activeSegment];
+        const b = mapped[s.activeSegment + 1];
+        svg.appendChild(svgNode("polyline", {
+          points: `${a.x},${a.y} ${b.x},${a.y} ${b.x},${b.y}`,
+          class: "manhattan-helper"
+        }));
+      }
+
+      for (let i = 0; i < points.length; i += 1) {
+        const p = mapped[i];
+        let nodeClass = "pending";
+        let label = "未讀";
+        if (i < s.readUntil) { nodeClass = "done"; label = "已讀"; }
+        if (i === s.prevIndex) { nodeClass = "prev"; label = "前一站"; }
+        if (i === s.curIndex) { nodeClass = "current"; label = "目前站"; }
+        if (i === s.returningNode) { nodeClass = "returning"; label = "接棒"; }
+        svg.appendChild(svgNode("circle", { cx: p.x, cy: p.y, r: 24, class: `node-circle ${nodeClass}` }));
+        svg.appendChild(svgNode("text", { x: p.x, y: p.y + 1, "text-anchor": "middle", "dominant-baseline": "middle", class: "node-label" }, String(i + 1)));
+        svg.appendChild(svgNode("text", { x: p.x, y: p.y + 45, "text-anchor": "middle", class: "coord-label" }, pointText(points[i])));
+        svg.appendChild(svgNode("text", { x: p.x, y: p.y - 34, "text-anchor": "middle", class: "coord-label" }, label));
+      }
+    }
+
+    function renderCode(activeLine) {
+      document.querySelectorAll(".code-line").forEach(row => {
+        row.classList.toggle("active", Number(row.dataset.line) === activeLine);
+      });
+      const active = $(`codeLine${activeLine}`);
+      if (active) active.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      $("lineExplainBody").textContent = lineExplain[activeLine] || "空白行，沒有實際執行動作。";
+    }
+
+    function render() {
+      const example = examples[currentExampleIndex];
+      const step = steps[currentStepIndex];
+      if (!step) return;
+      const s = step.visualState;
+
+      $("stepCounter").textContent = `步驟 ${currentStepIndex + 1} / ${steps.length}`;
+      $("currentResult").textContent = step.result;
+      $("stepMessage").textContent = step.message;
+      $("focusMain").textContent = s.focusMain;
+      $("focusDetail").textContent = s.focusDetail;
+      $("focusNote").textContent = s.focusNote;
+
+      renderVarGrid(s);
+      renderSvg(example, s);
+      renderFormula(s);
+      renderCompare(s);
+      renderTables(example, s);
+      renderCode(step.activeLine);
+
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([$("formulaPanel").parentElement]).catch(() => {});
+      }
+    }
+
+    function pause() {
+      isPlaying = false;
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+      $("playBtn").textContent = "播放";
+    }
+
+    function nextStep() {
+      if (currentStepIndex < steps.length - 1) {
+        currentStepIndex += 1;
+        render();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (currentStepIndex > 0) {
+        currentStepIndex -= 1;
+        render();
+      }
+    }
+
+    function resetStep() {
+      pause();
+      currentStepIndex = 0;
+      render();
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        pause();
+        return;
+      }
+      isPlaying = true;
+      $("playBtn").textContent = "暫停";
+      playTimer = setInterval(() => {
+        if (currentStepIndex >= steps.length - 1) {
+          pause();
+          return;
+        }
+        nextStep();
+      }, 950);
+    }
+
+    function loadExample(index) {
+      pause();
+      currentExampleIndex = index;
+      currentStepIndex = 0;
+      steps = buildSteps(examples[currentExampleIndex]);
+      $("exampleSelect").value = String(index);
+      render();
+    }
+
+    function setupDivider() {
+      const divider = $("divider");
+      const leftPane = $("leftPane");
+      const app = $("app");
+
+      function start(event) {
+        isDragging = true;
+        divider.classList.add("dragging");
+        event.preventDefault();
+      }
+
+      function end() {
+        isDragging = false;
+        divider.classList.remove("dragging");
+      }
+
+      function move(event) {
+        if (!isDragging) return;
+        const rect = app.getBoundingClientRect();
+        const isSmall = window.matchMedia("(max-width: 900px)").matches;
+        if (isSmall) {
+          const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+          const percent = ((clientY - rect.top) / rect.height) * 100;
+          const clamped = Math.max(35, Math.min(70, percent));
+          leftPane.style.flexBasis = `${clamped}%`;
+        } else {
+          const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+          const percent = ((clientX - rect.left) / rect.width) * 100;
+          const clamped = Math.max(34, Math.min(72, percent));
+          leftPane.style.flexBasis = `${clamped}%`;
+        }
+      }
+
+      divider.addEventListener("mousedown", start);
+      divider.addEventListener("touchstart", start, { passive: false });
+      document.addEventListener("mouseup", end);
+      document.addEventListener("touchend", end);
+      document.addEventListener("mousemove", move);
+      document.addEventListener("touchmove", move, { passive: false });
+    }
+
+    function openProblem() {
+      const modal = $("problemModal");
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([modal]).catch(() => {});
+      }
+    }
+
+    function closeProblem() {
+      const modal = $("problemModal");
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function setupEvents() {
+      $("prevBtn").addEventListener("click", prevStep);
+      $("nextBtn").addEventListener("click", nextStep);
+      $("playBtn").addEventListener("click", togglePlay);
+      $("resetBtn").addEventListener("click", resetStep);
+      $("exampleSelect").addEventListener("change", event => loadExample(Number(event.target.value)));
+      $("openProblemBtn").addEventListener("click", openProblem);
+      $("closeProblemBtn").addEventListener("click", closeProblem);
+      $("problemModal").addEventListener("click", event => {
+        if (event.target === $("problemModal")) closeProblem();
+      });
+
+      document.addEventListener("keydown", event => {
+        const activeTag = event.target && event.target.tagName;
+        if (["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(activeTag)) return;
+        if (event.key === "Escape") closeProblem();
+        if (event.key === "ArrowRight") nextStep();
+        if (event.key === "ArrowLeft") prevStep();
+        if (event.code === "Space") {
+          event.preventDefault();
+          togglePlay();
+        }
+      });
+    }
+
+    function init() {
+      initCode();
+      initExamples();
+      setupEvents();
+      setupDivider();
+      loadExample(0);
+    }
+
+    init();
+  </script>
+</body>
+</html>

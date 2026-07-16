@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>g275. 七言對聯｜白話教學動畫（含輸出說明）</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 132px;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d7dde8;
+      --text: #1f2937;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --warning: #f59e0b;
+      --warning-soft: #fef3c7;
+      --danger: #dc2626;
+      --danger-soft: #fee2e2;
+      --ok: #059669;
+      --ok-soft: #d1fae5;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      min-height: var(--toolbar-h);
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      z-index: 50;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    }
+
+    .titleRow, .controlRow, .infoRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-right: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    button, select {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 9px;
+      padding: 7px 11px;
+      font-size: 15px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    button:hover, select:hover { border-color: #94a3b8; }
+    button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    button.soft { background: var(--primary-soft); color: #1e40af; border-color: #bfdbfe; }
+    button.dangerSoft { background: var(--danger-soft); color: #991b1b; border-color: #fecaca; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .pill strong { font-weight: 800; }
+
+    .messageBox {
+      flex: 1 1 420px;
+      min-width: 280px;
+      border: 1px solid #c7d2fe;
+      background: #eef2ff;
+      color: #312e81;
+      padding: 7px 10px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .workspace {
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      min-height: 0;
+    }
+
+    .leftPane, .rightPane {
+      height: 100%;
+      min-width: 260px;
+      overflow: hidden;
+    }
+
+    .leftPane {
+      width: 58%;
+      padding: 12px;
+    }
+
+    .rightPane {
+      flex: 1;
+      padding: 12px 12px 12px 0;
+    }
+
+    .splitter {
+      width: 10px;
+      flex: 0 0 10px;
+      cursor: col-resize;
+      background: linear-gradient(90deg, transparent 0, transparent 3px, #cbd5e1 3px, #cbd5e1 7px, transparent 7px);
+    }
+    .splitter:hover { background: #dbeafe; }
+
+    .leftInner {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .cardHeader {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .cardBody { padding: 12px; }
+
+    .visualCard .cardBody {
+      padding: 8px;
+    }
+
+    .svgBox {
+      width: 100%;
+      height: 430px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    #visualSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #visualSvg .cell { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2; }
+    #visualSvg .cellText { font-size: 24px; font-weight: 800; fill: #111827; text-anchor: middle; dominant-baseline: central; }
+    #visualSvg .posText { font-size: 14px; fill: #475569; text-anchor: middle; }
+    #visualSvg .labelText { font-size: 18px; font-weight: 800; fill: #334155; }
+    #visualSvg .cell.active { fill: var(--warning-soft); stroke: var(--warning); stroke-width: 4; }
+    #visualSvg .cell.pass { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 3; }
+    #visualSvg .cell.fail { fill: var(--danger-soft); stroke: var(--danger); stroke-width: 3; }
+    #visualSvg .ruleNode { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2; }
+    #visualSvg .ruleNode.pending { fill: #f8fafc; }
+    #visualSvg .ruleNode.checking { fill: var(--warning-soft); stroke: var(--warning); stroke-width: 4; }
+    #visualSvg .ruleNode.pass { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 4; }
+    #visualSvg .ruleNode.fail { fill: var(--danger-soft); stroke: var(--danger); stroke-width: 4; }
+    #visualSvg .ruleTitle { font-size: 24px; font-weight: 900; text-anchor: middle; fill: #0f172a; }
+    #visualSvg .ruleSmall { font-size: 14px; text-anchor: middle; fill: #334155; }
+    #visualSvg .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#arrowHead); }
+    #visualSvg .noteText { font-size: 17px; fill: #334155; }
+    #visualSvg .banner { fill: #eff6ff; stroke: #bfdbfe; stroke-width: 2; }
+
+    .miniGrid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(34px, 1fr));
+      gap: 6px;
+      align-items: center;
+    }
+
+    .miniCell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+    }
+
+    .miniCell span {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .miniCell.active { background: var(--warning-soft); border-color: var(--warning); }
+
+    .rowTitle {
+      font-weight: 800;
+      margin: 6px 0 6px;
+      color: #334155;
+    }
+
+    .stateGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .stateItem {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 76px;
+    }
+
+    .stateItem .key {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .stateItem .val {
+      font-weight: 800;
+      font-size: 18px;
+      word-break: break-word;
+    }
+
+    .badgeList { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-weight: 900;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .badge.bad { background: var(--danger-soft); color: #991b1b; border-color: #fecaca; }
+    .badge.ok { background: var(--ok-soft); color: #065f46; border-color: #a7f3d0; }
+    .badge.empty { background: #f1f5f9; color: #475569; }
+
+    .ruleList {
+      margin: 0;
+      padding-left: 22px;
+      line-height: 1.7;
+    }
+
+    .ruleList strong { color: #0f172a; }
+
+    .scrollCardBody {
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .codePanel {
+      height: 100%;
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .codeHeader {
+      padding: 10px 12px;
+      border-bottom: 1px solid #334155;
+      background: #111827;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .codeBody {
+      overflow: auto;
+      flex: 1;
+      font-family: "Cascadia Mono", Consolas, Menlo, Monaco, monospace;
+      font-size: 16px;
+      line-height: 1.65;
+      padding: 10px 0 18px;
+    }
+
+    .codeLine {
+      display: grid;
+      grid-template-columns: 46px minmax(780px, 1fr);
+      gap: 10px;
+      padding: 1px 14px 1px 0;
+      border-left: 5px solid transparent;
+      white-space: pre;
+    }
+
+    .lineNo {
+      color: #94a3b8;
+      text-align: right;
+      user-select: none;
+    }
+
+    .codeLine.active {
+      background: rgba(245, 158, 11, 0.22);
+      border-left-color: var(--warning);
+    }
+
+    .codeLine.active .lineNo { color: #fbbf24; font-weight: 900; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .legendItem {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid #94a3b8; }
+    .dot.pending { background: #f8fafc; }
+    .dot.active { background: var(--warning-soft); border-color: var(--warning); }
+    .dot.pass { background: var(--ok-soft); border-color: var(--ok); }
+    .dot.fail { background: var(--danger-soft); border-color: var(--danger); }
+
+    .modalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.48);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modalOverlay.open { display: flex; }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: var(--panel);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    }
+
+    .modalHeader {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 1;
+    }
+
+    .modalHeader h2 { margin: 0; font-size: 22px; }
+    .modalBody { padding: 16px; }
+    .modalBody h3 { margin: 18px 0 8px; font-size: 19px; }
+    .modalBody p { margin: 8px 0; }
+    .modalBody pre {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      overflow: auto;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .sampleButtons { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+    .sampleButtons button.activeSample {
+      background: var(--purple);
+      color: #fff;
+      border-color: var(--purple);
+    }
+
+    .smallNote { color: var(--muted); font-size: 14px; }
+
+
+
+    .outputExplainGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+
+    .outputExplainBox {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 10px;
+    }
+
+    .outputExplainBox .titleSmall {
+      font-weight: 900;
+      color: #334155;
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .outputExplainBox p {
+      margin: 4px 0;
+      line-height: 1.6;
+    }
+
+    .expectedOutput {
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: "Cascadia Mono", Consolas, Menlo, Monaco, monospace;
+      font-size: 18px;
+      line-height: 1.6;
+      white-space: pre-line;
+      min-height: 48px;
+    }
+
+    .liveOutput {
+      background: #ecfdf5;
+      color: #064e3b;
+      border: 1px solid #a7f3d0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.6;
+      white-space: pre-line;
+      min-height: 48px;
+    }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-h: 168px; }
+      .workspace { flex-direction: column; }
+      .leftPane, .rightPane { width: 100%; min-height: 0; }
+      .leftPane { height: 52%; }
+      .rightPane { height: 48%; padding: 0 12px 12px; }
+      .splitter { height: 8px; width: 100%; flex-basis: 8px; cursor: row-resize; }
+      .svgBox { height: 360px; }
+      .codeLine { grid-template-columns: 42px minmax(680px, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" aria-label="動畫控制列">
+    <div class="titleRow">
+      <div class="title">g275. 七言對聯｜一步一步動畫</div>
+      <div class="subtitle">用 0 / 1 檢查 A、B、C 三個規則</div>
+      <button id="openProblemBtn" class="soft">題目說明</button>
+      <span class="smallNote">快捷鍵：← 上一步，→ 下一步，Space 播放 / 暫停</span>
+    </div>
+    <div class="controlRow">
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary">下一步</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn" class="dangerSoft">暫停</button>
+      <button id="resetBtn">重設</button>
+      <span class="pill"><strong id="stepText">步驟 1 / 1</strong></span>
+      <span class="pill">目前狀態：<strong id="resultText">尚未開始</strong></span>
+      <span class="pill">目前範例：<strong id="sampleNameText">範例 1</strong></span>
+      <div class="sampleButtons" id="sampleButtons"></div>
+    </div>
+    <div class="infoRow">
+      <div id="messageBox" class="messageBox">按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="leftPane" id="leftPane" aria-label="左側視覺化區">
+      <div class="leftInner">
+        <section class="card visualCard">
+          <div class="cardHeader">
+            <span>左側視覺化：對聯陣列與規則節點</span>
+            <span class="smallNote">本題不是遞迴，所以用資料結構流程圖</span>
+          </div>
+          <div class="cardBody">
+            <div class="svgBox">
+              <svg id="visualSvg" viewBox="0 0 900 440" preserveAspectRatio="xMidYMid meet" role="img" aria-label="七言對聯檢查流程圖"></svg>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <span>目前這一副對聯</span>
+            <span id="pairIndexText" class="smallNote">第 1 副</span>
+          </div>
+          <div class="cardBody" id="pairGridBox">
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">變數與輸出狀態</div>
+          <div class="cardBody">
+            <div class="stateGrid">
+              <div class="stateItem">
+                <div class="key">antiRule：目前違反規則 list</div>
+                <div class="val badgeList" id="antiRuleBox"></div>
+              </div>
+              <div class="stateItem">
+                <div class="key">目前檢查重點</div>
+                <div class="val" id="focusBox">尚未開始</div>
+              </div>
+              <div class="stateItem">
+                <div class="key">已輸出答案</div>
+                <div class="val" id="outputBox">尚未輸出</div>
+              </div>
+              <div class="stateItem">
+                <div class="key">程式對應行</div>
+                <div class="val" id="lineBox">第 - 行</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">本題輸出是什麼？</div>
+          <div class="cardBody">
+            <div class="outputExplainGrid">
+              <div class="outputExplainBox">
+                <div class="titleSmall">輸出規則</div>
+                <p>每一副對聯都要輸出 <strong>一行</strong>。</p>
+                <p>有違反規則，就按照檢查順序輸出 <strong>A、B、C</strong>。</p>
+                <p>完全沒有違反，就輸出 <strong>None</strong>。</p>
+              </div>
+              <div class="outputExplainBox">
+                <div class="titleSmall">目前已經印出的內容</div>
+                <div id="liveOutputBox" class="liveOutput">尚未輸出</div>
+              </div>
+              <div class="outputExplainBox">
+                <div class="titleSmall">本範例完整輸出</div>
+                <div id="expectedOutputBox" class="expectedOutput">尚未計算</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">規則白話整理</div>
+          <div class="cardBody scrollCardBody">
+            <ol class="ruleList">
+              <li><strong>A：</strong>每一句自己看第 2、4、6 個字。第 2 和第 4 要不同，第 2 和第 6 要相同。</li>
+              <li><strong>B：</strong>上聯第 7 個字必須是 1，下聯第 7 個字必須是 0。</li>
+              <li><strong>C：</strong>上下聯的第 2、4、6 個字，都要上下不同。只要有一個相同，就違反 C。</li>
+              <li><strong>位置提醒：</strong>題目說第 2 個字，Python 寫成 <code>s[1]</code>，因為 list 從 0 開始編號。</li>
+            </ol>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">節點顏色說明</div>
+          <div class="cardBody">
+            <div class="legend">
+              <span class="legendItem"><span class="dot pending"></span>尚未處理</span>
+              <span class="legendItem"><span class="dot active"></span>目前處理中</span>
+              <span class="legendItem"><span class="dot pass"></span>通過規則</span>
+              <span class="legendItem"><span class="dot fail"></span>違反規則</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div class="splitter" id="splitter" title="拖曳調整左右寬度"></div>
+
+    <section class="rightPane" aria-label="右側程式碼區">
+      <div class="codePanel">
+        <div class="codeHeader">
+          <span>完整 Python 程式碼</span>
+          <span class="smallNote">會同步高亮目前執行行</span>
+        </div>
+        <div class="codeBody" id="codeBody"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modalOverlay" id="problemModal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <h2 id="problemTitle">題目說明：七言對聯</h2>
+        <button id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="modalBody">
+        <p>中文依照發音方式，可以分成「平聲」與「仄聲」。題目把平聲記為 \(0\)，仄聲記為 \(1\)。</p>
+        <p>一副七言對聯有兩句話：上聯 7 個字、下聯 7 個字。輸入時每個字會用 0 或 1 表示。</p>
+
+        <h3>要檢查的三個規則</h3>
+        <p><strong>A：二四六不同平仄。</strong>每一句自己看第 2、4、6 個字：第 2 和第 4 必須不同，第 2 和第 6 必須相同。</p>
+        <p><strong>B：仄起平收。</strong>第一句的最後一個字必須是 1，第二句的最後一個字必須是 0。</p>
+        <p><strong>C：上下相對。</strong>上下聯的第 2、4、6 個字必須不同。</p>
+        <p>對每一副對聯，輸出它違反哪些規則；如果都沒有違反，輸出 <code>None</code>。</p>
+
+        <h3>輸入格式</h3>
+        <p>第一行輸入一個正整數 <code>n</code>，代表有幾副對聯。接下來有 <code>2n</code> 行，每兩行代表一副對聯。</p>
+
+        <h3>輸出格式</h3>
+        <p>對每一副對聯輸出一行。</p>
+        <p>如果違反 A，就印 <code>A</code>；違反 B，就印 <code>B</code>；違反 C，就印 <code>C</code>。如果同時違反多個規則，就把字母接在一起，例如 <code>AC</code> 或 <code>ABC</code>。</p>
+        <p>如果沒有違反任何規則，就輸出 <code>None</code>。</p>
+
+        <h3>範例輸入與輸出</h3>
+        <pre>範例輸入 #1
+1
+1 1 0 0 0 1 1
+1 0 0 0 1 1 0
+
+範例輸出 #1
+AC</pre>
+        <pre>範例輸入 #2
+1
+0 1 1 0 1 1 1
+1 0 1 1 0 0 0
+
+範例輸出 #2
+None</pre>
+        <pre>範例輸入 #3
+2
+0 1 1 0 0 0 1
+1 0 1 1 0 1 1
+0 1 0 0 0 0 1
+0 0 0 0 0 1 1
+
+範例輸出 #3
+AB
+ABC</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'n = int(input())                            #對聯數量',
+      'antiRule = []                               #違反規則list',
+      'for _ in range(n):',
+      '    s1 = list(map(int, input().split()))    #上聯',
+      '    s2 = list(map(int, input().split()))    #下聯',
+      '    if (s1[1]==s1[3]) | (s1[1]!=s1[5]) | (s2[1]==s2[3]) | (s2[1]!=s2[5]):',
+      '        antiRule.append("A")                #違反規則A',
+      '    if (s1[6] != 1) | (s2[6] != 0):',
+      '        antiRule.append("B")                #違反規則B',
+      '    if (s1[1]==s2[1]) | (s1[3]==s2[3]) | (s1[5] == s2[5]):',
+      '        antiRule.append("C")                #違反規則C',
+      '    print("".join(antiRule)) if antiRule != [] else print("None")',
+      '    antiRule = []                           #清空antiRule'
+    ];
+
+    const samples = [
+      {
+        name: '範例 1',
+        pairs: [
+          { s1: [1,1,0,0,0,1,1], s2: [1,0,0,0,1,1,0] }
+        ]
+      },
+      {
+        name: '範例 2',
+        pairs: [
+          { s1: [0,1,1,0,1,1,1], s2: [1,0,1,1,0,0,0] }
+        ]
+      },
+      {
+        name: '範例 3',
+        pairs: [
+          { s1: [0,1,1,0,0,0,1], s2: [1,0,1,1,0,1,1] },
+          { s1: [0,1,0,0,0,0,1], s2: [0,0,0,0,0,1,1] }
+        ]
+      }
+    ];
+
+    let currentSampleIndex = 0;
+    let steps = [];
+    let currentStepIndex = 0;
+    let playingTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function arrText(arr) {
+      return arr ? arr.join(' ') : '-';
+    }
+
+    function listText(arr) {
+      if (!arr || arr.length === 0) return '空 list []';
+      return '[' + arr.map(x => '"' + x + '"').join(', ') + ']';
+    }
+
+    function ruleAInfo(pair) {
+      const s1 = pair.s1, s2 = pair.s2;
+      const badUpper24 = s1[1] === s1[3];
+      const badUpper26 = s1[1] !== s1[5];
+      const badLower24 = s2[1] === s2[3];
+      const badLower26 = s2[1] !== s2[5];
+      return {
+        fail: badUpper24 || badUpper26 || badLower24 || badLower26,
+        parts: [
+          `上聯第2和第4：${s1[1]}、${s1[3]}，要不同，${badUpper24 ? '失敗' : '通過'}`,
+          `上聯第2和第6：${s1[1]}、${s1[5]}，要相同，${badUpper26 ? '失敗' : '通過'}`,
+          `下聯第2和第4：${s2[1]}、${s2[3]}，要不同，${badLower24 ? '失敗' : '通過'}`,
+          `下聯第2和第6：${s2[1]}、${s2[5]}，要相同，${badLower26 ? '失敗' : '通過'}`
+        ]
+      };
+    }
+
+    function ruleBInfo(pair) {
+      const s1 = pair.s1, s2 = pair.s2;
+      const badUpper = s1[6] !== 1;
+      const badLower = s2[6] !== 0;
+      return {
+        fail: badUpper || badLower,
+        parts: [
+          `上聯第7個字是 ${s1[6]}，必須是 1，${badUpper ? '失敗' : '通過'}`,
+          `下聯第7個字是 ${s2[6]}，必須是 0，${badLower ? '失敗' : '通過'}`
+        ]
+      };
+    }
+
+    function ruleCInfo(pair) {
+      const s1 = pair.s1, s2 = pair.s2;
+      const bad2 = s1[1] === s2[1];
+      const bad4 = s1[3] === s2[3];
+      const bad6 = s1[5] === s2[5];
+      return {
+        fail: bad2 || bad4 || bad6,
+        parts: [
+          `第2個字：上聯 ${s1[1]}、下聯 ${s2[1]}，要不同，${bad2 ? '失敗' : '通過'}`,
+          `第4個字：上聯 ${s1[3]}、下聯 ${s2[3]}，要不同，${bad4 ? '失敗' : '通過'}`,
+          `第6個字：上聯 ${s1[5]}、下聯 ${s2[5]}，要不同，${bad6 ? '失敗' : '通過'}`
+        ]
+      };
+    }
+
+    function getPairOutput(pair) {
+      const rules = [];
+      if (ruleAInfo(pair).fail) rules.push('A');
+      if (ruleBInfo(pair).fail) rules.push('B');
+      if (ruleCInfo(pair).fail) rules.push('C');
+      return rules.length ? rules.join('') : 'None';
+    }
+
+    function getExpectedOutput(sample) {
+      return sample.pairs.map(pair => getPairOutput(pair));
+    }
+
+
+    function makeStep(base, overrides) {
+      return Object.assign({
+        activeLine: 1,
+        message: '開始。',
+        result: '尚未開始',
+        pairIndex: 0,
+        pair: null,
+        activeNode: 'start',
+        activePositions: [],
+        positionMode: 'active',
+        ruleStatus: { A: 'pending', B: 'pending', C: 'pending' },
+        antiRule: [],
+        output: [],
+        focus: '尚未開始'
+      }, base || {}, overrides || {});
+    }
+
+    function buildSteps(sample) {
+      const built = [];
+      let antiRule = [];
+      const output = [];
+      let currentPair = sample.pairs[0] || null;
+      let lastRuleStatus = { A: 'pending', B: 'pending', C: 'pending' };
+      let base = {
+        pairIndex: 0,
+        pair: currentPair,
+        ruleStatus: { A: 'pending', B: 'pending', C: 'pending' },
+        antiRule: [],
+        output: []
+      };
+
+      built.push(makeStep(base, {
+        activeLine: 1,
+        message: `讀入 n = ${sample.pairs.length}，代表共有 ${sample.pairs.length} 副對聯。`,
+        result: `n = ${sample.pairs.length}`,
+        activeNode: 'input',
+        focus: '讀取對聯數量 n'
+      }));
+
+      built.push(makeStep(base, {
+        activeLine: 2,
+        message: '建立 antiRule 空 list，等等用來放違反的規則。',
+        result: 'antiRule = []',
+        activeNode: 'list',
+        focus: '初始化 antiRule'
+      }));
+
+      sample.pairs.forEach((pair, idx) => {
+        antiRule = [];
+        currentPair = pair;
+        let ruleStatus = { A: 'pending', B: 'pending', C: 'pending' };
+        const pairBase = () => ({
+          pairIndex: idx,
+          pair,
+          ruleStatus: Object.assign({}, ruleStatus),
+          antiRule: antiRule.slice(),
+          output: output.slice()
+        });
+
+        built.push(makeStep(pairBase(), {
+          activeLine: 3,
+          message: `進入第 ${idx + 1} 副對聯，開始檢查這一組上聯與下聯。`,
+          result: `第 ${idx + 1} 副 / 共 ${sample.pairs.length} 副`,
+          activeNode: 'loop',
+          focus: 'for 迴圈開始下一副'
+        }));
+
+        built.push(makeStep(pairBase(), {
+          activeLine: 4,
+          message: `讀入上聯 s1：${arrText(pair.s1)}。`,
+          result: `s1 = [${arrText(pair.s1)}]`,
+          activeNode: 's1',
+          activePositions: [1,2,3,4,5,6,7],
+          focus: '讀取上聯 s1'
+        }));
+
+        built.push(makeStep(pairBase(), {
+          activeLine: 5,
+          message: `讀入下聯 s2：${arrText(pair.s2)}。`,
+          result: `s2 = [${arrText(pair.s2)}]`,
+          activeNode: 's2',
+          activePositions: [1,2,3,4,5,6,7],
+          focus: '讀取下聯 s2'
+        }));
+
+        const a = ruleAInfo(pair);
+        ruleStatus.A = a.fail ? 'fail' : 'pass';
+        built.push(makeStep(pairBase(), {
+          activeLine: 6,
+          message: `檢查規則 A：看上下聯自己的第 2、4、6 個字。${a.fail ? '有違反 A。' : '規則 A 通過。'}`,
+          result: `A：${a.fail ? '違反' : '通過'}`,
+          activeNode: 'A',
+          activePositions: [2,4,6],
+          positionMode: a.fail ? 'fail' : 'pass',
+          focus: a.parts.join('；')
+        }));
+        if (a.fail) {
+          antiRule.push('A');
+          built.push(makeStep(pairBase(), {
+            activeLine: 7,
+            message: '因為違反 A，所以把 "A" 放進 antiRule。',
+            result: `antiRule = ${listText(antiRule)}`,
+            activeNode: 'A',
+            activePositions: [2,4,6],
+            positionMode: 'fail',
+            focus: '執行 antiRule.append("A")'
+          }));
+        }
+
+        const b = ruleBInfo(pair);
+        ruleStatus.B = b.fail ? 'fail' : 'pass';
+        built.push(makeStep(pairBase(), {
+          activeLine: 8,
+          message: `檢查規則 B：上聯最後要 1，下聯最後要 0。${b.fail ? '有違反 B。' : '規則 B 通過。'}`,
+          result: `B：${b.fail ? '違反' : '通過'}`,
+          activeNode: 'B',
+          activePositions: [7],
+          positionMode: b.fail ? 'fail' : 'pass',
+          focus: b.parts.join('；')
+        }));
+        if (b.fail) {
+          antiRule.push('B');
+          built.push(makeStep(pairBase(), {
+            activeLine: 9,
+            message: '因為違反 B，所以把 "B" 放進 antiRule。',
+            result: `antiRule = ${listText(antiRule)}`,
+            activeNode: 'B',
+            activePositions: [7],
+            positionMode: 'fail',
+            focus: '執行 antiRule.append("B")'
+          }));
+        }
+
+        const c = ruleCInfo(pair);
+        ruleStatus.C = c.fail ? 'fail' : 'pass';
+        built.push(makeStep(pairBase(), {
+          activeLine: 10,
+          message: `檢查規則 C：上下聯第 2、4、6 個字要不同。${c.fail ? '有違反 C。' : '規則 C 通過。'}`,
+          result: `C：${c.fail ? '違反' : '通過'}`,
+          activeNode: 'C',
+          activePositions: [2,4,6],
+          positionMode: c.fail ? 'fail' : 'pass',
+          focus: c.parts.join('；')
+        }));
+        if (c.fail) {
+          antiRule.push('C');
+          built.push(makeStep(pairBase(), {
+            activeLine: 11,
+            message: '因為違反 C，所以把 "C" 放進 antiRule。',
+            result: `antiRule = ${listText(antiRule)}`,
+            activeNode: 'C',
+            activePositions: [2,4,6],
+            positionMode: 'fail',
+            focus: '執行 antiRule.append("C")'
+          }));
+        }
+
+        lastRuleStatus = Object.assign({}, ruleStatus);
+
+        const printed = antiRule.length ? antiRule.join('') : 'None';
+        output.push(printed);
+        built.push(makeStep(pairBase(), {
+          activeLine: 12,
+          message: antiRule.length ? `antiRule 不是空的，所以輸出 ${printed}。` : 'antiRule 是空的，代表沒有違反任何規則，所以輸出 None。',
+          result: `輸出：${printed}`,
+          activeNode: 'print',
+          activePositions: [],
+          focus: '列印這一副對聯的結果'
+        }));
+
+        antiRule = [];
+        built.push(makeStep({
+          pairIndex: idx,
+          pair,
+          ruleStatus: Object.assign({}, ruleStatus),
+          antiRule: antiRule.slice(),
+          output: output.slice()
+        }, {
+          activeLine: 13,
+          message: '這一副檢查完了，清空 antiRule，準備下一副。',
+          result: 'antiRule = []',
+          activeNode: 'clear',
+          activePositions: [],
+          focus: '清空暫存 list'
+        }));
+      });
+
+      const lastPair = sample.pairs[sample.pairs.length - 1] || null;
+      built.push(makeStep({
+        pairIndex: sample.pairs.length - 1,
+        pair: lastPair,
+        ruleStatus: Object.assign({}, lastRuleStatus),
+        antiRule: [],
+        output: output.slice()
+      }, {
+        activeLine: 3,
+        message: '所有對聯都檢查完成，程式結束。',
+        result: `最後輸出：${output.join(' / ')}`,
+        activeNode: 'done',
+        focus: '程式完成'
+      }));
+
+      return built;
+    }
+
+    function renderCode() {
+      const codeBody = $('codeBody');
+      codeBody.innerHTML = '';
+      codeLines.forEach((line, idx) => {
+        const lineEl = document.createElement('div');
+        lineEl.className = 'codeLine';
+        lineEl.id = `codeLine${idx + 1}`;
+        const no = document.createElement('div');
+        no.className = 'lineNo';
+        no.textContent = idx + 1;
+        const text = document.createElement('div');
+        text.className = 'codeText';
+        text.textContent = line;
+        lineEl.appendChild(no);
+        lineEl.appendChild(text);
+        codeBody.appendChild(lineEl);
+      });
+    }
+
+    function statusClass(status, activeNode, rule) {
+      if (activeNode === rule) return 'checking';
+      if (status === 'fail') return 'fail';
+      if (status === 'pass') return 'pass';
+      return 'pending';
+    }
+
+    function renderSvg(step) {
+      const pair = step.pair || { s1: [0,0,0,0,0,0,0], s2: [0,0,0,0,0,0,0] };
+      const activeSet = new Set(step.activePositions || []);
+      const mode = step.positionMode || 'active';
+      const cellClass = (pos) => activeSet.has(pos) ? `cell ${mode}` : 'cell';
+      const s1Cells = pair.s1.map((v, i) => {
+        const x = 150 + i * 86;
+        const pos = i + 1;
+        return `
+          <text class="posText" x="${x + 30}" y="78">第${pos}</text>
+          <rect class="${cellClass(pos)}" x="${x}" y="90" width="60" height="54" rx="10"></rect>
+          <text class="cellText" x="${x + 30}" y="118">${v}</text>`;
+      }).join('');
+      const s2Cells = pair.s2.map((v, i) => {
+        const x = 150 + i * 86;
+        const pos = i + 1;
+        return `
+          <rect class="${cellClass(pos)}" x="${x}" y="172" width="60" height="54" rx="10"></rect>
+          <text class="cellText" x="${x + 30}" y="200">${v}</text>`;
+      }).join('');
+
+      const aClass = statusClass(step.ruleStatus.A, step.activeNode, 'A');
+      const bClass = statusClass(step.ruleStatus.B, step.activeNode, 'B');
+      const cClass = statusClass(step.ruleStatus.C, step.activeNode, 'C');
+      const statusText = (rule) => {
+        const s = step.ruleStatus[rule];
+        if (step.activeNode === rule) return '檢查中';
+        if (s === 'fail') return '違反';
+        if (s === 'pass') return '通過';
+        return '尚未檢查';
+      };
+
+      const outputText = (step.output && step.output.length) ? step.output.join('，') : '尚未輸出';
+      const anti = (step.antiRule && step.antiRule.length) ? step.antiRule.join('') : '空';
+
+      $('visualSvg').innerHTML = `
+        <defs>
+          <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"></path>
+          </marker>
+        </defs>
+        <rect class="banner" x="24" y="18" width="852" height="42" rx="12"></rect>
+        <text class="noteText" x="42" y="45">目前看第 ${step.pairIndex + 1} 副對聯。重點：題目第 2、4、6、7 個字，Python 會寫成 s[1]、s[3]、s[5]、s[6]。</text>
+
+        <text class="labelText" x="48" y="122">上聯 s1</text>
+        <text class="labelText" x="48" y="204">下聯 s2</text>
+        ${s1Cells}
+        ${s2Cells}
+
+        <path class="arrow" d="M 450 238 C 450 258, 450 264, 450 284"></path>
+
+        <rect class="ruleNode ${aClass}" x="70" y="286" width="210" height="92" rx="16"></rect>
+        <text class="ruleTitle" x="175" y="318">規則 A</text>
+        <text class="ruleSmall" x="175" y="344">每句看 2、4、6</text>
+        <text class="ruleSmall" x="175" y="366">${statusText('A')}</text>
+
+        <rect class="ruleNode ${bClass}" x="345" y="286" width="210" height="92" rx="16"></rect>
+        <text class="ruleTitle" x="450" y="318">規則 B</text>
+        <text class="ruleSmall" x="450" y="344">看第 7 個字</text>
+        <text class="ruleSmall" x="450" y="366">${statusText('B')}</text>
+
+        <rect class="ruleNode ${cClass}" x="620" y="286" width="210" height="92" rx="16"></rect>
+        <text class="ruleTitle" x="725" y="318">規則 C</text>
+        <text class="ruleSmall" x="725" y="344">上下 2、4、6 要不同</text>
+        <text class="ruleSmall" x="725" y="366">${statusText('C')}</text>
+
+        <text class="noteText" x="42" y="416">antiRule：${anti}　｜　已輸出：${outputText}</text>
+      `;
+    }
+
+    function renderPairGrid(step) {
+      const box = $('pairGridBox');
+      const pair = step.pair;
+      if (!pair) {
+        box.innerHTML = '<p>尚未讀取資料。</p>';
+        return;
+      }
+      const activeSet = new Set(step.activePositions || []);
+      const rowHtml = (name, arr) => `
+        <div class="rowTitle">${name}</div>
+        <div class="miniGrid">
+          ${arr.map((v, i) => {
+            const pos = i + 1;
+            return `<div class="miniCell ${activeSet.has(pos) ? 'active' : ''}"><span>第${pos}字</span>${v}</div>`;
+          }).join('')}
+        </div>
+      `;
+      box.innerHTML = rowHtml('上聯 s1', pair.s1) + rowHtml('下聯 s2', pair.s2);
+    }
+
+    function renderOutputExplanation(step) {
+      const expectedBox = $('expectedOutputBox');
+      const liveBox = $('liveOutputBox');
+      if (!expectedBox || !liveBox) return;
+
+      const expected = getExpectedOutput(samples[currentSampleIndex]);
+      expectedBox.textContent = expected.join('\n');
+
+      if (step.output && step.output.length) {
+        liveBox.textContent = step.output.join('\n');
+      } else {
+        liveBox.textContent = '尚未輸出';
+      }
+    }
+
+    function renderState(step) {
+      const anti = $('antiRuleBox');
+      anti.innerHTML = '';
+      if (!step.antiRule || step.antiRule.length === 0) {
+        const b = document.createElement('span');
+        b.className = 'badge empty';
+        b.textContent = '[] 空';
+        anti.appendChild(b);
+      } else {
+        step.antiRule.forEach(x => {
+          const b = document.createElement('span');
+          b.className = 'badge bad';
+          b.textContent = x;
+          anti.appendChild(b);
+        });
+      }
+
+      $('focusBox').textContent = step.focus || '尚未開始';
+      $('outputBox').textContent = (step.output && step.output.length) ? step.output.join(' / ') : '尚未輸出';
+      $('lineBox').textContent = `第 ${step.activeLine} 行`;
+      $('pairIndexText').textContent = `第 ${step.pairIndex + 1} 副`;
+    }
+
+    function renderStep() {
+      const step = steps[currentStepIndex];
+      if (!step) return;
+
+      document.querySelectorAll('.codeLine').forEach(el => el.classList.remove('active'));
+      const activeLine = $(`codeLine${step.activeLine}`);
+      if (activeLine) {
+        activeLine.classList.add('active');
+        activeLine.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      $('stepText').textContent = `步驟 ${currentStepIndex + 1} / ${steps.length}`;
+      $('messageBox').textContent = step.message;
+      $('resultText').textContent = step.result;
+      $('sampleNameText').textContent = samples[currentSampleIndex].name;
+
+      $('prevBtn').disabled = currentStepIndex === 0;
+      $('nextBtn').disabled = currentStepIndex === steps.length - 1;
+
+      renderSvg(step);
+      renderPairGrid(step);
+      renderState(step);
+      renderOutputExplanation(step);
+    }
+
+    function nextStep() {
+      if (currentStepIndex < steps.length - 1) {
+        currentStepIndex += 1;
+        renderStep();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (currentStepIndex > 0) {
+        currentStepIndex -= 1;
+        renderStep();
+      }
+    }
+
+    function reset() {
+      currentStepIndex = 0;
+      pause();
+      renderStep();
+    }
+
+    function play() {
+      if (playingTimer) return;
+      playingTimer = setInterval(() => {
+        if (currentStepIndex >= steps.length - 1) {
+          pause();
+          return;
+        }
+        nextStep();
+      }, 1200);
+    }
+
+    function pause() {
+      if (playingTimer) {
+        clearInterval(playingTimer);
+        playingTimer = null;
+      }
+    }
+
+    function setSample(index) {
+      currentSampleIndex = index;
+      steps = buildSteps(samples[currentSampleIndex]);
+      currentStepIndex = 0;
+      pause();
+      document.querySelectorAll('#sampleButtons button').forEach((btn, i) => {
+        btn.classList.toggle('activeSample', i === index);
+      });
+      renderStep();
+    }
+
+    function renderSampleButtons() {
+      const box = $('sampleButtons');
+      box.innerHTML = '';
+      samples.forEach((sample, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = sample.name;
+        btn.type = 'button';
+        btn.className = i === currentSampleIndex ? 'activeSample' : '';
+        btn.addEventListener('click', () => setSample(i));
+        box.appendChild(btn);
+      });
+    }
+
+    function setupSplitter() {
+      const splitter = $('splitter');
+      const left = $('leftPane');
+      let dragging = false;
+
+      splitter.addEventListener('mousedown', (e) => {
+        dragging = true;
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        if (window.innerWidth <= 900) return;
+        const total = document.querySelector('.workspace').clientWidth;
+        const newWidth = Math.max(280, Math.min(total - 360, e.clientX));
+        left.style.width = `${newWidth}px`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        dragging = false;
+        document.body.style.userSelect = '';
+      });
+    }
+
+    function setupModal() {
+      const modal = $('problemModal');
+      $('openProblemBtn').addEventListener('click', () => modal.classList.add('open'));
+      $('closeProblemBtn').addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') modal.classList.remove('open');
+      });
+    }
+
+    function setupControls() {
+      $('prevBtn').addEventListener('click', prevStep);
+      $('nextBtn').addEventListener('click', nextStep);
+      $('resetBtn').addEventListener('click', reset);
+      $('playBtn').addEventListener('click', play);
+      $('pauseBtn').addEventListener('click', pause);
+
+      window.addEventListener('keydown', (e) => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          playingTimer ? pause() : play();
+        }
+      });
+    }
+
+    function init() {
+      renderCode();
+      renderSampleButtons();
+      steps = buildSteps(samples[currentSampleIndex]);
+      setupControls();
+      setupSplitter();
+      setupModal();
+      renderStep();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

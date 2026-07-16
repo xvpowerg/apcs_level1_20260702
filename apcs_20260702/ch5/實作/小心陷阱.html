@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小心陷阱：一維數線模擬教學動畫</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --panel:#ffffff;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --line:#d7dde8;
+      --brand:#2563eb;
+      --brand2:#0ea5e9;
+      --good:#16a34a;
+      --warn:#f97316;
+      --bad:#dc2626;
+      --soft-blue:#eaf2ff;
+      --soft-green:#ecfdf5;
+      --soft-red:#fef2f2;
+      --soft-orange:#fff7ed;
+      --code-bg:#111827;
+      --code-ink:#e5e7eb;
+      --code-muted:#94a3b8;
+      --hl:#374151;
+      --toolbar-h:116px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color:var(--ink);
+      background:var(--bg);
+      overflow:hidden;
+    }
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      min-height:var(--toolbar-h);
+      background:rgba(255,255,255,.96);
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid var(--line);
+      z-index:50;
+      padding:10px 14px;
+      box-shadow:0 4px 20px rgba(15,23,42,.08);
+    }
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      font-size:20px;
+      letter-spacing:.3px;
+      white-space:nowrap;
+    }
+    .title .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;height:34px;
+      border-radius:12px;
+      background:linear-gradient(135deg,var(--brand),var(--brand2));
+      color:#fff;
+      box-shadow:0 8px 16px rgba(37,99,235,.18);
+    }
+    .mini-concept{
+      flex:1;
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      color:var(--muted);
+      min-width:0;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:13px;
+      color:#374151;
+      white-space:nowrap;
+    }
+    .toolbar{
+      display:grid;
+      grid-template-columns: auto auto auto auto auto auto 1fr;
+      gap:8px;
+      align-items:center;
+    }
+    button, select{
+      font-family:inherit;
+      border:1px solid var(--line);
+      background:#fff;
+      color:#111827;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:14px;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+    button:hover, select:hover{border-color:#9db6e8; transform:translateY(-1px);}
+    button.primary{background:var(--brand); color:#fff; border-color:var(--brand);}
+    button.danger{background:#fff; color:var(--bad);}
+    .step-info{
+      display:grid;
+      grid-template-columns: 125px 165px 1fr;
+      gap:8px;
+      align-items:stretch;
+      min-width:0;
+    }
+    .info-box{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:7px 10px;
+      min-width:0;
+    }
+    .info-label{font-size:12px;color:var(--muted);margin-bottom:2px;}
+    .info-value{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .info-desc .info-value{font-weight:600;white-space:normal;line-height:1.35;}
+
+    .app{
+      position:fixed;
+      top:var(--toolbar-h);
+      left:0;right:0;bottom:0;
+      display:flex;
+      min-height:0;
+    }
+    .left-pane,.right-pane{
+      min-width:260px;
+      overflow:auto;
+      padding:14px;
+    }
+    .left-pane{width:58%;}
+    .right-pane{flex:1;background:#0f172a;color:#e5e7eb;padding:0;}
+    .divider{
+      width:8px;
+      background:linear-gradient(90deg,#e5e7eb,#cbd5e1,#e5e7eb);
+      cursor:col-resize;
+      position:relative;
+      z-index:5;
+    }
+    .divider::after{
+      content:"";
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:3px;height:48px;border-radius:999px;background:#94a3b8;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 10px 24px rgba(15,23,42,.06);
+      margin-bottom:14px;
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      background:linear-gradient(180deg,#fff,#fbfdff);
+    }
+    .card-title{font-size:18px;font-weight:800;}
+    .card-sub{font-size:13px;color:var(--muted);}
+    .card-bd{padding:14px;}
+    .big-state{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap:10px;
+    }
+    .state-tile{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+      position:relative;
+      overflow:hidden;
+    }
+    .state-tile::before{
+      content:"";
+      position:absolute;right:-24px;top:-24px;width:70px;height:70px;border-radius:50%;background:var(--soft-blue);
+    }
+    .state-tile.life::before{background:var(--soft-green);}
+    .state-tile.trap::before{background:var(--soft-orange);}
+    .state-tile.answer::before{background:var(--soft-red);}
+    .state-label{font-size:13px;color:var(--muted);margin-bottom:4px;position:relative;}
+    .state-value{font-size:28px;font-weight:900;position:relative;line-height:1.1;}
+    .state-note{font-size:12px;color:var(--muted);margin-top:4px;position:relative;line-height:1.35;}
+    .number-wrap{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      overflow-x:auto;
+    }
+    #numberSvg{
+      display:block;
+      min-width:720px;
+      width:100%;
+      height:220px;
+    }
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+      font-size:13px;
+      color:#374151;
+    }
+    .legend span{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;background:#94a3b8;}
+    .dot.hero{background:var(--brand);}.dot.t1{background:var(--warn);}.dot.t2{background:#9333ea;}.dot.both{background:var(--bad);}
+
+    .explain-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap:10px;
+    }
+    .explain-box{
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:12px;
+      line-height:1.55;
+    }
+    .explain-box b{color:#111827;}
+    .explain-box .emoji{font-size:24px;display:block;margin-bottom:4px;}
+    .round-table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:14px;
+      font-size:14px;
+      background:#fff;
+    }
+    .round-table th,.round-table td{
+      border-bottom:1px solid var(--line);
+      padding:9px 8px;
+      text-align:center;
+      vertical-align:middle;
+    }
+    .round-table th{background:#f8fafc;font-size:13px;color:#475569;}
+    .round-table tr:last-child td{border-bottom:none;}
+    .round-table tr.active td{background:#eff6ff;font-weight:800;}
+    .round-table td.left-text{text-align:left;}
+    .note-list{
+      margin:0;
+      padding-left:1.2em;
+      line-height:1.75;
+    }
+    .note-list li{margin:.25em 0;}
+    .danger-text{color:var(--bad);font-weight:800;}
+    .good-text{color:var(--good);font-weight:800;}
+    .orange-text{color:var(--warn);font-weight:800;}
+    .code-head{
+      position:sticky;
+      top:0;
+      background:#0f172a;
+      border-bottom:1px solid #263244;
+      z-index:4;
+      padding:12px 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    .code-title{font-size:17px;font-weight:800;color:#fff;}
+    .code-sub{font-size:12px;color:#94a3b8;}
+    .code-wrap{padding:12px 0 24px;}
+    .code-line{
+      display:grid;
+      grid-template-columns: 44px 1fr;
+      gap:10px;
+      padding:4px 14px;
+      min-height:27px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size:15px;
+      line-height:1.45;
+      white-space:pre;
+      border-left:4px solid transparent;
+    }
+    .code-line .ln{color:#64748b;text-align:right;user-select:none;}
+    .code-line.active{
+      background:#1f2937;
+      border-left-color:#60a5fa;
+    }
+    .code-line.future{opacity:.82;}
+    .kw{color:#93c5fd;font-weight:700;}.fn{color:#facc15;}.str{color:#86efac;}.cm{color:#94a3b8;}.num{color:#fca5a5;}.op{color:#e5e7eb;}.var{color:#ddd6fe;}
+    .callout{
+      border:1px solid #bfdbfe;
+      background:#eff6ff;
+      border-radius:16px;
+      padding:12px 14px;
+      line-height:1.65;
+      margin-top:10px;
+    }
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+      padding:20px;
+    }
+    .modal{
+      width:min(920px,96vw);
+      max-height:86vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:20px;
+      box-shadow:0 30px 80px rgba(0,0,0,.25);
+      border:1px solid var(--line);
+    }
+    .modal-hd{
+      position:sticky;
+      top:0;
+      background:#fff;
+      border-bottom:1px solid var(--line);
+      padding:12px 16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      z-index:2;
+    }
+    .modal-title{font-size:20px;font-weight:900;}
+    .modal-bd{padding:16px;line-height:1.75;font-size:16px;}
+    .modal-bd h3{font-size:18px;margin:16px 0 8px;}
+    .io-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    pre.sample{
+      margin:0;
+      background:#0f172a;
+      color:#e5e7eb;
+      padding:12px;
+      border-radius:14px;
+      overflow:auto;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:14px;
+      line-height:1.5;
+    }
+    .small-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;}
+    .small-table th,.small-table td{border:1px solid var(--line);padding:8px;text-align:left;}
+    .small-table th{background:#f8fafc;}
+    .kbd{
+      font-family:Consolas,"Courier New",monospace;
+      background:#f1f5f9;
+      border:1px solid #cbd5e1;
+      border-bottom-width:2px;
+      border-radius:6px;
+      padding:1px 5px;
+      font-size:.92em;
+    }
+
+    .problem-card{
+      border:2px solid #93c5fd;
+      box-shadow:0 12px 30px rgba(37,99,235,.10);
+    }
+    .problem-card .card-hd{
+      background:linear-gradient(180deg,#eff6ff,#ffffff);
+    }
+    .problem-content{
+      font-size:16px;
+      line-height:1.75;
+    }
+    .problem-section{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:#fff;
+      margin-bottom:12px;
+    }
+    .problem-section:last-child{margin-bottom:0;}
+    .problem-section h3{
+      margin:0 0 10px;
+      font-size:18px;
+      color:#1e3a8a;
+    }
+    .problem-section p{margin:6px 0;}
+    .problem-rules{
+      margin:0;
+      padding-left:1.4em;
+    }
+    .problem-rules > li{margin:7px 0;}
+    .problem-rules ul{margin:6px 0 0;padding-left:1.4em;}
+    .problem-rules ul li{margin:5px 0;}
+    .range-list{
+      margin:0;
+      padding-left:1.4em;
+    }
+    .range-list li{margin:7px 0;}
+    .problem-io-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(220px,1fr));
+      gap:12px;
+    }
+    .sample-group{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:#f8fafc;
+    }
+    .sample-group h4{
+      margin:0 0 8px;
+      font-size:16px;
+    }
+    .sample-pair{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .sample-label{
+      font-size:13px;
+      font-weight:800;
+      color:#475569;
+      margin-bottom:5px;
+    }
+    .original-note{
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a3412;
+      font-weight:700;
+      margin-top:10px;
+    }
+    @media (max-width: 920px){
+      :root{--toolbar-h:176px;}
+      .toolbar{grid-template-columns: repeat(3, auto) 1fr;}
+      .step-info{grid-column:1/-1;grid-template-columns:1fr;}
+      .title-row{align-items:flex-start;}
+      .mini-concept{display:none;}
+      .app{flex-direction:column;}
+      .left-pane{width:100%;height:58%;}
+      .right-pane{height:42%;}
+      .divider{width:100%;height:8px;cursor:row-resize;}
+      .big-state{grid-template-columns:1fr 1fr;}
+      .explain-grid{grid-template-columns:1fr;}
+      .io-grid{grid-template-columns:1fr;}
+      .problem-io-grid{grid-template-columns:1fr;}
+      .sample-pair{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="title-row">
+      <div class="title"><span class="badge">⚠️</span><span>小心陷阱｜一維數線模擬</span></div>
+      <div class="mini-concept">
+        <span class="pill">一句話：生命值多少，就跳幾格</span>
+        <span class="pill">先跳，再扣血</span>
+        <span class="pill">兩個陷阱要用兩個 if</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="btnPrev">上一步</button>
+      <button id="btnNext" class="primary">下一步</button>
+      <button id="btnPlay">播放</button>
+      <button id="btnPause">暫停</button>
+      <button id="btnReset" class="danger">重設</button>
+      <select id="caseSelect" title="選擇範例">
+        <option value="0">範例 1：會停在 3</option>
+        <option value="1">範例 2：會停在 18</option>
+      </select>
+      <div class="step-info">
+        <div class="info-box"><div class="info-label">目前步驟</div><div class="info-value" id="stepText">步驟 1 / 1</div></div>
+        <div class="info-box"><div class="info-label">目前答案 / 狀態</div><div class="info-value" id="answerText">準備中</div></div>
+        <div class="info-box info-desc"><div class="info-label">本步驟說明</div><div class="info-value" id="descText">請按下一步。</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app" id="app">
+    <section class="left-pane" id="leftPane">
+
+      <div class="card problem-card" id="fullProblemCard">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">0. 完整題目（原題轉文字）</div>
+            <div class="card-sub">題目內容、輸入、範圍、子題、輸出與範例都完整放在這裡</div>
+          </div>
+          <span class="pill">必讀</span>
+        </div>
+        <div class="card-bd">
+
+          <div class="problem-content">
+            <section class="problem-section">
+              <h3>題目內容</h3>
+              <p>在一維數線上進行一場模擬遊戲。遊戲規則如下：</p>
+              <ul class="problem-rules">
+                <li>初始位置為 <span class="kbd">0</span>。</li>
+                <li>初始生命值為 <span class="kbd">k</span>（<span class="kbd">1 ≤ k ≤ 20</span>）。</li>
+                <li>當前生命值為 <span class="kbd">v</span> 時，角色會往右跳 <span class="kbd">v</span> 格，也就是從位置 <span class="kbd">p</span> 移動到 <span class="kbd">p + v</span>。</li>
+                <li>每次移動後，如果落在 <span class="kbd">x1</span> 或 <span class="kbd">x2</span> 的倍數上，會損失生命值：
+                  <ul>
+                    <li>若落在 <span class="kbd">x1</span> 的倍數，生命值減少 <span class="kbd">y1</span>。</li>
+                    <li>若落在 <span class="kbd">x2</span> 的倍數，生命值減少 <span class="kbd">y2</span>。</li>
+                    <li>若同時是 <span class="kbd">x1</span> 和 <span class="kbd">x2</span> 的倍數，生命值總共減少 <span class="kbd">y1 + y2</span>。</li>
+                  </ul>
+                </li>
+                <li>當生命值小於等於 <span class="kbd">0</span> 時，遊戲結束，輸出當前所在的位置。</li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸入說明</h3>
+              <p>輸入第一行 <span class="kbd">k</span> 表示初始生命值。</p>
+              <p>第二行有 <span class="kbd">x1</span> 與 <span class="kbd">y1</span>。</p>
+              <p>第三行有 <span class="kbd">x2</span> 與 <span class="kbd">y2</span>。</p>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸入範圍</h3>
+              <ul class="range-list">
+                <li><span class="kbd">k</span>：初始生命值，<span class="kbd">1 ≤ k ≤ 20</span></li>
+                <li><span class="kbd">x1</span>、<span class="kbd">x2</span>：兩個陷阱的倍數條件，<span class="kbd">1 ≤ x1, x2 ≤ 10</span></li>
+                <li><span class="kbd">y1</span>、<span class="kbd">y2</span>：對應陷阱的扣血值，<span class="kbd">1 ≤ y1, y2 ≤ 20</span></li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>子題</h3>
+              <ul class="range-list">
+                <li><b>40%</b>：<span class="kbd">x1 = 3</span>、<span class="kbd">x2 = 4</span>、<span class="kbd">y1 = y2 = k</span></li>
+                <li><b>60%</b>：無額外限制</li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸出說明</h3>
+              <p>輸出遊戲結束所在的位置。</p>
+            </section>
+
+            <section class="problem-section">
+              <h3>範例輸入與輸出</h3>
+              <div class="problem-io-grid">
+                <div class="sample-group">
+                  <h4>範例 #1</h4>
+                  <div class="sample-pair">
+                    <div>
+                      <div class="sample-label">範例輸入 #1</div>
+                      <pre class="sample">1
+3 1
+4 1</pre>
+                    </div>
+                    <div>
+                      <div class="sample-label">範例輸出 #1</div>
+                      <pre class="sample">3</pre>
+                    </div>
+                  </div>
+                </div>
+                <div class="sample-group">
+                  <h4>範例 #2</h4>
+                  <div class="sample-pair">
+                    <div>
+                      <div class="sample-label">範例輸入 #2</div>
+                      <pre class="sample">7
+3 2
+2 3</pre>
+                    </div>
+                    <div>
+                      <div class="sample-label">範例輸出 #2</div>
+                      <pre class="sample">18</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="original-note">閱讀順序：先看完整題目，再按「下一步」觀察程式如何一步一步模擬。</div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">1. 目前角色狀態</div>
+            <div class="card-sub">看這四格就知道遊戲現在跑到哪裡</div>
+          </div>
+          <button id="btnProblem">題目說明</button>
+        </div>
+        <div class="card-bd">
+          <div class="big-state">
+            <div class="state-tile">
+              <div class="state-label">目前位置 pos</div>
+              <div class="state-value" id="posVal">0</div>
+              <div class="state-note">人現在站在哪一格</div>
+            </div>
+            <div class="state-tile life">
+              <div class="state-label">目前生命值 k</div>
+              <div class="state-value" id="lifeVal">0</div>
+              <div class="state-note">也是下一次要跳幾格</div>
+            </div>
+            <div class="state-tile trap">
+              <div class="state-label">這次踩到陷阱</div>
+              <div class="state-value" id="trapVal">無</div>
+              <div class="state-note">看位置能不能被 x1 或 x2 整除</div>
+            </div>
+            <div class="state-tile answer">
+              <div class="state-label">遊戲狀態</div>
+              <div class="state-value" id="gameVal">開始</div>
+              <div class="state-note">生命值 ≤ 0 就停止</div>
+            </div>
+          </div>
+          <div class="callout" id="mainCallout">把角色想成小朋友：血量越多，腿越有力，所以跳越遠。跳完如果踩到陷阱牌，就扣血。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">2. 一維數線動畫</div>
+            <div class="card-sub">藍色人是角色；橘色是 x1 陷阱；紫色是 x2 陷阱；紅色是兩個都踩到</div>
+          </div>
+          <span class="pill" id="caseInfo">k=1, x1=3, y1=1, x2=4, y2=1</span>
+        </div>
+        <div class="card-bd">
+          <div class="number-wrap">
+            <svg id="numberSvg" viewBox="0 0 900 220" role="img" aria-label="一維數線動畫"></svg>
+          </div>
+          <div class="legend">
+            <span><i class="dot hero"></i>角色位置</span>
+            <span><i class="dot t1"></i>x1 倍數陷阱</span>
+            <span><i class="dot t2"></i>x2 倍數陷阱</span>
+            <span><i class="dot both"></i>同時踩到兩個陷阱</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">3. 本題三個重點</div>
+            <div class="card-sub">寫程式時最容易錯的地方</div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <div class="explain-grid">
+            <div class="explain-box"><span class="emoji">🦘</span><b>先跳，再檢查。</b><br>一開始位置是 0，但不扣血。每次都是跳完落地後，才看是不是陷阱。</div>
+            <div class="explain-box"><span class="emoji">❤️</span><b>生命值 k 有兩個用途。</b><br>它既是目前血量，也是這回合要跳的格數。例如 k=7 就跳 7 格。</div>
+            <div class="explain-box"><span class="emoji">⚠️</span><b>兩個 if，不要用 elif。</b><br>如果同時是 x1 和 x2 的倍數，要扣 y1+y2，所以兩個陷阱都要檢查。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">4. 回合表</div>
+            <div class="card-sub">每一回合到底怎麼跳、怎麼扣血</div>
+          </div>
+        </div>
+        <div class="card-bd" style="overflow:auto;">
+          <table class="round-table" id="roundTable">
+            <thead>
+              <tr>
+                <th>回合</th>
+                <th>跳之前位置</th>
+                <th>跳之前生命</th>
+                <th>跳幾格</th>
+                <th>跳到位置</th>
+                <th>踩到什麼</th>
+                <th>扣血後生命</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <div class="card-title">5. 白話記法</div>
+            <div class="card-sub">學生只要記住這個流程</div>
+          </div>
+        </div>
+        <div class="card-bd">
+          <ol class="note-list">
+            <li><b>站在 pos。</b>一開始 pos = 0。</li>
+            <li><b>看血量 k。</b>血量多少，就往右跳幾格。</li>
+            <li><b>落地後看陷阱。</b>能被 x1 整除，扣 y1；能被 x2 整除，扣 y2。</li>
+            <li><b>如果血量 k ≤ 0。</b>遊戲結束，輸出現在的位置 pos。</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider" id="divider"></div>
+
+    <section class="right-pane" id="rightPane">
+      <div class="code-head">
+        <div>
+          <div class="code-title">完整 Python 程式碼</div>
+          <div class="code-sub">目前執行到哪一行，右邊會反白</div>
+        </div>
+        <span class="pill" style="background:#111827;color:#cbd5e1;border-color:#334155;">while 模擬題</span>
+      </div>
+      <div class="code-wrap" id="codeWrap">
+        <div class="code-line" data-line="1"><span class="ln">1</span><span><span class="var">k</span> <span class="op">=</span> <span class="fn">int</span><span class="op">(</span><span class="fn">input</span><span class="op">())</span>                    <span class="cm"># 讀入初始生命值</span></span></div>
+        <div class="code-line" data-line="2"><span class="ln">2</span><span><span class="var">x1</span><span class="op">,</span> <span class="var">y1</span> <span class="op">=</span> <span class="fn">map</span><span class="op">(</span><span class="fn">int</span><span class="op">,</span> <span class="fn">input</span><span class="op">().</span><span class="fn">split</span><span class="op">())</span>  <span class="cm"># 第一組陷阱：x1 的倍數扣 y1</span></span></div>
+        <div class="code-line" data-line="3"><span class="ln">3</span><span><span class="var">x2</span><span class="op">,</span> <span class="var">y2</span> <span class="op">=</span> <span class="fn">map</span><span class="op">(</span><span class="fn">int</span><span class="op">,</span> <span class="fn">input</span><span class="op">().</span><span class="fn">split</span><span class="op">())</span>  <span class="cm"># 第二組陷阱：x2 的倍數扣 y2</span></span></div>
+        <div class="code-line" data-line="4"><span class="ln">4</span><span></span></div>
+        <div class="code-line" data-line="5"><span class="ln">5</span><span><span class="var">pos</span> <span class="op">=</span> <span class="num">0</span>                              <span class="cm"># 角色一開始在位置 0</span></span></div>
+        <div class="code-line" data-line="6"><span class="ln">6</span><span></span></div>
+        <div class="code-line" data-line="7"><span class="ln">7</span><span><span class="kw">while</span> <span class="var">k</span> <span class="op">&gt;</span> <span class="num">0</span><span class="op">:</span>                       <span class="cm"># 只要還有生命，就繼續玩</span></span></div>
+        <div class="code-line" data-line="8"><span class="ln">8</span><span>    <span class="var">pos</span> <span class="op">+=</span> <span class="var">k</span>                         <span class="cm"># 生命值是多少，就往右跳幾格</span></span></div>
+        <div class="code-line" data-line="9"><span class="ln">9</span><span></span></div>
+        <div class="code-line" data-line="10"><span class="ln">10</span><span>    <span class="kw">if</span> <span class="var">pos</span> <span class="op">%</span> <span class="var">x1</span> <span class="op">==</span> <span class="num">0</span><span class="op">:</span>              <span class="cm"># 如果落在 x1 的倍數</span></span></div>
+        <div class="code-line" data-line="11"><span class="ln">11</span><span>        <span class="var">k</span> <span class="op">-=</span> <span class="var">y1</span>                      <span class="cm"># 扣 y1 血</span></span></div>
+        <div class="code-line" data-line="12"><span class="ln">12</span><span></span></div>
+        <div class="code-line" data-line="13"><span class="ln">13</span><span>    <span class="kw">if</span> <span class="var">pos</span> <span class="op">%</span> <span class="var">x2</span> <span class="op">==</span> <span class="num">0</span><span class="op">:</span>              <span class="cm"># 如果落在 x2 的倍數</span></span></div>
+        <div class="code-line" data-line="14"><span class="ln">14</span><span>        <span class="var">k</span> <span class="op">-=</span> <span class="var">y2</span>                      <span class="cm"># 扣 y2 血</span></span></div>
+        <div class="code-line" data-line="15"><span class="ln">15</span><span></span></div>
+        <div class="code-line" data-line="16"><span class="ln">16</span><span><span class="fn">print</span><span class="op">(</span><span class="var">pos</span><span class="op">)</span>                            <span class="cm"># 輸出最後停止的位置</span></span></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-hd">
+        <div class="modal-title">題目說明：小心陷阱</div>
+        <button id="btnCloseModal">關閉</button>
+      </div>
+      <div class="modal-bd">
+
+          <div class="problem-content">
+            <section class="problem-section">
+              <h3>題目內容</h3>
+              <p>在一維數線上進行一場模擬遊戲。遊戲規則如下：</p>
+              <ul class="problem-rules">
+                <li>初始位置為 <span class="kbd">0</span>。</li>
+                <li>初始生命值為 <span class="kbd">k</span>（<span class="kbd">1 ≤ k ≤ 20</span>）。</li>
+                <li>當前生命值為 <span class="kbd">v</span> 時，角色會往右跳 <span class="kbd">v</span> 格，也就是從位置 <span class="kbd">p</span> 移動到 <span class="kbd">p + v</span>。</li>
+                <li>每次移動後，如果落在 <span class="kbd">x1</span> 或 <span class="kbd">x2</span> 的倍數上，會損失生命值：
+                  <ul>
+                    <li>若落在 <span class="kbd">x1</span> 的倍數，生命值減少 <span class="kbd">y1</span>。</li>
+                    <li>若落在 <span class="kbd">x2</span> 的倍數，生命值減少 <span class="kbd">y2</span>。</li>
+                    <li>若同時是 <span class="kbd">x1</span> 和 <span class="kbd">x2</span> 的倍數，生命值總共減少 <span class="kbd">y1 + y2</span>。</li>
+                  </ul>
+                </li>
+                <li>當生命值小於等於 <span class="kbd">0</span> 時，遊戲結束，輸出當前所在的位置。</li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸入說明</h3>
+              <p>輸入第一行 <span class="kbd">k</span> 表示初始生命值。</p>
+              <p>第二行有 <span class="kbd">x1</span> 與 <span class="kbd">y1</span>。</p>
+              <p>第三行有 <span class="kbd">x2</span> 與 <span class="kbd">y2</span>。</p>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸入範圍</h3>
+              <ul class="range-list">
+                <li><span class="kbd">k</span>：初始生命值，<span class="kbd">1 ≤ k ≤ 20</span></li>
+                <li><span class="kbd">x1</span>、<span class="kbd">x2</span>：兩個陷阱的倍數條件，<span class="kbd">1 ≤ x1, x2 ≤ 10</span></li>
+                <li><span class="kbd">y1</span>、<span class="kbd">y2</span>：對應陷阱的扣血值，<span class="kbd">1 ≤ y1, y2 ≤ 20</span></li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>子題</h3>
+              <ul class="range-list">
+                <li><b>40%</b>：<span class="kbd">x1 = 3</span>、<span class="kbd">x2 = 4</span>、<span class="kbd">y1 = y2 = k</span></li>
+                <li><b>60%</b>：無額外限制</li>
+              </ul>
+            </section>
+
+            <section class="problem-section">
+              <h3>輸出說明</h3>
+              <p>輸出遊戲結束所在的位置。</p>
+            </section>
+
+            <section class="problem-section">
+              <h3>範例輸入與輸出</h3>
+              <div class="problem-io-grid">
+                <div class="sample-group">
+                  <h4>範例 #1</h4>
+                  <div class="sample-pair">
+                    <div>
+                      <div class="sample-label">範例輸入 #1</div>
+                      <pre class="sample">1
+3 1
+4 1</pre>
+                    </div>
+                    <div>
+                      <div class="sample-label">範例輸出 #1</div>
+                      <pre class="sample">3</pre>
+                    </div>
+                  </div>
+                </div>
+                <div class="sample-group">
+                  <h4>範例 #2</h4>
+                  <div class="sample-pair">
+                    <div>
+                      <div class="sample-label">範例輸入 #2</div>
+                      <pre class="sample">7
+3 2
+2 3</pre>
+                    </div>
+                    <div>
+                      <div class="sample-label">範例輸出 #2</div>
+                      <pre class="sample">18</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="original-note">閱讀順序：先看完整題目，再按「下一步」觀察程式如何一步一步模擬。</div>
+            </section>
+          </div>
+        <section class="problem-section">
+          <h3>白話重點</h3>
+          <ul class="note-list">
+            <li>一開始在位置 <span class="kbd">0</span>，但要先移動，才檢查是否踩到陷阱。</li>
+            <li>每回合先做 <span class="kbd">pos += k</span>：生命值多少，就往右跳多少格。</li>
+            <li>落地後分別檢查 <span class="kbd">x1</span> 與 <span class="kbd">x2</span>，所以必須使用兩個 <span class="kbd">if</span>。</li>
+            <li>當生命值 <span class="kbd">k ≤ 0</span>，停止跳躍，輸出目前位置。</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+
+<script>
+const cases = [
+  {name:'範例 1', k:1, x1:3, y1:1, x2:4, y2:1, expected:3, input:'1\n3 1\n4 1'},
+  {name:'範例 2', k:7, x1:3, y1:2, x2:2, y2:3, expected:18, input:'7\n3 2\n2 3'}
+];
+let currentCaseIndex = 0;
+let steps = [];
+let roundRows = [];
+let stepIndex = 0;
+let timer = null;
+
+function trapText(t1,t2){
+  if(t1 && t2) return 'x1 + x2';
+  if(t1) return 'x1';
+  if(t2) return 'x2';
+  return '無';
+}
+function trapExplain(t1,t2,cfg,pos){
+  if(t1 && t2) return `${pos} 同時是 ${cfg.x1} 和 ${cfg.x2} 的倍數，所以扣 ${cfg.y1}+${cfg.y2}。`;
+  if(t1) return `${pos} 是 ${cfg.x1} 的倍數，所以扣 ${cfg.y1}。`;
+  if(t2) return `${pos} 是 ${cfg.x2} 的倍數，所以扣 ${cfg.y2}。`;
+  return `${pos} 不是 ${cfg.x1} 的倍數，也不是 ${cfg.x2} 的倍數，所以不扣血。`;
+}
+function buildSteps(cfg){
+  const arr = [];
+  roundRows = [];
+  let k = cfg.k;
+  let pos = 0;
+  let round = 0;
+  arr.push({line:1,pos,k,trap:'無',game:'讀入',round:0,desc:`讀入初始生命值 k = ${cfg.k}。`,answer:'準備開始',callout:'第一行只有一個數字，代表一開始有多少血。'});
+  arr.push({line:2,pos,k,trap:'無',game:'讀入',round:0,desc:`讀入第一個陷阱：位置是 ${cfg.x1} 的倍數，就扣 ${cfg.y1} 血。`,answer:'準備開始',callout:'x1 是陷阱牌的位置規則，y1 是踩到要扣多少血。'});
+  arr.push({line:3,pos,k,trap:'無',game:'讀入',round:0,desc:`讀入第二個陷阱：位置是 ${cfg.x2} 的倍數，就扣 ${cfg.y2} 血。`,answer:'準備開始',callout:'x2 是第二種陷阱規則，y2 是第二種陷阱扣血量。'});
+  arr.push({line:5,pos,k,trap:'無',game:'開始',round:0,desc:'位置 pos 設成 0，角色從 0 出發。',answer:'尚未停止',callout:'注意：一開始站在 0 不檢查陷阱，因為題目說「移動後」才檢查。'});
+  while(k > 0 && round < 80){
+    round += 1;
+    const beforePos = pos;
+    const beforeK = k;
+    arr.push({line:7,pos,k,trap:'無',game:'檢查生命',round,desc:`第 ${round} 回合開始：k = ${k}，因為 k > 0，所以繼續。`,answer:'遊戲進行中',callout:'while k > 0 的意思：只要還活著，就繼續跳。'});
+    pos += k;
+    arr.push({line:8,pos,k,trap:'無',game:'跳躍',round,desc:`第 ${round} 回合：從 ${beforePos} 往右跳 ${beforeK} 格，到 ${pos}。`,answer:'遊戲進行中',callout:`這題最核心：生命值 k = ${beforeK}，所以這一次就跳 ${beforeK} 格。`});
+    let t1 = pos % cfg.x1 === 0;
+    arr.push({line:10,pos,k,trap:t1?'x1':'無',game:'檢查 x1',round,desc:t1?`${pos} 可以被 ${cfg.x1} 整除，踩到第一種陷阱。`:`${pos} 不能被 ${cfg.x1} 整除，沒有踩到第一種陷阱。`,answer:'遊戲進行中',callout:t1?`因為 ${pos} % ${cfg.x1} = 0，所以要扣 y1 = ${cfg.y1}。`:`因為 ${pos} % ${cfg.x1} 不是 0，所以這個 if 不會扣血。`});
+    if(t1){
+      k -= cfg.y1;
+      arr.push({line:11,pos,k,trap:'x1',game:'扣血',round,desc:`扣掉 y1 = ${cfg.y1}，生命值變成 ${k}。`,answer:k<=0?`生命值 ${k}，準備停止`:'遊戲進行中',callout:'踩到第一種陷阱，k 會變小。'});
+    }
+    let t2 = pos % cfg.x2 === 0;
+    arr.push({line:13,pos,k,trap:t2?(t1?'x1 + x2':'x2'):(t1?'x1':'無'),game:'檢查 x2',round,desc:t2?`${pos} 可以被 ${cfg.x2} 整除，踩到第二種陷阱。`:`${pos} 不能被 ${cfg.x2} 整除，沒有踩到第二種陷阱。`,answer:k<=0?`生命值 ${k}，準備停止`:'遊戲進行中',callout:t2?`因為 ${pos} % ${cfg.x2} = 0，所以要扣 y2 = ${cfg.y2}。`:`因為 ${pos} % ${cfg.x2} 不是 0，所以第二個 if 不會扣血。`});
+    if(t2){
+      k -= cfg.y2;
+      arr.push({line:14,pos,k,trap:t1?'x1 + x2':'x2',game:'扣血',round,desc:`扣掉 y2 = ${cfg.y2}，生命值變成 ${k}。`,answer:k<=0?`生命值 ${k}，遊戲結束`:'遊戲進行中',callout:t1&&t2?'同時踩到兩個陷阱，所以前面扣過 y1，這裡還要再扣 y2。':'踩到第二種陷阱，k 會變小。'});
+    }
+    roundRows.push({round,beforePos,beforeK,jump:beforeK,pos,trap:trapText(t1,t2),afterK:k, t1,t2});
+  }
+  arr.push({line:7,pos,k,trap:'結束',game:'停止',round,desc:`回到 while 檢查：k = ${k}，不是大於 0，所以跳出迴圈。`,answer:`停止位置 ${pos}`,callout:'生命值已經小於等於 0，不會再跳了。'});
+  arr.push({line:16,pos,k,trap:'結束',game:'輸出',round,desc:`輸出最後位置 pos = ${pos}。`,answer:`答案：${pos}`,callout:`所以這筆測資最後輸出 ${pos}。`});
+  return arr;
+}
+
+function getScale(maxPos){
+  const left=55,right=845;
+  const max = Math.max(10, maxPos + 2);
+  const scale = (right-left)/max;
+  return {left,right,max,scale,x:p=>left+p*scale};
+}
+function drawNumberLine(){
+  const cfg = cases[currentCaseIndex];
+  const st = steps[stepIndex] || {pos:0,k:cfg.k};
+  const maxPos = Math.max(cfg.expected, ...roundRows.map(r=>r.pos), st.pos, 10);
+  const s = getScale(maxPos);
+  const svg = document.getElementById('numberSvg');
+  svg.innerHTML = '';
+  const NS='http://www.w3.org/2000/svg';
+  function el(name, attrs={}, text=''){
+    const e=document.createElementNS(NS,name);
+    for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    if(text) e.textContent=text;
+    svg.appendChild(e); return e;
+  }
+  el('rect',{x:0,y:0,width:900,height:220,rx:18,fill:'#ffffff'});
+  el('line',{x1:s.left,y1:120,x2:s.right,y2:120,stroke:'#475569','stroke-width':3,'stroke-linecap':'round'});
+  const tickStep = maxPos <= 20 ? 1 : 2;
+  for(let p=0;p<=s.max;p+=tickStep){
+    const x=s.x(p);
+    el('line',{x1:x,y1:112,x2:x,y2:128,stroke:'#94a3b8','stroke-width':1});
+    el('text',{x,y:148,'text-anchor':'middle',fill:'#64748b','font-size':12},String(p));
+  }
+  // trap markers
+  for(let p=1;p<=s.max;p++){
+    const t1=p%cfg.x1===0, t2=p%cfg.x2===0;
+    if(!t1 && !t2) continue;
+    let fill=t1&&t2?'#dc2626':(t1?'#f97316':'#9333ea');
+    let label=t1&&t2?'雙':(t1?'x1':'x2');
+    el('circle',{cx:s.x(p),cy:89,r:t1&&t2?13:10,fill,opacity:.92});
+    el('text',{x:s.x(p),y:94,'text-anchor':'middle',fill:'#fff','font-size':10,'font-weight':800},label);
+  }
+  // jump arrow for current/last round if possible
+  const currentRound = st.round || 0;
+  let rr = roundRows.find(r=>r.round===currentRound);
+  if(rr){
+    const y=56, x1=s.x(rr.beforePos), x2=s.x(rr.pos);
+    el('defs',{});
+    const defs=svg.querySelector('defs');
+    const marker=document.createElementNS(NS,'marker');
+    marker.setAttribute('id','arrow');marker.setAttribute('markerWidth','10');marker.setAttribute('markerHeight','10');marker.setAttribute('refX','9');marker.setAttribute('refY','3');marker.setAttribute('orient','auto');marker.setAttribute('markerUnits','strokeWidth');
+    const path=document.createElementNS(NS,'path');path.setAttribute('d','M0,0 L0,6 L9,3 z');path.setAttribute('fill','#2563eb');marker.appendChild(path);defs.appendChild(marker);
+    const mid=(x1+x2)/2;
+    el('path',{d:`M ${x1} ${y} C ${mid} ${y-35}, ${mid} ${y-35}, ${x2} ${y}`,fill:'none',stroke:'#2563eb','stroke-width':4,'marker-end':'url(#arrow)','stroke-linecap':'round'});
+    el('text',{x:mid,y:28,'text-anchor':'middle',fill:'#1d4ed8','font-size':14,'font-weight':800},`跳 ${rr.jump} 格`);
+  }
+  // hero
+  const hx=s.x(st.pos);
+  el('line',{x1:hx,y1:78,x2:hx,y2:120,stroke:'#2563eb','stroke-width':3,'stroke-dasharray':'5 4'});
+  el('circle',{cx:hx,cy:72,r:20,fill:'#2563eb'});
+  el('text',{x:hx,y:79,'text-anchor':'middle',fill:'#fff','font-size':22},'人');
+  el('text',{x:hx,y:106,'text-anchor':'middle',fill:'#1d4ed8','font-size':14,'font-weight':900},`pos=${st.pos}`);
+  el('text',{x:60,y:196,fill:'#334155','font-size':14,'font-weight':700},`規則：x1=${cfg.x1} 扣 ${cfg.y1} 血；x2=${cfg.x2} 扣 ${cfg.y2} 血；目前生命 k=${st.k}`);
+}
+
+function renderTable(){
+  const tbody = document.querySelector('#roundTable tbody');
+  const st = steps[stepIndex] || {};
+  tbody.innerHTML='';
+  roundRows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r.round===st.round) tr.classList.add('active');
+    const trapClass = r.trap==='無'?'':(r.trap==='x1 + x2'?'danger-text':(r.trap==='x1'?'orange-text':'good-text'));
+    tr.innerHTML = `<td>${r.round}</td><td>${r.beforePos}</td><td>${r.beforeK}</td><td>${r.jump}</td><td>${r.pos}</td><td class="${trapClass}">${r.trap}</td><td>${r.afterK}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function highlightCode(line){
+  document.querySelectorAll('.code-line').forEach(el=>el.classList.remove('active'));
+  const target = document.querySelector(`.code-line[data-line="${line}"]`);
+  if(target){
+    target.classList.add('active');
+    target.scrollIntoView({block:'center',behavior:'smooth'});
+  }
+}
+function render(){
+  const cfg = cases[currentCaseIndex];
+  const st = steps[stepIndex];
+  document.getElementById('stepText').textContent = `步驟 ${stepIndex+1} / ${steps.length}`;
+  document.getElementById('answerText').textContent = st.answer;
+  document.getElementById('descText').textContent = st.desc;
+  document.getElementById('posVal').textContent = st.pos;
+  document.getElementById('lifeVal').textContent = st.k;
+  document.getElementById('trapVal').textContent = st.trap;
+  document.getElementById('gameVal').textContent = st.game;
+  document.getElementById('mainCallout').textContent = st.callout;
+  document.getElementById('caseInfo').textContent = `k=${cfg.k}, x1=${cfg.x1}, y1=${cfg.y1}, x2=${cfg.x2}, y2=${cfg.y2}`;
+  highlightCode(st.line);
+  drawNumberLine();
+  renderTable();
+}
+function loadCase(idx){
+  currentCaseIndex = idx;
+  steps = buildSteps(cases[idx]);
+  stepIndex = 0;
+  stopTimer();
+  render();
+}
+function nextStep(){ if(stepIndex < steps.length-1){ stepIndex++; render(); } else stopTimer(); }
+function prevStep(){ if(stepIndex > 0){ stepIndex--; render(); } }
+function resetStep(){ stepIndex=0; stopTimer(); render(); }
+function play(){ stopTimer(); timer = setInterval(nextStep, 900); }
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+
+document.getElementById('btnNext').addEventListener('click',nextStep);
+document.getElementById('btnPrev').addEventListener('click',prevStep);
+document.getElementById('btnReset').addEventListener('click',resetStep);
+document.getElementById('btnPlay').addEventListener('click',play);
+document.getElementById('btnPause').addEventListener('click',stopTimer);
+document.getElementById('caseSelect').addEventListener('change',e=>loadCase(Number(e.target.value)));
+
+document.getElementById('btnProblem').addEventListener('click',()=>document.getElementById('modalBackdrop').style.display='flex');
+document.getElementById('btnCloseModal').addEventListener('click',()=>document.getElementById('modalBackdrop').style.display='none');
+document.getElementById('modalBackdrop').addEventListener('click',e=>{ if(e.target.id==='modalBackdrop') e.currentTarget.style.display='none'; });
+
+// divider drag
+const divider = document.getElementById('divider');
+const leftPane = document.getElementById('leftPane');
+let dragging=false;
+divider.addEventListener('mousedown',()=>{dragging=true;document.body.style.userSelect='none';});
+window.addEventListener('mouseup',()=>{dragging=false;document.body.style.userSelect='';});
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  const app = document.getElementById('app');
+  const rect = app.getBoundingClientRect();
+  if(window.innerWidth > 920){
+    let w = e.clientX - rect.left;
+    w = Math.max(300, Math.min(rect.width-300, w));
+    leftPane.style.width = w + 'px';
+  }else{
+    let h = e.clientY - rect.top;
+    h = Math.max(220, Math.min(rect.height-180, h));
+    leftPane.style.height = h + 'px';
+  }
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') nextStep();
+  if(e.key==='ArrowLeft') prevStep();
+  if(e.key===' ') { e.preventDefault(); timer ? stopTimer() : play(); }
+});
+
+loadCase(0);
+</script>
+</body>
+</html>

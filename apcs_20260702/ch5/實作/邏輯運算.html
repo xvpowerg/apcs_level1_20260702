@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>邏輯運算子｜一步一步動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-height: 146px;
+      --border: #d8e0ea;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #5b6b82;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --green: #14804a;
+      --green-soft: #e9f8ef;
+      --red: #b42318;
+      --red-soft: #fff0ee;
+      --yellow: #9a6700;
+      --yellow-soft: #fff7d6;
+      --purple: #6d28d9;
+      --purple-soft: #f1e9ff;
+      --code-bg: #101827;
+      --code-line: #182235;
+      --code-text: #e5eefc;
+      --code-muted: #89a1c3;
+      --active-line: #3b2f12;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button, select, input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease, border 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #f1f5f9; }
+    button:active { transform: translateY(1px); }
+    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    button.primary:hover { background: #1d4ed8; }
+    button.warn { background: var(--yellow-soft); color: #6b4b00; border-color: #f3d26a; }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--toolbar-height);
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.97);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title-block {
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .title-block .sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 190px 240px minmax(260px, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .status-chip {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      min-height: 46px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .status-chip b {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .status-chip span {
+      font-size: 18px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status-chip.message span {
+      white-space: normal;
+      font-size: 18px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .main {
+      padding-top: var(--toolbar-height);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .split {
+      width: 100%;
+      height: calc(100vh - var(--toolbar-height));
+      display: flex;
+      overflow: hidden;
+    }
+
+    .left-pane, .right-pane {
+      height: 100%;
+      overflow: auto;
+      padding: 14px;
+    }
+
+    .left-pane {
+      flex: 0 0 56%;
+      min-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-pane {
+      flex: 1 1 auto;
+      min-width: 360px;
+      background: #eef3fb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .divider {
+      flex: 0 0 9px;
+      cursor: col-resize;
+      background: linear-gradient(90deg, #d8e0ea, #f8fafc, #d8e0ea);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .divider:hover { background: #c7d2fe; }
+
+    .card {
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      padding: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .card h3 {
+      margin: 10px 0 8px;
+      font-size: 18px;
+    }
+
+    .sample-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sample-row select {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      min-width: 240px;
+      background: #fff;
+    }
+
+    .hint-line {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
+    .svg-card {
+      padding-bottom: 12px;
+    }
+
+    .svg-box {
+      width: 100%;
+      height: min(430px, 48vh);
+      min-height: 340px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #fbfdff;
+      overflow: hidden;
+    }
+
+    /* 只讓主動畫 SVG 撐滿容器。
+       不可寫成全域 svg，因為 MathJax 也會產生 SVG，會把題目內的公式放到超大。 */
+    .svg-box > svg,
+    #logicSvg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #problemModal mjx-container {
+      font-size: 100% !important;
+      line-height: 1.2 !important;
+    }
+
+    .edge {
+      stroke: #9aa8bd;
+      stroke-width: 3;
+      fill: none;
+      marker-end: url(#arrowHead);
+      opacity: 0.7;
+    }
+
+    .edge.active {
+      stroke: var(--blue);
+      opacity: 1;
+      stroke-width: 5;
+    }
+
+    .node rect {
+      fill: #fff;
+      stroke: #9aa8bd;
+      stroke-width: 2.5;
+      rx: 18;
+      ry: 18;
+    }
+
+    .node text {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      fill: #172033;
+      font-size: 18px;
+      dominant-baseline: middle;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .node .small-text { font-size: 15px; fill: #46566d; }
+    .node .title-text { font-size: 20px; font-weight: 800; fill: #111827; }
+
+    .node.idle rect { fill: #ffffff; }
+    .node.done rect { fill: var(--blue-soft); stroke: var(--blue); }
+    .node.match rect { fill: var(--green-soft); stroke: var(--green); }
+    .node.no-match rect { fill: var(--red-soft); stroke: var(--red); }
+    .node.print rect { fill: var(--yellow-soft); stroke: #d69e2e; }
+    .node.waiting rect { fill: #f8fafc; stroke: #cbd5e1; stroke-dasharray: 6 5; }
+    .node.active rect { stroke: #f59e0b; stroke-width: 5; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      color: #334155;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 15px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #94a3b8;
+      background: #fff;
+    }
+
+    .dot.active { background: #f59e0b; border-color: #b45309; }
+    .dot.done { background: var(--blue-soft); border-color: var(--blue); }
+    .dot.match { background: var(--green-soft); border-color: var(--green); }
+    .dot.no-match { background: var(--red-soft); border-color: var(--red); }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #fff;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e5edf7;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 16px;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .value-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-weight: 800;
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+
+    .note-list li { margin: 6px 0; }
+
+    .code-card {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      flex-shrink: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .code-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .code-body {
+      flex: 1 1 auto;
+      overflow: auto;
+      background: var(--code-bg);
+      padding: 12px 0;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 54px minmax(600px, 1fr);
+      gap: 10px;
+      min-height: 30px;
+      padding: 2px 14px 2px 0;
+      color: var(--code-text);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 17px;
+      line-height: 1.55;
+      white-space: pre;
+      border-left: 5px solid transparent;
+    }
+
+    .code-line .line-no {
+      color: var(--code-muted);
+      text-align: right;
+      user-select: none;
+    }
+
+    .code-line.active {
+      background: var(--active-line);
+      border-left-color: #f59e0b;
+    }
+
+    .code-line.comment .code-text { color: #9ccaa8; }
+    .code-line.blank { min-height: 16px; }
+
+    .right-note {
+      flex-shrink: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+    }
+
+    .right-note strong { color: var(--blue); }
+
+    .truth-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .truth-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .truth-card .truth-title {
+      padding: 8px 10px;
+      font-weight: 800;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .truth-card table th,
+    .truth-card table td {
+      text-align: center;
+      padding: 7px 8px;
+      font-size: 15px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal-panel {
+      width: min(980px, 94vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 18px;
+    }
+
+    .modal-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: -18px;
+      background: #fff;
+      padding: 0 0 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+
+    .modal-title-row h2 { margin: 0; font-size: 20px; line-height: 1.35; }
+    .modal-panel h3 { margin: 16px 0 8px; font-size: 18px; line-height: 1.35; }
+    .modal-panel p { margin: 8px 0; font-size: 16px; line-height: 1.6; }
+    .modal-panel pre {
+      margin: 8px 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      overflow: auto;
+      font-size: 15.5px;
+      line-height: 1.5;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .example-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+
+    /* 題目說明區：壓小字級，避免題目彈窗搶走主畫面。 */
+    #problemModal .modal-panel {
+      font-size: 14.5px;
+      line-height: 1.45;
+      padding: 14px;
+    }
+
+    #problemModal .modal-title-row {
+      top: -14px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    #problemModal .modal-title-row h2 {
+      font-size: 17px !important;
+      line-height: 1.3;
+    }
+
+    #problemModal .modal-panel h3 {
+      font-size: 15.5px !important;
+      line-height: 1.3;
+      margin: 10px 0 5px;
+    }
+
+    #problemModal .modal-panel p,
+    #problemModal .modal-panel li {
+      font-size: 14.5px !important;
+      line-height: 1.5;
+      margin: 6px 0;
+    }
+
+    #problemModal .logic-inline {
+      font-family: "Times New Roman", "Noto Serif TC", serif;
+      font-size: 1em !important;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    #problemModal .truth-grid {
+      gap: 8px;
+      grid-template-columns: repeat(3, minmax(170px, 1fr));
+    }
+
+    #problemModal .truth-title,
+    #problemModal .example-box b {
+      font-size: 14px !important;
+    }
+
+    #problemModal table th,
+    #problemModal table td {
+      font-size: 13px !important;
+      padding: 4px 6px;
+    }
+
+    #problemModal .modal-panel pre {
+      font-size: 13.5px !important;
+      line-height: 1.4;
+      padding: 8px 10px;
+    }
+
+    #problemModal .example-grid {
+      gap: 8px;
+    }
+
+    #problemModal .example-box {
+      padding: 9px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-weight: 800;
+      font-size: 14px;
+      margin-right: 6px;
+    }
+
+    @media (max-width: 920px) {
+      :root { --toolbar-height: 180px; }
+      .status-row { grid-template-columns: 1fr; }
+      .split { flex-direction: column; overflow: auto; }
+      .left-pane, .right-pane { min-width: 0; width: 100%; height: auto; overflow: visible; }
+      .divider { display: none; }
+      .svg-box { height: 360px; }
+      .truth-grid, .example-grid { grid-template-columns: 1fr; }
+      .code-card { min-height: 520px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" aria-label="教學動畫控制列">
+    <div class="title-row">
+      <div class="title-block">
+        <h1>邏輯運算子｜一步一步動畫</h1>
+        <div class="sub">重點：先把 a、b 轉成 0 或 1，再測 AND、OR、XOR 是否等於 c。</div>
+      </div>
+      <div class="toolbar-controls">
+        <button id="problemBtn" class="warn" type="button">題目說明</button>
+        <button id="prevBtn" type="button">上一步</button>
+        <button id="nextBtn" class="primary" type="button">下一步</button>
+        <button id="playBtn" type="button">播放</button>
+        <button id="resetBtn" type="button">重設</button>
+      </div>
+    </div>
+    <div class="status-row">
+      <div class="status-chip"><b>目前步驟</b><span id="stepCounter">步驟 1 / 1</span></div>
+      <div class="status-chip"><b>目前答案或狀態</b><span id="resultChip">尚未開始</span></div>
+      <div class="status-chip message"><b>本步驟說明</b><span id="messageText">準備開始。</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="split" id="splitRoot">
+      <section class="left-pane" id="leftPane" aria-label="左側視覺化區">
+        <section class="card">
+          <h2>範例切換</h2>
+          <div class="sample-row">
+            <label for="sampleSelect">選擇範例：</label>
+            <select id="sampleSelect"></select>
+            <button id="applySampleBtn" type="button">套用範例</button>
+          </div>
+          <div class="hint-line" id="sampleHint">目前輸入：-</div>
+        </section>
+
+        <section class="card svg-card">
+          <h2>資料流程圖</h2>
+          <div class="svg-box">
+            <svg id="logicSvg" viewBox="0 0 960 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="邏輯運算資料流程圖">
+              <defs>
+                <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#9aa8bd"></path>
+                </marker>
+              </defs>
+
+              <path class="edge" data-edge="input-bool" d="M195 252 C225 252 230 252 255 252"></path>
+              <path class="edge" data-edge="bool-and" d="M405 232 C450 140 455 118 480 112"></path>
+              <path class="edge" data-edge="bool-or" d="M405 252 C435 252 450 252 480 252"></path>
+              <path class="edge" data-edge="bool-xor" d="M405 272 C450 360 455 388 480 392"></path>
+              <path class="edge" data-edge="and-output" d="M640 112 C690 120 710 160 735 190"></path>
+              <path class="edge" data-edge="or-output" d="M640 252 C690 248 710 230 735 220"></path>
+              <path class="edge" data-edge="xor-output" d="M640 392 C695 368 715 310 735 265"></path>
+              <path class="edge" data-edge="ops-impossible" d="M640 392 C690 405 715 378 735 355"></path>
+
+              <g class="node idle" data-node="input" transform="translate(35 205)">
+                <rect width="160" height="95"></rect>
+                <text x="80" y="23" class="title-text">讀入輸入</text>
+                <text id="inputText1" x="80" y="50" class="small-text">a, b, c</text>
+                <text id="inputText2" x="80" y="73" class="small-text">尚未讀取</text>
+              </g>
+
+              <g class="node idle" data-node="bool" transform="translate(255 205)">
+                <rect width="150" height="95"></rect>
+                <text x="75" y="22" class="title-text">轉成真假</text>
+                <text id="boolText1" x="75" y="50" class="small-text">a 尚未</text>
+                <text id="boolText2" x="75" y="73" class="small-text">b 尚未</text>
+              </g>
+
+              <g class="node idle" data-node="AND" transform="translate(480 70)">
+                <rect width="160" height="85"></rect>
+                <text x="80" y="22" class="title-text">AND</text>
+                <text id="andText" x="80" y="48" class="small-text">尚未計算</text>
+                <text id="andCompare" x="80" y="68" class="small-text">是否等於 c？</text>
+              </g>
+
+              <g class="node idle" data-node="OR" transform="translate(480 210)">
+                <rect width="160" height="85"></rect>
+                <text x="80" y="22" class="title-text">OR</text>
+                <text id="orText" x="80" y="48" class="small-text">尚未計算</text>
+                <text id="orCompare" x="80" y="68" class="small-text">是否等於 c？</text>
+              </g>
+
+              <g class="node idle" data-node="XOR" transform="translate(480 350)">
+                <rect width="160" height="85"></rect>
+                <text x="80" y="22" class="title-text">XOR</text>
+                <text id="xorText" x="80" y="48" class="small-text">尚未計算</text>
+                <text id="xorCompare" x="80" y="68" class="small-text">是否等於 c？</text>
+              </g>
+
+              <g class="node idle" data-node="output" transform="translate(735 155)">
+                <rect width="185" height="110"></rect>
+                <text x="92.5" y="25" class="title-text">目前輸出</text>
+                <text id="outputText1" x="92.5" y="57" class="small-text">尚未輸出</text>
+                <text id="outputText2" x="92.5" y="82" class="small-text"></text>
+              </g>
+
+              <g class="node idle" data-node="impossible" transform="translate(735 315)">
+                <rect width="185" height="90"></rect>
+                <text x="92.5" y="25" class="title-text">最後檢查</text>
+                <text id="impossibleText1" x="92.5" y="52" class="small-text">三個都不行？</text>
+                <text id="impossibleText2" x="92.5" y="72" class="small-text">尚未檢查</text>
+              </g>
+            </svg>
+          </div>
+          <div class="legend" aria-label="節點顏色說明">
+            <span><i class="dot active"></i>目前處理</span>
+            <span><i class="dot done"></i>已完成</span>
+            <span><i class="dot match"></i>結果符合 c</span>
+            <span><i class="dot no-match"></i>結果不符合 c</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>目前變數表</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>項目</th><th>目前內容</th><th>白話意思</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>原始輸入</td><td id="stateRaw">-</td><td>一開始讀進來的三個整數。</td></tr>
+                <tr><td>a、b 轉換後</td><td id="stateBool">-</td><td>非 0 會變成 1，0 仍然是 0。</td></tr>
+                <tr><td>AND 結果</td><td id="stateAnd">-</td><td>兩個都為 1，結果才是 1。</td></tr>
+                <tr><td>OR 結果</td><td id="stateOr">-</td><td>至少一個為 1，結果就是 1。</td></tr>
+                <tr><td>XOR 結果</td><td id="stateXor">-</td><td>剛好一個為 1，結果才是 1。</td></tr>
+                <tr><td>目前輸出</td><td id="stateOutput">-</td><td>只要某個運算結果等於 c，就印出它。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>觀念提醒</h2>
+          <ul class="note-list">
+            <li><span class="badge">重點 1</span>題目說「b 不為 0」不是只代表 1，也可能是 3、9、999。</li>
+            <li><span class="badge">重點 2</span>程式先把 a、b 變成 0 或 1，所以 3 和 9 都會被當成 1。</li>
+            <li><span class="badge">重點 3</span>三個 if 是分開檢查，不是 if / elif，所以可能印出多行。</li>
+            <li><span class="badge">重點 4</span>只有三種運算都無法得到 c，最後才印 IMPOSSIBLE。</li>
+          </ul>
+        </section>
+      </section>
+
+      <div class="divider" id="divider" aria-label="拖曳調整左右寬度"></div>
+
+      <section class="right-pane" aria-label="右側程式碼區">
+        <section class="card code-card">
+          <div class="code-header">
+            <h2>完整 Python 程式碼</h2>
+            <div class="hint-line">高亮列會跟動畫同步</div>
+          </div>
+          <div class="code-body" id="codeBody" aria-label="Python 程式碼"></div>
+        </section>
+        <section class="right-note">
+          <strong>程式流程：</strong>
+          讀入 a、b、c → 把 a、b 轉成 0 或 1 → 依序檢查 AND、OR、XOR → 都不行才輸出 IMPOSSIBLE。
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+    <div class="modal-panel">
+      <div class="modal-title-row">
+        <h2 id="problemTitle">題目說明：邏輯運算子</h2>
+        <button id="closeModalBtn" type="button">關閉</button>
+      </div>
+
+      <h3>問題描述</h3>
+      <p>小蘇最近在學三種邏輯運算子：AND、OR、XOR。這三種運算子都需要兩個運算元，例如 <span class="logic-inline">a AND b</span>。</p>
+      <p>題目給你三個整數 <span class="logic-inline">a</span>、<span class="logic-inline">b</span>、<span class="logic-inline">c</span>。其中 <span class="logic-inline">a</span>、<span class="logic-inline">b</span> 是非負整數，<span class="logic-inline">c</span> 只會是 0 或 1。請找出哪些運算可以得到指定結果 <span class="logic-inline">c</span>。</p>
+      <p>判斷時要注意：如果 <span class="logic-inline">a</span> 或 <span class="logic-inline">b</span> 不是 0，就把它當成 1；如果是 0，就還是 0。</p>
+
+      <h3>三種運算規則</h3>
+      <div class="truth-grid">
+        <div class="truth-card">
+          <div class="truth-title">a AND b</div>
+          <table>
+            <thead><tr><th></th><th>b 為 0</th><th>b 不為 0</th></tr></thead>
+            <tbody>
+              <tr><th>a 為 0</th><td>0</td><td>0</td></tr>
+              <tr><th>a 不為 0</th><td>0</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="truth-card">
+          <div class="truth-title">a OR b</div>
+          <table>
+            <thead><tr><th></th><th>b 為 0</th><th>b 不為 0</th></tr></thead>
+            <tbody>
+              <tr><th>a 為 0</th><td>0</td><td>1</td></tr>
+              <tr><th>a 不為 0</th><td>1</td><td>1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="truth-card">
+          <div class="truth-title">a XOR b</div>
+          <table>
+            <thead><tr><th></th><th>b 為 0</th><th>b 不為 0</th></tr></thead>
+            <tbody>
+              <tr><th>a 為 0</th><td>0</td><td>1</td></tr>
+              <tr><th>a 不為 0</th><td>1</td><td>0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>輸入格式</h3>
+      <p>輸入只有一行，共三個整數，整數之間用一個空白隔開。</p>
+      <pre>a b c</pre>
+      <p>第一個整數代表 <span class="logic-inline">a</span>，第二個整數代表 <span class="logic-inline">b</span>，第三個整數代表目標結果 <span class="logic-inline">c</span>。</p>
+
+      <h3>輸出格式</h3>
+      <p>輸出可能得到指定結果的運算。若有多個，輸出順序固定為 AND、OR、XOR，每個輸出一行。若三個都不可能得到指定結果，輸出 IMPOSSIBLE。</p>
+
+      <h3>範例</h3>
+      <div class="example-grid">
+        <div class="example-box"><b>範例一輸入</b><pre>0 0 0</pre><b>正確輸出</b><pre>AND
+OR
+XOR</pre></div>
+        <div class="example-box"><b>範例二輸入</b><pre>1 1 1</pre><b>正確輸出</b><pre>AND
+OR</pre></div>
+        <div class="example-box"><b>範例三輸入</b><pre>3 0 1</pre><b>正確輸出</b><pre>OR
+XOR</pre></div>
+        <div class="example-box"><b>範例四輸入</b><pre>0 0 1</pre><b>正確輸出</b><pre>IMPOSSIBLE</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'a, b, c = map(int, input().split())  #切割輸入字串',
+      '',
+      '#將大於0的a b值轉換為1',
+      'a = 1 if a!=0 else 0 ',
+      'b = 1 if b!=0 else 0',
+      '',
+      '#運算符號運算結果為c時印出該運算符號',
+      'if (a and b) == c:  # a and b 運算結果是否為c',
+      '    print("AND")',
+      'if (a or b) == c:   # a or b 運算結果是否為c',
+      '    print("OR")',
+      'if (a ^ b) == c:    # a xor b 運算結果是否為c',
+      '    print("XOR")  ',
+      '#三個運算符號均無法取得該結果列印"IMPOSSIBLE"',
+      'if (a and b) != c and (a or b) != c and (a ^ b) != c:',
+      '    print("IMPOSSIBLE")'
+    ];
+
+    const samples = [
+      { name: '範例一：0 0 0', input: '0 0 0', rawA: 0, rawB: 0, c: 0 },
+      { name: '範例二：1 1 1', input: '1 1 1', rawA: 1, rawB: 1, c: 1 },
+      { name: '範例三：3 0 1', input: '3 0 1', rawA: 3, rawB: 0, c: 1 },
+      { name: '範例四：0 0 1', input: '0 0 1', rawA: 0, rawB: 0, c: 1 }
+    ];
+
+    let currentSampleIndex = 0;
+    let steps = [];
+    let currentStep = 0;
+    let timer = null;
+
+    const el = {
+      sampleSelect: document.getElementById('sampleSelect'),
+      sampleHint: document.getElementById('sampleHint'),
+      stepCounter: document.getElementById('stepCounter'),
+      resultChip: document.getElementById('resultChip'),
+      messageText: document.getElementById('messageText'),
+      codeBody: document.getElementById('codeBody'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      applySampleBtn: document.getElementById('applySampleBtn'),
+      problemBtn: document.getElementById('problemBtn'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      modal: document.getElementById('problemModal'),
+      divider: document.getElementById('divider'),
+      leftPane: document.getElementById('leftPane'),
+      splitRoot: document.getElementById('splitRoot')
+    };
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function renderCode() {
+      el.codeBody.innerHTML = '';
+      codeLines.forEach((line, index) => {
+        const row = document.createElement('div');
+        row.className = 'code-line';
+        if (line.trim().startsWith('#')) row.classList.add('comment');
+        if (line.trim() === '') row.classList.add('blank');
+        row.dataset.line = String(index + 1);
+        row.innerHTML = `<span class="line-no">${index + 1}</span><span class="code-text">${escapeHtml(line) || ' '}</span>`;
+        el.codeBody.appendChild(row);
+      });
+    }
+
+    function fillSampleSelect() {
+      el.sampleSelect.innerHTML = '';
+      samples.forEach((s, idx) => {
+        const option = document.createElement('option');
+        option.value = String(idx);
+        option.textContent = s.name;
+        el.sampleSelect.appendChild(option);
+      });
+    }
+
+    function cloneState(state) {
+      return JSON.parse(JSON.stringify(state));
+    }
+
+    function formatOutputs(outputs) {
+      if (!outputs || outputs.length === 0) return '尚未輸出';
+      return outputs.join('、');
+    }
+
+    function buildSteps(sample) {
+      const base = {
+        rawA: sample.rawA,
+        rawB: sample.rawB,
+        c: sample.c,
+        aBool: null,
+        bBool: null,
+        andResult: null,
+        orResult: null,
+        xorResult: null,
+        outputs: [],
+        finalCheck: null,
+        tokenNote: '尚未讀取',
+        activeEdge: null
+      };
+
+      const list = [];
+      const push = (activeLine, activeNode, message, result, patch) => {
+        if (patch) patch(base);
+        list.push({
+          activeLine,
+          activeNode,
+          message,
+          result,
+          visualState: cloneState(base)
+        });
+      };
+
+      push(1, 'input', '準備讀取一整行輸入，這行有三個數字：a、b、c。', '準備讀取', s => {
+        s.tokenNote = '準備讀取 a、b、c';
+      });
+
+      push(1, 'input', `讀到輸入：a=${sample.rawA}，b=${sample.rawB}，c=${sample.c}。`, '已讀入三個整數', s => {
+        s.tokenNote = `已讀 token：${sample.rawA}、${sample.rawB}、${sample.c}`;
+      });
+
+      push(4, 'boolA', `轉換 a：原本 a=${sample.rawA}，${sample.rawA !== 0 ? '不是 0，所以變成 1' : '是 0，所以仍然是 0'}。`, '正在轉換 a', s => {
+        s.aBool = sample.rawA !== 0 ? 1 : 0;
+        s.activeEdge = 'input-bool';
+      });
+
+      push(5, 'boolB', `轉換 b：原本 b=${sample.rawB}，${sample.rawB !== 0 ? '不是 0，所以變成 1' : '是 0，所以仍然是 0'}。`, '正在轉換 b', s => {
+        s.bBool = sample.rawB !== 0 ? 1 : 0;
+        s.activeEdge = 'input-bool';
+      });
+
+      const andValue = (base.aBool && base.bBool) ? 1 : 0;
+      push(8, 'AND', `檢查 AND：${base.aBool} AND ${base.bBool} = ${andValue}，再看它是不是等於 c=${sample.c}。`, '檢查 AND', s => {
+        s.andResult = andValue;
+        s.activeEdge = 'bool-and';
+      });
+      if (andValue === sample.c) {
+        push(9, 'output', `AND 結果是 ${andValue}，剛好等於 c，所以輸出 AND。`, '輸出 AND', s => {
+          s.outputs.push('AND');
+          s.activeEdge = 'and-output';
+        });
+      } else {
+        push(8, 'AND', `AND 結果是 ${andValue}，不等於 c=${sample.c}，所以不印 AND。`, 'AND 不符合', s => {
+          s.activeEdge = 'bool-and';
+        });
+      }
+
+      const orValue = (base.aBool || base.bBool) ? 1 : 0;
+      push(10, 'OR', `檢查 OR：${base.aBool} OR ${base.bBool} = ${orValue}，再看它是不是等於 c=${sample.c}。`, '檢查 OR', s => {
+        s.orResult = orValue;
+        s.activeEdge = 'bool-or';
+      });
+      if (orValue === sample.c) {
+        push(11, 'output', `OR 結果是 ${orValue}，剛好等於 c，所以輸出 OR。`, '輸出 OR', s => {
+          s.outputs.push('OR');
+          s.activeEdge = 'or-output';
+        });
+      } else {
+        push(10, 'OR', `OR 結果是 ${orValue}，不等於 c=${sample.c}，所以不印 OR。`, 'OR 不符合', s => {
+          s.activeEdge = 'bool-or';
+        });
+      }
+
+      const xorValue = (base.aBool ^ base.bBool);
+      push(12, 'XOR', `檢查 XOR：${base.aBool} XOR ${base.bBool} = ${xorValue}，再看它是不是等於 c=${sample.c}。`, '檢查 XOR', s => {
+        s.xorResult = xorValue;
+        s.activeEdge = 'bool-xor';
+      });
+      if (xorValue === sample.c) {
+        push(13, 'output', `XOR 結果是 ${xorValue}，剛好等於 c，所以輸出 XOR。`, '輸出 XOR', s => {
+          s.outputs.push('XOR');
+          s.activeEdge = 'xor-output';
+        });
+      } else {
+        push(12, 'XOR', `XOR 結果是 ${xorValue}，不等於 c=${sample.c}，所以不印 XOR。`, 'XOR 不符合', s => {
+          s.activeEdge = 'bool-xor';
+        });
+      }
+
+      const noAnswer = base.outputs.length === 0;
+      push(15, 'impossible', noAnswer
+        ? '最後檢查：AND、OR、XOR 都沒有輸出，所以條件成立。'
+        : `最後檢查：目前已經有輸出 ${base.outputs.join('、')}，所以不會輸出 IMPOSSIBLE。`,
+        noAnswer ? '準備輸出 IMPOSSIBLE' : '不用輸出 IMPOSSIBLE', s => {
+          s.finalCheck = noAnswer ? 'will-print' : 'skip';
+          s.activeEdge = noAnswer ? 'ops-impossible' : null;
+        });
+
+      if (noAnswer) {
+        push(16, 'output', '三個運算都不能得到 c，所以輸出 IMPOSSIBLE。', '輸出 IMPOSSIBLE', s => {
+          s.outputs.push('IMPOSSIBLE');
+          s.finalCheck = 'printed';
+          s.activeEdge = 'ops-impossible';
+        });
+      } else {
+        push(15, 'impossible', '程式結束。答案就是目前已經印出的運算名稱。', '程式結束', s => {
+          s.finalCheck = 'done';
+          s.activeEdge = null;
+        });
+      }
+
+      return list;
+    }
+
+    function setText(id, text) {
+      const target = document.getElementById(id);
+      if (target) target.textContent = text;
+    }
+
+    function resetSvgClasses() {
+      document.querySelectorAll('#logicSvg .node').forEach(node => {
+        node.classList.remove('idle', 'done', 'match', 'no-match', 'print', 'waiting', 'active');
+        node.classList.add('idle');
+      });
+      document.querySelectorAll('#logicSvg .edge').forEach(edge => edge.classList.remove('active'));
+    }
+
+    function setNodeStatus(id, status, active = false) {
+      const node = document.querySelector(`#logicSvg [data-node="${id}"]`);
+      if (!node) return;
+      node.classList.remove('idle', 'done', 'match', 'no-match', 'print', 'waiting');
+      node.classList.add(status);
+      if (active) node.classList.add('active');
+    }
+
+    function renderSvg(step) {
+      const s = step.visualState;
+      resetSvgClasses();
+
+      setText('inputText1', `a=${s.rawA}，b=${s.rawB}`);
+      setText('inputText2', `c=${s.c}`);
+      setText('boolText1', s.aBool === null ? 'a 尚未轉換' : `a → ${s.aBool}`);
+      setText('boolText2', s.bBool === null ? 'b 尚未轉換' : `b → ${s.bBool}`);
+
+      const setOpText = (op, value) => {
+        const lower = op.toLowerCase();
+        const textId = lower === 'and' ? 'andText' : lower === 'or' ? 'orText' : 'xorText';
+        const compareId = lower === 'and' ? 'andCompare' : lower === 'or' ? 'orCompare' : 'xorCompare';
+        if (value === null) {
+          setText(textId, '尚未計算');
+          setText(compareId, '是否等於 c？');
+        } else {
+          setText(textId, `結果 = ${value}`);
+          setText(compareId, value === s.c ? `等於 c=${s.c}` : `不等於 c=${s.c}`);
+        }
+      };
+
+      setOpText('AND', s.andResult);
+      setOpText('OR', s.orResult);
+      setOpText('XOR', s.xorResult);
+
+      if (!s.outputs || s.outputs.length === 0) {
+        setText('outputText1', '尚未輸出');
+        setText('outputText2', '');
+      } else if (s.outputs.length <= 2) {
+        setText('outputText1', s.outputs.join(' / '));
+        setText('outputText2', '');
+      } else {
+        setText('outputText1', s.outputs.slice(0, 2).join(' / '));
+        setText('outputText2', s.outputs.slice(2).join(' / '));
+      }
+
+      if (s.finalCheck === null) {
+        setText('impossibleText1', '三個都不行？');
+        setText('impossibleText2', '尚未檢查');
+      } else if (s.finalCheck === 'will-print') {
+        setText('impossibleText1', '三個都不行');
+        setText('impossibleText2', '條件成立');
+      } else if (s.finalCheck === 'printed') {
+        setText('impossibleText1', '已輸出');
+        setText('impossibleText2', 'IMPOSSIBLE');
+      } else {
+        setText('impossibleText1', '已有答案');
+        setText('impossibleText2', '不用印 IMPOSSIBLE');
+      }
+
+      const inputActive = step.activeNode === 'input';
+      setNodeStatus('input', 'done', inputActive);
+
+      let boolStatus = 'waiting';
+      if (s.aBool !== null || s.bBool !== null) boolStatus = 'done';
+      setNodeStatus('bool', boolStatus, step.activeNode === 'boolA' || step.activeNode === 'boolB');
+
+      const opStatus = (value) => value === null ? 'waiting' : (value === s.c ? 'match' : 'no-match');
+      setNodeStatus('AND', opStatus(s.andResult), step.activeNode === 'AND');
+      setNodeStatus('OR', opStatus(s.orResult), step.activeNode === 'OR');
+      setNodeStatus('XOR', opStatus(s.xorResult), step.activeNode === 'XOR');
+
+      const outputStatus = s.outputs && s.outputs.length ? 'print' : 'waiting';
+      setNodeStatus('output', outputStatus, step.activeNode === 'output');
+
+      let impossibleStatus = 'waiting';
+      if (s.finalCheck === 'will-print' || s.finalCheck === 'printed') impossibleStatus = 'match';
+      if (s.finalCheck === 'skip' || s.finalCheck === 'done') impossibleStatus = 'done';
+      setNodeStatus('impossible', impossibleStatus, step.activeNode === 'impossible');
+
+      if (s.activeEdge) {
+        const edge = document.querySelector(`#logicSvg [data-edge="${s.activeEdge}"]`);
+        if (edge) edge.classList.add('active');
+      }
+    }
+
+    function pill(value) {
+      return `<span class="value-pill">${escapeHtml(value)}</span>`;
+    }
+
+    function valueOrDash(value) {
+      return value === null || value === undefined ? '-' : String(value);
+    }
+
+    function renderStateTable(step) {
+      const s = step.visualState;
+      document.getElementById('stateRaw').innerHTML = `a=${pill(s.rawA)} b=${pill(s.rawB)} c=${pill(s.c)}`;
+      document.getElementById('stateBool').innerHTML = `a=${pill(valueOrDash(s.aBool))} b=${pill(valueOrDash(s.bBool))}`;
+      document.getElementById('stateAnd').innerHTML = s.andResult === null ? '-' : `${s.aBool} and ${s.bBool} = ${pill(s.andResult)}`;
+      document.getElementById('stateOr').innerHTML = s.orResult === null ? '-' : `${s.aBool} or ${s.bBool} = ${pill(s.orResult)}`;
+      document.getElementById('stateXor').innerHTML = s.xorResult === null ? '-' : `${s.aBool} ^ ${s.bBool} = ${pill(s.xorResult)}`;
+      document.getElementById('stateOutput').textContent = formatOutputs(s.outputs);
+    }
+
+    function highlightCode(activeLine) {
+      const lines = Array.isArray(activeLine) ? activeLine : [activeLine];
+      document.querySelectorAll('.code-line').forEach(row => {
+        const lineNo = Number(row.dataset.line);
+        row.classList.toggle('active', lines.includes(lineNo));
+      });
+      const first = document.querySelector(`.code-line[data-line="${lines[0]}"]`);
+      if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const step = steps[currentStep];
+      el.stepCounter.textContent = `步驟 ${currentStep + 1} / ${steps.length}`;
+      el.resultChip.textContent = step.result;
+      el.messageText.textContent = step.message;
+      highlightCode(step.activeLine);
+      renderSvg(step);
+      renderStateTable(step);
+
+      const sample = samples[currentSampleIndex];
+      el.sampleHint.textContent = `目前輸入：${sample.input}。程式會把 a=${sample.rawA}、b=${sample.rawB} 先轉成 0 或 1。`;
+    }
+
+    function resetAnimation() {
+      stopPlayback();
+      currentStep = 0;
+      steps = buildSteps(samples[currentSampleIndex]);
+      renderStep();
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        renderStep();
+      } else {
+        stopPlayback();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep -= 1;
+        renderStep();
+      }
+    }
+
+    function startPlayback() {
+      if (timer) return;
+      el.playBtn.textContent = '暫停';
+      timer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          stopPlayback();
+          return;
+        }
+        nextStep();
+      }, 950);
+    }
+
+    function stopPlayback() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      el.playBtn.textContent = '播放';
+    }
+
+    function togglePlayback() {
+      if (timer) stopPlayback();
+      else startPlayback();
+    }
+
+    function applySample() {
+      currentSampleIndex = Number(el.sampleSelect.value);
+      resetAnimation();
+    }
+
+    function openModal() {
+      el.modal.classList.add('show');
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el.modal]);
+      }
+    }
+
+    function closeModal() {
+      el.modal.classList.remove('show');
+    }
+
+    function initDividerDrag() {
+      let dragging = false;
+
+      el.divider.addEventListener('mousedown', () => {
+        dragging = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      window.addEventListener('mousemove', (event) => {
+        if (!dragging) return;
+        const rect = el.splitRoot.getBoundingClientRect();
+        const percent = ((event.clientX - rect.left) / rect.width) * 100;
+        const clamped = Math.min(74, Math.max(34, percent));
+        el.leftPane.style.flexBasis = `${clamped}%`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        dragging = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    }
+
+    function initEvents() {
+      el.nextBtn.addEventListener('click', nextStep);
+      el.prevBtn.addEventListener('click', prevStep);
+      el.playBtn.addEventListener('click', togglePlayback);
+      el.resetBtn.addEventListener('click', resetAnimation);
+      el.applySampleBtn.addEventListener('click', applySample);
+      el.sampleSelect.addEventListener('change', applySample);
+      el.problemBtn.addEventListener('click', openModal);
+      el.closeModalBtn.addEventListener('click', closeModal);
+      el.modal.addEventListener('click', (event) => {
+        if (event.target === el.modal) closeModal();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+        if (event.key === 'ArrowRight') nextStep();
+        if (event.key === 'ArrowLeft') prevStep();
+        if (event.key === ' ') {
+          event.preventDefault();
+          togglePlayback();
+        }
+        if (event.key === 'Escape') closeModal();
+      });
+    }
+
+    function init() {
+      renderCode();
+      fillSampleSelect();
+      el.sampleSelect.value = String(currentSampleIndex);
+      initEvents();
+      initDividerDrag();
+      resetAnimation();
+    }
+
+    init();
+  </script>
+</body>
+</html>

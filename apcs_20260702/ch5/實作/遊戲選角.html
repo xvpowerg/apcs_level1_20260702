@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>m931.1 遊戲選角｜分解輸入與 insert(0) 教學動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-height: 118px;
+      --border: #d7dde7;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --active: #fff3bf;
+      --done: #dcfce7;
+      --pending: #f1f5f9;
+      --returning: #fae8ff;
+      --selected: #fee2e2;
+      --code-active: #fff7cc;
+      --code-border: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    body.dragging {
+      user-select: none;
+      cursor: col-resize;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      min-height: var(--toolbar-height);
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.98);
+      border-bottom: 1px solid var(--border);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-right: 10px;
+      white-space: nowrap;
+    }
+
+    .btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 72px;
+    }
+
+    .btn:hover { background: #f8fafc; }
+    .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn.danger { background: #ef4444; color: white; border-color: #ef4444; }
+
+    .select {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: white;
+      min-width: 120px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .pill.strong {
+      font-weight: 700;
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .message-box {
+      flex: 1 1 360px;
+      min-height: 38px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 18px;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .workspace {
+      margin-top: var(--toolbar-height);
+      height: calc(100vh - var(--toolbar-height));
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .pane {
+      min-width: 260px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .left-pane {
+      flex: 0 0 56%;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-pane {
+      flex: 1 1 auto;
+      padding: 14px;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .divider {
+      flex: 0 0 9px;
+      background: #d8dee9;
+      cursor: col-resize;
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .divider:hover { background: #b8c1d1; }
+
+    .section-card {
+      position: relative;
+      width: 100%;
+      flex-shrink: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .section-body {
+      padding: 12px;
+    }
+
+    .svg-frame {
+      height: min(58vh, 520px);
+      min-height: 390px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      overflow: hidden;
+    }
+
+    #roleSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 12px 12px;
+      border-top: 1px solid #eef2f7;
+      background: #fff;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      color: #475569;
+    }
+
+    .legend-color {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1px solid #94a3b8;
+      display: inline-block;
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .state-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #ffffff;
+      min-height: 54px;
+    }
+
+    .state-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .state-value {
+      font-size: 17px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .array-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .array-row {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .array-row.active {
+      background: var(--active);
+      border-color: #f59e0b;
+    }
+
+    .array-row.selected {
+      background: var(--selected);
+      border-color: #ef4444;
+    }
+
+    .array-row.done {
+      background: var(--done);
+      border-color: #22c55e;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .tag.blue { background: #dbeafe; color: #1d4ed8; }
+    .tag.green { background: #dcfce7; color: #15803d; }
+    .tag.red { background: #fee2e2; color: #b91c1c; }
+    .tag.yellow { background: #fef3c7; color: #92400e; }
+
+    code.inline-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-size: 0.95em;
+    }
+
+    .concept-flow {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .concept-box {
+      border: 1px solid #dbe3ee;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      min-height: 116px;
+    }
+
+    .concept-box.good {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .concept-box.bad {
+      background: #fff7ed;
+      border-color: #fdba74;
+    }
+
+    .concept-title {
+      font-weight: 900;
+      font-size: 17px;
+      margin-bottom: 7px;
+    }
+
+    .concept-line {
+      margin: 5px 0;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .concept-conclusion {
+      margin-top: 10px;
+      border-left: 5px solid #2563eb;
+      background: #eff6ff;
+      padding: 9px 11px;
+      border-radius: 8px;
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .empty-note {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      color: #64748b;
+      background: #f8fafc;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .sample-box {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .io-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .io-title {
+      padding: 7px 10px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 800;
+    }
+
+    .io-pre {
+      margin: 0;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .code-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .code-title {
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 19px;
+      padding: 0 0 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .code-hint {
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .code-wrap {
+      flex: 1 1 auto;
+      overflow: auto;
+      border: 1px solid #334155;
+      background: #111827;
+      border-radius: 12px;
+      padding: 10px 0;
+      min-height: 0;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 8px;
+      padding: 4px 12px 4px 0;
+      min-height: 30px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 16px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      border-left: 5px solid transparent;
+    }
+
+    .code-line.active {
+      background: var(--code-active);
+      color: #111827;
+      border-left-color: var(--code-border);
+    }
+
+    .line-no {
+      text-align: right;
+      color: #94a3b8;
+      user-select: none;
+    }
+
+    .code-line.active .line-no {
+      color: #92400e;
+      font-weight: 800;
+    }
+
+    .line-text { overflow-wrap: anywhere; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(980px, 100%);
+      max-height: 70vh;
+      overflow: auto;
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 60px rgba(0,0,0,0.25);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      z-index: 1;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      padding: 16px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .modal-body h3 {
+      font-size: 18px;
+      margin: 18px 0 8px;
+    }
+
+    .modal-body p { margin: 8px 0; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .problem-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .problem-card.full { grid-column: 1 / -1; }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-height: 168px; }
+      .workspace { flex-direction: column; overflow: auto; }
+      .left-pane, .right-pane { flex: 0 0 auto; width: 100%; min-height: 520px; }
+      .divider { display: none; }
+      .message-box { flex-basis: 100%; white-space: normal; }
+      .state-grid, .sample-box, .problem-grid, .concept-flow { grid-template-columns: 1fr; }
+      .problem-card.full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" aria-label="動畫控制列">
+    <div class="toolbar-row">
+      <div class="title">m931.1 遊戲選角｜分解輸入與 insert(0) 教學</div>
+      <button class="btn" id="problemBtn">題目說明</button>
+      <label for="exampleSelect" class="pill">範例</label>
+      <select id="exampleSelect" class="select" aria-label="切換範例">
+        <option value="0">範例 #1</option>
+        <option value="1">範例 #2</option>
+        <option value="2">範例 #3</option>
+      </select>
+      <button class="btn" id="prevBtn">上一步</button>
+      <button class="btn primary" id="nextBtn">下一步</button>
+      <button class="btn" id="playBtn">播放</button>
+      <button class="btn danger" id="resetBtn">重設</button>
+      <span class="pill strong" id="stepPill">步驟 1 / 1</span>
+      <span class="pill strong" id="resultPill">狀態：尚未開始</span>
+    </div>
+    <div class="toolbar-row">
+      <div class="message-box" id="messageBox">本步驟說明</div>
+      <span class="pill" id="linePill">目前程式碼：第 - 行</span>
+      <span class="pill" id="nodePill">目前角色：-</span>
+    </div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <section class="pane left-pane" id="leftPane" aria-label="資料結構視覺化">
+      <section class="section-card">
+        <div class="section-header">
+          <span>角色資料結構視覺化</span>
+          <span class="tag blue" id="phaseTag">讀取資料</span>
+        </div>
+        <div class="svg-frame">
+          <svg id="roleSvg" viewBox="0 0 900 620" preserveAspectRatio="xMidYMin meet" role="img" aria-label="角色列表 SVG 視覺化"></svg>
+        </div>
+        <div class="legend" aria-label="節點狀態說明">
+          <span class="legend-item"><span class="legend-color" style="background:#f1f5f9"></span>尚未處理</span>
+          <span class="legend-item"><span class="legend-color" style="background:#fff3bf"></span>目前處理中</span>
+          <span class="legend-item"><span class="legend-color" style="background:#dcfce7"></span>已加入能力值</span>
+          <span class="legend-item"><span class="legend-color" style="background:#dbeafe"></span>排序後第一名</span>
+          <span class="legend-item"><span class="legend-color" style="background:#fee2e2"></span>答案：第二名</span>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">目前狀態</div>
+        <div class="section-body">
+          <div class="state-grid" id="stateGrid"></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">程式中的 roles 目前長相</div>
+        <div class="section-body">
+          <div class="array-list" id="arrayList"></div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">為什麼一定要用 insert(0)？</div>
+        <div class="section-body">
+          <div class="concept-flow">
+            <div class="concept-box good">
+              <div class="concept-title">使用 insert(0, 能力值)</div>
+              <div class="concept-line"><code class="inline-code">[3, 1]</code> 變成 <code class="inline-code">[10, 3, 1]</code></div>
+              <div class="concept-line">資料順序：<strong>[能力值, 攻擊力, 防禦力]</strong></div>
+              <div class="concept-line">排序先看索引 0，所以先比較<strong>能力值</strong>。</div>
+            </div>
+            <div class="concept-box bad">
+              <div class="concept-title">若改成 append(能力值)</div>
+              <div class="concept-line"><code class="inline-code">[3, 1]</code> 變成 <code class="inline-code">[3, 1, 10]</code></div>
+              <div class="concept-line">資料順序：<strong>[攻擊力, 防禦力, 能力值]</strong></div>
+              <div class="concept-line">普通排序會先比較<strong>攻擊力</strong>，排名可能錯誤。</div>
+            </div>
+          </div>
+          <div class="concept-conclusion">
+            Python 排序小串列時，會先比較第 0 格。因此把能力值放在索引 0，後面的 <code class="inline-code">roles.sort(reverse=True)</code> 才會先依能力值由大到小排列。
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">目前範例輸入 / 輸出</div>
+        <div class="section-body">
+          <div class="sample-box" id="sampleBox"></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="divider" id="divider" title="拖曳調整左右寬度"></div>
+
+    <section class="pane right-pane" aria-label="Python 程式碼">
+      <div class="code-card">
+        <div class="code-title">
+          <span>完整 Python 程式碼</span>
+          <span class="code-hint">鍵盤：← 上一步、→ 下一步、Space 播放/暫停</span>
+        </div>
+        <div class="code-wrap" id="codeWrap"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-modal="true" role="dialog">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">m931.1 遊戲選角｜題目文字版</div>
+        <button class="btn danger" id="closeModalBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <div class="problem-card full">
+          <h3>題目內容</h3>
+          <p>有 \( n \) 個角色，每個角色都有攻擊力和防禦力。</p>
+          <p>角色的能力值是攻擊力和防禦力的平方和，也就是：</p>
+          <p>\[ \text{能力值} = a_i^2 + d_i^2 \]</p>
+          <p>請輸出能力值第二大的角色的攻擊力和防禦力。</p>
+          <p>題目保證每個角色的能力值都不相同。</p>
+        </div>
+
+        <div class="problem-grid">
+          <div class="problem-card">
+            <h3>輸入說明</h3>
+            <p>第一行包含一個整數 \( n \)，表示有多少個角色。</p>
+            <p>接下來 \( n \) 行，每行包含兩個整數 \( a_i \) 和 \( d_i \)，表示第 \( i \) 個角色的攻擊力和防禦力。</p>
+            <p>範圍：</p>
+            <p>\( 3 \le n \le 20 \)</p>
+            <p>\( 1 \le a_i, d_i \le 100 \)</p>
+          </div>
+          <div class="problem-card">
+            <h3>輸出說明</h3>
+            <p>輸出兩個整數。</p>
+            <p>第一個是能力值第二大的角色的攻擊力。</p>
+            <p>第二個是能力值第二大的角色的防禦力。</p>
+          </div>
+          <div class="problem-card full">
+            <h3>核心想法</h3>
+            <p>這題不是找攻擊力第二大，也不是找防禦力第二大。</p>
+            <p>是先算每個角色的能力值，再依照能力值排序，最後拿第二名的攻擊力與防禦力。</p>
+            <p>程式把每筆資料整理成 <strong>[能力值, 攻擊力, 防禦力]</strong>。因為 Python 排序小串列時會先比較索引 0，所以能力值必須放在最前面。</p>
+            <p><code class="inline-code">insert(0, 能力值)</code> 是「插入最前面」；<code class="inline-code">append(能力值)</code> 是「加到最後面」。本題用普通 <code class="inline-code">sort(reverse=True)</code>，因此使用 insert(0) 最直接。</p>
+          </div>
+        </div>
+
+        <h3>範例</h3>
+        <div class="sample-box">
+          <div class="io-card"><div class="io-title">範例輸入 #1</div><pre class="io-pre">3
+3 1
+5 2
+1 4</pre></div>
+          <div class="io-card"><div class="io-title">範例輸出 #1</div><pre class="io-pre">1 4</pre></div>
+          <div class="io-card"><div class="io-title">範例輸入 #2</div><pre class="io-pre">6
+6 6
+1 3
+8 6
+5 4
+2 8
+7 2</pre></div>
+          <div class="io-card"><div class="io-title">範例輸出 #2</div><pre class="io-pre">6 6</pre></div>
+          <div class="io-card"><div class="io-title">範例輸入 #3</div><pre class="io-pre">5
+34 35
+84 32
+39 79
+59 89
+59 31</pre></div>
+          <div class="io-card"><div class="io-title">範例輸出 #3</div><pre class="io-pre">84 32</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'n = int(input())',
+      'roles = []                                      #先準備一個空串列',
+      'for _ in range(n):                              #重複讀取 n 個角色',
+      '    role = list(map(int, input().split()))      #讀取一位角色：[攻擊力, 防禦力]',
+      '    roles.append(role)                          #把這位角色放進 roles',
+      '#print(roles)',
+      'for i in range(n):',
+      '    ability = roles[i][0]**2 + roles[i][1]**2   #計算能力值',
+      '    roles[i].insert(0, ability)                 #插入索引0，變成[能力,攻擊,防禦]',
+      'roles.sort(reverse=True)                        #先看索引0，依能力值由大到小排序',
+      '#print(roles)',
+      'print(roles[1][1], roles[1][2])                 #輸出第二名的攻擊力與防禦力'
+    ];
+
+    const examples = [
+      {
+        name: '範例 #1',
+        n: 3,
+        roles: [[3,1],[5,2],[1,4]],
+        output: '1 4'
+      },
+      {
+        name: '範例 #2',
+        n: 6,
+        roles: [[6,6],[1,3],[8,6],[5,4],[2,8],[7,2]],
+        output: '6 6'
+      },
+      {
+        name: '範例 #3',
+        n: 5,
+        roles: [[34,35],[84,32],[39,79],[59,89],[59,31]],
+        output: '84 32'
+      }
+    ];
+
+    let steps = [];
+    let currentStep = 0;
+    let currentExampleIndex = 0;
+    let playTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHTML(s) {
+      return String(s).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[ch]));
+    }
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function rowText(role) {
+      if (role.score === null || role.score === undefined) return `[${role.a}, ${role.d}]`;
+      return `[${role.score}, ${role.a}, ${role.d}]`;
+    }
+
+    function inputText(ex) {
+      return [String(ex.n), ...ex.roles.map(r => `${r[0]} ${r[1]}`)].join('\n');
+    }
+
+    function phaseLabel(phase) {
+      const map = {
+        start: '讀取 n',
+        initRoles: '建立空 roles',
+        inputLoop: '輸入迴圈',
+        readRole: '讀取一位角色',
+        appendRole: 'append 加入 roles',
+        loop: '能力值迴圈',
+        calc: '計算能力值',
+        insert: 'insert(0) 放最前面',
+        presort: '準備排序',
+        sorted: '排序完成',
+        output: '輸出答案'
+      };
+      return map[phase] || phase;
+    }
+
+    function sortLikePythonReverse(a, b) {
+      const av = [a.score, a.a, a.d];
+      const bv = [b.score, b.a, b.d];
+      for (let i = 0; i < av.length; i++) {
+        if (av[i] !== bv[i]) return bv[i] - av[i];
+      }
+      return 0;
+    }
+
+    function buildSteps(ex) {
+      const sourceRoles = ex.roles.map((r, idx) => ({ id: idx + 1, a: r[0], d: r[1], score: null }));
+      const visualRoles = [];
+      const built = [];
+      const base = {
+        n: ex.n,
+        answer: '',
+        formula: '-',
+        tempRole: null,
+        activeIndex: -1,
+        selectedIndex: -1,
+        sorted: false,
+        nodeLabel: '-',
+        result: '狀態：尚未開始'
+      };
+
+      built.push({
+        ...base,
+        activeLine: 1,
+        phase: 'start',
+        roles: clone(visualRoles),
+        message: `讀入 n = ${ex.n}，代表接下來要讀取 ${ex.n} 位角色。`,
+        result: `已讀到 n = ${ex.n}`
+      });
+
+      built.push({
+        ...base,
+        activeLine: 2,
+        phase: 'initRoles',
+        roles: clone(visualRoles),
+        message: '先建立 roles = []。現在它是一個空串列，準備收集角色資料。',
+        result: 'roles = []'
+      });
+
+      for (let i = 0; i < sourceRoles.length; i++) {
+        const source = sourceRoles[i];
+
+        built.push({
+          ...base,
+          activeLine: 3,
+          phase: 'inputLoop',
+          roles: clone(visualRoles),
+          nodeLabel: `準備讀第 ${source.id} 位角色`,
+          message: `輸入迴圈第 ${i + 1} 次：準備讀取第 ${source.id} 位角色。`,
+          result: `輸入進度 ${i + 1} / ${ex.n}`
+        });
+
+        built.push({
+          ...base,
+          activeLine: 4,
+          phase: 'readRole',
+          roles: clone(visualRoles),
+          tempRole: [source.a, source.d],
+          nodeLabel: `第 ${source.id} 位角色`,
+          message: `list(map(int, input().split())) 讀到 [${source.a}, ${source.d}]，先放進暫存變數 role。`,
+          result: `role = [${source.a}, ${source.d}]`
+        });
+
+        visualRoles.push(clone(source));
+        built.push({
+          ...base,
+          activeLine: 5,
+          phase: 'appendRole',
+          roles: clone(visualRoles),
+          activeIndex: visualRoles.length - 1,
+          tempRole: [source.a, source.d],
+          nodeLabel: `第 ${source.id} 位角色`,
+          message: `roles.append(role) 把 [${source.a}, ${source.d}] 加到 roles 最後面。`,
+          result: `roles 目前有 ${visualRoles.length} 位角色`
+        });
+      }
+
+      for (let i = 0; i < visualRoles.length; i++) {
+        built.push({
+          ...base,
+          activeLine: 7,
+          phase: 'loop',
+          roles: clone(visualRoles),
+          activeIndex: i,
+          nodeLabel: `原本第 ${visualRoles[i].id} 位角色`,
+          message: `能力值迴圈輪到 i = ${i}，目前處理 roles[${i}]。`,
+          result: `目前處理 i = ${i}`
+        });
+
+        const role = visualRoles[i];
+        const score = role.a * role.a + role.d * role.d;
+        built.push({
+          ...base,
+          activeLine: 8,
+          phase: 'calc',
+          roles: clone(visualRoles),
+          activeIndex: i,
+          nodeLabel: `原本第 ${role.id} 位角色`,
+          formula: `${role.a}² + ${role.d}² = ${score}`,
+          message: `先算能力值：${role.a}² + ${role.d}² = ${score}，存進 ability。`,
+          result: `ability = ${score}`
+        });
+
+        role.score = score;
+        built.push({
+          ...base,
+          activeLine: 9,
+          phase: 'insert',
+          roles: clone(visualRoles),
+          activeIndex: i,
+          nodeLabel: `原本第 ${role.id} 位角色`,
+          formula: `[${role.a}, ${role.d}] → [${score}, ${role.a}, ${role.d}]`,
+          message: `insert(0, ${score}) 把能力值插到索引 0。這樣排序時會先比較能力值。`,
+          result: `roles[${i}] = [${score}, ${role.a}, ${role.d}]`
+        });
+      }
+
+      built.push({
+        ...base,
+        activeLine: 10,
+        phase: 'presort',
+        roles: clone(visualRoles),
+        message: '每筆資料現在都是 [能力值, 攻擊力, 防禦力]，準備由大到小排序。',
+        result: '準備排序'
+      });
+
+      visualRoles.sort(sortLikePythonReverse);
+      built.push({
+        ...base,
+        activeLine: 10,
+        phase: 'sorted',
+        roles: clone(visualRoles),
+        sorted: true,
+        message: '排序先比較索引 0，也就是能力值。能力值最大的排在最前面。',
+        result: '排序完成'
+      });
+
+      const second = visualRoles[1];
+      built.push({
+        ...base,
+        activeLine: 12,
+        phase: 'output',
+        roles: clone(visualRoles),
+        sorted: true,
+        selectedIndex: 1,
+        nodeLabel: `第 2 名：原本第 ${second.id} 位角色`,
+        formula: `roles[1] = [${second.score}, ${second.a}, ${second.d}]`,
+        message: `roles[1] 是第二名；索引 1 是攻擊力 ${second.a}，索引 2 是防禦力 ${second.d}。`,
+        result: `答案：${second.a} ${second.d}`,
+        answer: `${second.a} ${second.d}`
+      });
+
+      return built;
+    }
+
+    function renderCode() {
+      const wrap = $('codeWrap');
+      wrap.innerHTML = codeLines.map((line, idx) => {
+        const lineNo = idx + 1;
+        return `<div class="code-line" data-line="${lineNo}"><span class="line-no">${lineNo}</span><span class="line-text">${escapeHTML(line)}</span></div>`;
+      }).join('');
+    }
+
+    function highlightCode(activeLine) {
+      document.querySelectorAll('.code-line').forEach(el => {
+        el.classList.toggle('active', Number(el.dataset.line) === activeLine);
+      });
+      const active = document.querySelector(`.code-line[data-line="${activeLine}"]`);
+      const wrap = $('codeWrap');
+      if (active) {
+        const a = active.getBoundingClientRect();
+        const w = wrap.getBoundingClientRect();
+        if (a.top < w.top || a.bottom > w.bottom) {
+          active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+    }
+
+    function nodeColor(state, idx, role) {
+      if (state.selectedIndex === idx) return { fill: '#fee2e2', stroke: '#ef4444', label: '答案第二名' };
+      if (state.sorted && idx === 0) return { fill: '#dbeafe', stroke: '#2563eb', label: '排序第一名' };
+      if (state.activeIndex === idx) return { fill: '#fff3bf', stroke: '#f59e0b', label: '目前處理' };
+      if (role.score !== null && role.score !== undefined) return { fill: '#dcfce7', stroke: '#22c55e', label: '已加入能力值' };
+      return { fill: '#f1f5f9', stroke: '#94a3b8', label: '尚未處理' };
+    }
+
+    function renderSvg(state) {
+      const svg = $('roleSvg');
+      const roles = state.roles || [];
+      const n = roles.length;
+      const rowH = 72;
+      const gap = 14;
+      const top = 92;
+      const height = Math.max(620, top + n * (rowH + gap) + 60);
+      svg.setAttribute('viewBox', `0 0 900 ${height}`);
+
+      let html = `
+        <rect x="0" y="0" width="900" height="${height}" fill="#ffffff"></rect>
+        <text x="450" y="36" text-anchor="middle" font-size="25" font-weight="800" fill="#0f172a">角色列表 roles</text>
+        <text x="450" y="66" text-anchor="middle" font-size="18" fill="#475569">${escapeHTML(
+          state.sorted
+            ? '排序後：第 1 列是第一名，第 2 列是第二名'
+            : ['initRoles', 'inputLoop', 'readRole', 'appendRole', 'start'].includes(state.phase)
+              ? '輸入階段：roles 從空串列開始，一位一位 append 進來'
+              : '能力值階段：把能力值 insert 到索引 0'
+        )}</text>
+      `;
+
+      if (roles.length === 0) {
+        html += `
+          <rect x="180" y="130" rx="18" ry="18" width="540" height="110" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3" stroke-dasharray="10 8"></rect>
+          <text x="450" y="178" text-anchor="middle" font-size="24" font-weight="800" fill="#64748b">roles = []</text>
+          <text x="450" y="214" text-anchor="middle" font-size="18" fill="#64748b">目前還沒有任何角色資料</text>
+        `;
+      }
+
+      roles.forEach((role, idx) => {
+        const y = top + idx * (rowH + gap);
+        const color = nodeColor(state, idx, role);
+        const rankLabel = state.sorted ? `第 ${idx + 1} 名` : `位置 ${idx}`;
+        const roleLabel = `原本第 ${role.id} 個`;
+        const scoreText = role.score === null || role.score === undefined
+          ? `尚未算能力　攻擊=${role.a}　防禦=${role.d}`
+          : `能力=${role.score}　攻擊=${role.a}　防禦=${role.d}`;
+        const listText = role.score === null || role.score === undefined
+          ? `[${role.a}, ${role.d}]`
+          : `[${role.score}, ${role.a}, ${role.d}]`;
+
+        html += `
+          <g>
+            <rect x="70" y="${y}" rx="16" ry="16" width="760" height="${rowH}" fill="${color.fill}" stroke="${color.stroke}" stroke-width="3"></rect>
+            <text x="100" y="${y + 28}" font-size="21" font-weight="800" fill="#0f172a">${escapeHTML(rankLabel)}｜${escapeHTML(roleLabel)}</text>
+            <text x="100" y="${y + 55}" font-size="19" fill="#334155">${escapeHTML(scoreText)}</text>
+            <text x="810" y="${y + 31}" text-anchor="end" font-size="18" font-weight="800" fill="#334155">${escapeHTML(color.label)}</text>
+            <text x="810" y="${y + 56}" text-anchor="end" font-size="18" fill="#475569">${escapeHTML(listText)}</text>
+          </g>
+        `;
+      });
+
+      if (state.phase === 'sorted' || state.phase === 'output') {
+        html += `
+          <path d="M 45 100 L 45 ${top + Math.max(0, n - 1) * (rowH + gap) + rowH - 8}" stroke="#2563eb" stroke-width="4" marker-end="url(#arrow)"></path>
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L6,3 z" fill="#2563eb"></path>
+            </marker>
+          </defs>
+          <text x="32" y="88" text-anchor="middle" font-size="16" font-weight="800" fill="#1d4ed8">大</text>
+          <text x="32" y="${top + Math.max(0, n - 1) * (rowH + gap) + rowH + 18}" text-anchor="middle" font-size="16" font-weight="800" fill="#1d4ed8">小</text>
+        `;
+      }
+
+      svg.innerHTML = html;
+    }
+
+    function renderStateGrid(state) {
+      const activeRole = state.activeIndex >= 0 ? state.roles[state.activeIndex] : null;
+      const selected = state.selectedIndex >= 0 ? state.roles[state.selectedIndex] : null;
+      const items = [
+        ['目前階段', phaseLabel(state.phase)],
+        ['角色數 n', state.n],
+        ['目前程式碼行', `第 ${state.activeLine} 行`],
+        ['目前角色', state.nodeLabel || '-'],
+        ['暫存變數 role', state.tempRole ? `[${state.tempRole.join(', ')}]` : '-'],
+        ['能力值／資料變化', state.formula || '-'],
+        ['排序狀態', state.sorted ? '已經由大到小排序' : '尚未排序或正在處理'],
+        ['目前角色資料', activeRole ? rowText(activeRole) : '-'],
+        ['目前答案', state.answer || (selected ? `${selected.a} ${selected.d}` : '-')]
+      ];
+
+      $('stateGrid').innerHTML = items.map(([label, value]) => `
+        <div class="state-item">
+          <div class="state-label">${escapeHTML(label)}</div>
+          <div class="state-value">${escapeHTML(value)}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderArrayList(state) {
+      const roles = state.roles || [];
+      if (roles.length === 0) {
+        $('arrayList').innerHTML = '<div class="empty-note">roles = []　目前是空串列</div>';
+        return;
+      }
+      $('arrayList').innerHTML = roles.map((role, idx) => {
+        const classes = ['array-row'];
+        if (state.selectedIndex === idx) classes.push('selected');
+        else if (state.activeIndex === idx) classes.push('active');
+        else if (role.score !== null && role.score !== undefined) classes.push('done');
+        const label = state.sorted ? `排序後第 ${idx + 1} 列` : `roles[${idx}]`;
+        const status = state.selectedIndex === idx ? '<span class="tag red">第二名答案</span>'
+          : state.activeIndex === idx ? '<span class="tag yellow">目前處理</span>'
+          : role.score !== null && role.score !== undefined ? '<span class="tag green">已算能力</span>'
+          : '<span class="tag">尚未處理</span>';
+        return `
+          <div class="${classes.join(' ')}">
+            <span class="tag blue">${escapeHTML(label)}</span>
+            <strong>${escapeHTML(rowText(role))}</strong>
+            <span>原本第 ${role.id} 個角色</span>
+            ${status}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSampleBox(ex) {
+      $('sampleBox').innerHTML = `
+        <div class="io-card">
+          <div class="io-title">目前範例輸入</div>
+          <pre class="io-pre">${escapeHTML(inputText(ex))}</pre>
+        </div>
+        <div class="io-card">
+          <div class="io-title">正確輸出</div>
+          <pre class="io-pre">${escapeHTML(ex.output)}</pre>
+        </div>
+      `;
+    }
+
+    function renderStep() {
+      const state = steps[currentStep];
+      const ex = examples[currentExampleIndex];
+      $('stepPill').textContent = `步驟 ${currentStep + 1} / ${steps.length}`;
+      $('resultPill').textContent = state.result || '狀態：-';
+      $('messageBox').textContent = state.message || '';
+      $('linePill').textContent = `目前程式碼：第 ${state.activeLine} 行`;
+      $('nodePill').textContent = `目前角色：${state.nodeLabel || '-'}`;
+      $('phaseTag').textContent = phaseLabel(state.phase);
+      renderSvg(state);
+      renderStateGrid(state);
+      renderArrayList(state);
+      renderSampleBox(ex);
+      highlightCode(state.activeLine);
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        renderStep();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        renderStep();
+      }
+    }
+
+    function resetStep() {
+      pause();
+      currentStep = 0;
+      renderStep();
+    }
+
+    function play() {
+      if (playTimer) return;
+      $('playBtn').textContent = '暫停';
+      playTimer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          pause();
+        } else {
+          nextStep();
+        }
+      }, 1050);
+    }
+
+    function pause() {
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+      $('playBtn').textContent = '播放';
+    }
+
+    function togglePlay() {
+      if (playTimer) pause(); else play();
+    }
+
+    function loadExample(index) {
+      pause();
+      currentExampleIndex = Number(index);
+      steps = buildSteps(examples[currentExampleIndex]);
+      currentStep = 0;
+      $('exampleSelect').value = String(currentExampleIndex);
+      renderStep();
+    }
+
+    function setupDivider() {
+      const divider = $('divider');
+      const leftPane = $('leftPane');
+      const workspace = $('workspace');
+      let dragging = false;
+
+      divider.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        divider.setPointerCapture(e.pointerId);
+        document.body.classList.add('dragging');
+      });
+
+      divider.addEventListener('pointerup', (e) => {
+        dragging = false;
+        document.body.classList.remove('dragging');
+        try { divider.releasePointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      divider.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const rect = workspace.getBoundingClientRect();
+        const min = 300;
+        const max = rect.width - 340;
+        let width = e.clientX - rect.left;
+        width = Math.max(min, Math.min(max, width));
+        leftPane.style.flex = `0 0 ${width}px`;
+      });
+    }
+
+    function setupModal() {
+      const modal = $('problemModal');
+      $('problemBtn').addEventListener('click', () => {
+        modal.classList.add('open');
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([modal]).catch(() => {});
+        }
+      });
+      $('closeModalBtn').addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+    }
+
+    function setupEvents() {
+      $('prevBtn').addEventListener('click', prevStep);
+      $('nextBtn').addEventListener('click', nextStep);
+      $('resetBtn').addEventListener('click', resetStep);
+      $('playBtn').addEventListener('click', togglePlay);
+      $('exampleSelect').addEventListener('change', (e) => loadExample(e.target.value));
+
+      document.addEventListener('keydown', (e) => {
+        const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        const modalOpen = $('problemModal').classList.contains('open');
+        if (e.key === 'Escape' && modalOpen) {
+          $('problemModal').classList.remove('open');
+          return;
+        }
+        if (modalOpen) return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+    }
+
+    renderCode();
+    setupDivider();
+    setupModal();
+    setupEvents();
+    loadExample(0);
+  </script>
+</body>
+</html>

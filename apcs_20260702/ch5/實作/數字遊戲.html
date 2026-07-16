@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>i399. 數字遊戲｜一步一步動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root{
+      --toolbar-h: 150px;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --border: #d7deea;
+      --text: #1f2937;
+      --muted: #607089;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --ok: #15803d;
+      --ok-soft: #dcfce7;
+      --warn: #b45309;
+      --warn-soft: #ffedd5;
+      --bad: #b91c1c;
+      --bad-soft: #fee2e2;
+      --skip: #94a3b8;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+      --line-active: #334155;
+      --line-active-border: #facc15;
+      --shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .topbar{
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+    }
+
+    .title-row{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .title{
+      font-size: 22px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .badge{
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: #1e40af;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .toolbar{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button,
+    select{
+      font: inherit;
+      font-size: 16px;
+      min-height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 6px 10px;
+    }
+
+    button{
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover{
+      border-color: #93c5fd;
+      background: #eff6ff;
+    }
+
+    .primary-btn{
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .primary-btn:hover{
+      background: #1d4ed8;
+      color: white;
+    }
+
+    .status-line{
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: minmax(170px, auto) minmax(170px, auto) 1fr;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .status-box{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 7px 10px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .status-box strong{
+      white-space: nowrap;
+      color: #334155;
+    }
+
+    .status-box span{
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .message-box{
+      background: #fff7ed;
+      border-color: #fed7aa;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .app{
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      min-height: 0;
+    }
+
+    .left-pane,
+    .right-pane{
+      min-width: 260px;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .left-pane{
+      flex: 0 0 58%;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-pane{
+      flex: 1 1 auto;
+      padding: 14px;
+      background: #eef2f7;
+    }
+
+    .splitter{
+      width: 9px;
+      flex: 0 0 9px;
+      cursor: col-resize;
+      background: linear-gradient(90deg, #e2e8f0, #cbd5e1, #e2e8f0);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .splitter:hover{
+      background: #bfdbfe;
+    }
+
+    .card{
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    .card-title{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+
+    .small-note{
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .visual-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-card{
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 10px;
+      min-height: 84px;
+    }
+
+    .mini-title{
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    .chips{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chip{
+      min-width: 44px;
+      min-height: 38px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      font-weight: 800;
+      font-size: 20px;
+      padding: 4px 10px;
+    }
+
+    .chip.labelled{
+      flex-direction: column;
+      gap: 1px;
+      min-width: 58px;
+      padding: 5px 9px;
+    }
+
+    .chip-label{
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .chip-value{
+      font-size: 21px;
+      line-height: 1.1;
+    }
+
+    .arrow-text{
+      color: var(--muted);
+      font-weight: 800;
+      padding: 0 2px;
+    }
+
+    .svg-card{
+      padding: 10px;
+    }
+
+    .svg-wrap{
+      position: relative;
+      width: 100%;
+      height: 440px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+
+    /* 只讓左側流程樹 SVG 填滿容器，不影響 MathJax 的數學 SVG */
+    .svg-wrap > svg{
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-rect{
+      fill: #ffffff;
+      stroke: #cbd5e1;
+      stroke-width: 3;
+      rx: 16;
+      filter: drop-shadow(0 4px 8px rgba(15,23,42,0.10));
+    }
+
+    .node-text-main{
+      font-size: 26px;
+      font-weight: 900;
+      fill: #0f172a;
+    }
+
+    .node-text-sub{
+      font-size: 19px;
+      font-weight: 700;
+      fill: #475569;
+    }
+
+    .node-pending .node-rect{ fill: #ffffff; stroke: #cbd5e1; }
+    .node-active .node-rect{ fill: #fff7ed; stroke: #f97316; stroke-width: 5; }
+    .node-done .node-rect{ fill: #ecfdf5; stroke: #16a34a; stroke-width: 4; }
+    .node-skipped .node-rect{ fill: #f1f5f9; stroke: #94a3b8; stroke-dasharray: 8 6; opacity: .78; }
+    .node-answer .node-rect{ fill: #dbeafe; stroke: #2563eb; stroke-width: 5; }
+
+    .edge{
+      stroke: #94a3b8;
+      stroke-width: 4;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .edge.done{ stroke: #16a34a; }
+    .edge.active{ stroke: #f97316; stroke-width: 5; }
+    .edge.skipped{ stroke: #cbd5e1; stroke-dasharray: 8 7; }
+
+    .edge-label{
+      font-size: 18px;
+      font-weight: 900;
+      fill: #475569;
+      paint-order: stroke;
+      stroke: #fff;
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+
+    .table-wrap{
+      max-height: 180px;
+      overflow: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th, td{
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    th{
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 900;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:last-child td{ border-bottom: 0; }
+
+    .branch-list{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .branch-item{
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px 10px;
+      min-height: 62px;
+    }
+
+    .branch-item.active{ border-color: #f97316; background: #fff7ed; }
+    .branch-item.true{ border-color: #22c55e; background: #f0fdf4; }
+    .branch-item.false{ border-color: #94a3b8; background: #f8fafc; }
+
+    .branch-title{
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .branch-desc{
+      color: #475569;
+      font-size: 15px;
+      margin-top: 2px;
+    }
+
+    .code-card{
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .code-head{
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .code-head h2{
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .code-body{
+      background: var(--code-bg);
+      color: var(--code-text);
+      overflow: auto;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 12px 0;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .code-line{
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 8px;
+      padding: 2px 14px 2px 0;
+      border-left: 6px solid transparent;
+      white-space: pre;
+    }
+
+    .code-line.active{
+      background: var(--line-active);
+      border-left-color: var(--line-active-border);
+    }
+
+    .line-no{
+      color: #94a3b8;
+      text-align: right;
+      user-select: none;
+      padding-right: 8px;
+      border-right: 1px solid rgba(148, 163, 184, .35);
+    }
+
+    .line-text{
+      overflow: visible;
+    }
+
+    .legend{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 15px;
+      color: #475569;
+    }
+
+    .legend span{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 800;
+    }
+
+    .dot{
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      background: #fff;
+      display: inline-block;
+    }
+
+    .dot.active{ background:#fff7ed; border-color:#f97316; }
+    .dot.done{ background:#dcfce7; border-color:#16a34a; }
+    .dot.skipped{ background:#f1f5f9; border-color:#94a3b8; }
+    .dot.answer{ background:#dbeafe; border-color:#2563eb; }
+
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(15, 23, 42, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.open{ display: flex; }
+
+    .modal{
+      width: min(980px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(15,23,42,.25);
+      padding: 18px;
+    }
+
+    .modal-header{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      z-index: 2;
+    }
+
+    /* 題目說明彈窗：字體控制在一般內文字級，避免題目區搶畫面 */
+    .modal h2{
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .modal h3{
+      margin: 12px 0 5px;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .modal p{
+      margin: 5px 0;
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .modal strong{
+      font-size: 15px;
+    }
+
+    .modal pre{
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 7px 9px;
+      border-radius: 10px;
+      overflow: auto;
+      font-size: 14px;
+      line-height: 1.45;
+      margin: 5px 0 9px;
+    }
+
+    .modal mjx-container{
+      font-size: 95% !important;
+      line-height: 1 !important;
+    }
+
+    .modal mjx-container svg{
+      display: inline !important;
+      width: auto !important;
+      height: auto !important;
+      max-width: none !important;
+    }
+
+    .example-grid{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kbd{
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .math-text{
+      font-family: Cambria Math, "Times New Roman", "Noto Serif TC", serif;
+      font-size: 1em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px){
+      body{ overflow: auto; }
+      .app{
+        height: auto;
+        min-height: calc(100vh - var(--toolbar-h));
+        flex-direction: column;
+        overflow: visible;
+      }
+      .left-pane,
+      .right-pane{
+        min-width: 0;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      .splitter{ display: none; }
+      .visual-grid,
+      .branch-list,
+      .status-line,
+      .example-grid{
+        grid-template-columns: 1fr;
+      }
+      .svg-wrap{ height: 390px; }
+      .code-body{ min-height: 460px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="title-row">
+      <div class="title">
+        <span>i399. 1. 數字遊戲</span>
+        <span class="badge">白話教學</span>
+      </div>
+      <div class="legend" aria-label="節點圖例">
+        <span><i class="dot active"></i>目前處理</span>
+        <span><i class="dot done"></i>已完成</span>
+        <span><i class="dot skipped"></i>沒走到</span>
+        <span><i class="dot answer"></i>輸出答案</span>
+      </div>
+    </div>
+
+    <div class="toolbar" role="toolbar" aria-label="動畫控制列">
+      <button id="problemBtn">題目說明</button>
+      <label for="sampleSelect"><strong>範例：</strong></label>
+      <select id="sampleSelect" aria-label="切換範例">
+        <option value="0">範例 1：6 6 6</option>
+        <option value="1">範例 2：7 9 7</option>
+        <option value="2">範例 3：4 1 8</option>
+      </select>
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary-btn">下一步</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn">暫停</button>
+      <button id="resetBtn">重設</button>
+      <span class="small-note">快捷鍵：<span class="kbd">←</span> <span class="kbd">→</span> <span class="kbd">Space</span></span>
+    </div>
+
+    <div class="status-line">
+      <div class="status-box"><strong>目前步驟</strong><span id="stepText">步驟 1 / 1</span></div>
+      <div class="status-box"><strong>目前答案</strong><span id="answerText">尚未輸出</span></div>
+      <div class="status-box message-box"><strong>本步驟</strong><span id="messageText">準備開始。</span></div>
+    </div>
+  </header>
+
+  <main class="app" id="app">
+    <section class="left-pane" id="leftPane" aria-label="左側資料視覺化">
+      <section class="card">
+        <div class="card-title">
+          <span>目前資料狀態</span>
+          <span class="small-note" id="stageText">準備</span>
+        </div>
+        <div class="visual-grid">
+          <div class="mini-card">
+            <div class="mini-title">輸入 token</div>
+            <div class="chips" id="inputChips"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-title">排序後的 a、b、c</div>
+            <div class="chips" id="sortedChips"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-title">刪除重複後，會輸出的數字</div>
+            <div class="chips" id="uniqueChips"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-title">目前讀取與程式位置</div>
+            <div id="positionInfo" class="small-note"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card svg-card">
+        <div class="card-title">
+          <span>判斷流程樹</span>
+          <span class="small-note">排序後，只會有四種情況</span>
+        </div>
+        <div class="svg-wrap">
+          <svg id="treeSvg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="程式判斷流程樹"></svg>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <span>次數統計與 P</span>
+          <span class="small-note">P 是出現最多次的次數</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>數字</th>
+                <th>出現次數</th>
+                <th>是否目前最多</th>
+              </tr>
+            </thead>
+            <tbody id="countRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">
+          <span>if / elif 判斷紀錄</span>
+          <span class="small-note">程式會由上往下檢查</span>
+        </div>
+        <div class="branch-list" id="branchList"></div>
+      </section>
+    </section>
+
+    <div class="splitter" id="splitter" role="separator" aria-label="拖曳調整左右寬度"></div>
+
+    <section class="right-pane" aria-label="右側 Python 程式碼">
+      <section class="card code-card">
+        <div class="code-head">
+          <h2>完整 Python 程式碼</h2>
+          <span class="small-note">高亮行會跟動畫同步</span>
+        </div>
+        <div class="code-body" id="codeBody" tabindex="0" aria-label="程式碼區"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">i399. 1. 數字遊戲：題目文字版</h2>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+
+      <h3>題目內容</h3>
+      <p>給三個介於 <span class="math-text">1</span> 到 <span class="math-text">9</span> 的整數 <span class="math-text">A₁, A₂, A₃</span>。</p>
+      <p>先輸出一個正整數 <span class="math-text">P</span>，表示「出現最多次的數字」出現了幾次。</p>
+      <p>接下來把輸入的三個數字去除重複，也就是相同數字只留一個，再由大到小輸出。</p>
+
+      <h3>輸入說明</h3>
+      <p>輸入三個介於 <span class="math-text">1</span> 到 <span class="math-text">9</span> 的整數。</p>
+
+      <h3>輸出說明</h3>
+      <p>先輸出 <span class="math-text">P</span>，再輸出去除重複後的數字，數字由大到小排列。</p>
+
+      <h3>範例</h3>
+      <div class="example-grid">
+        <div>
+          <strong>範例輸入 1</strong>
+          <pre>6 6 6</pre>
+          <strong>範例輸出 1</strong>
+          <pre>3 6</pre>
+        </div>
+        <div>
+          <strong>範例輸入 2</strong>
+          <pre>7 9 7</pre>
+          <strong>範例輸出 2</strong>
+          <pre>2 9 7</pre>
+        </div>
+        <div>
+          <strong>範例輸入 3</strong>
+          <pre>4 1 8</pre>
+          <strong>範例輸出 3</strong>
+          <pre>1 8 4 1</pre>
+        </div>
+      </div>
+
+      <h3>白話重點</h3>
+      <p>這題只有三個數字，所以不用寫很複雜的統計。先把三個數字由大到小排序，相同的數字就會靠在一起。</p>
+      <p>排序後只要檢查四種情況：三個都一樣、後兩個一樣、前兩個一樣、三個都不一樣。</p>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'a,b,c=map(int,input().split())      #取值並轉型',
+      'a,b,c=sorted([a,b,c], reverse=True) #反向排序',
+      'if a==b and b==c:                   #三數相等',
+      '    print("3",a)',
+      'elif (a!=b and b==c):               #a不同b,c相等',
+      '    print("2",a,b)',
+      'elif (a==b and b!=c):               #a,b相等c不同',
+      '    print("2",b,c)',
+      'else:                               #三數不相等',
+      '    print("1",a,b,c)'
+    ];
+
+    const samples = [
+      { name: '範例 1', input: [6, 6, 6] },
+      { name: '範例 2', input: [7, 9, 7] },
+      { name: '範例 3', input: [4, 1, 8] }
+    ];
+
+    let steps = [];
+    let stepIndex = 0;
+    let playing = false;
+    let timerId = null;
+
+    const codeBody = document.getElementById('codeBody');
+    const stepText = document.getElementById('stepText');
+    const answerText = document.getElementById('answerText');
+    const messageText = document.getElementById('messageText');
+    const stageText = document.getElementById('stageText');
+    const inputChips = document.getElementById('inputChips');
+    const sortedChips = document.getElementById('sortedChips');
+    const uniqueChips = document.getElementById('uniqueChips');
+    const positionInfo = document.getElementById('positionInfo');
+    const countRows = document.getElementById('countRows');
+    const branchList = document.getElementById('branchList');
+    const treeSvg = document.getElementById('treeSvg');
+    const topbar = document.getElementById('topbar');
+
+    function syncToolbarHeight(){
+      const h = topbar.offsetHeight;
+      document.documentElement.style.setProperty('--toolbar-h', h + 'px');
+    }
+
+    function renderCode(){
+      codeBody.innerHTML = '';
+      codeLines.forEach((line, i) => {
+        const row = document.createElement('div');
+        row.className = 'code-line';
+        row.dataset.line = String(i + 1);
+
+        const no = document.createElement('div');
+        no.className = 'line-no';
+        no.textContent = String(i + 1);
+
+        const text = document.createElement('div');
+        text.className = 'line-text';
+        text.textContent = line;
+
+        row.appendChild(no);
+        row.appendChild(text);
+        codeBody.appendChild(row);
+      });
+    }
+
+    function sortedDesc(arr){
+      return [...arr].sort((x, y) => y - x);
+    }
+
+    function uniqueDesc(arr){
+      const out = [];
+      for (const v of arr){
+        if (!out.includes(v)) out.push(v);
+      }
+      return out;
+    }
+
+    function countValues(arr){
+      const map = new Map();
+      for (const v of arr) map.set(v, (map.get(v) || 0) + 1);
+      return [...map.entries()].sort((a, b) => b[0] - a[0]).map(([value, count]) => ({ value, count }));
+    }
+
+    function makeBase(sample){
+      const raw = sample.input;
+      const sorted = sortedDesc(raw);
+      const [a, b, c] = sorted;
+      const counts = countValues(sorted);
+      const p = Math.max(...counts.map(x => x.count));
+      const unique = uniqueDesc(sorted);
+      const output = [p, ...unique].join(' ');
+      const c1 = a === b && b === c;
+      const c2 = a !== b && b === c;
+      const c3 = a === b && b !== c;
+      return { raw, sorted, a, b, c, counts, p, unique, output, c1, c2, c3 };
+    }
+
+    function state(base, extra = {}){
+      return {
+        raw: base.raw,
+        sorted: base.sorted,
+        a: base.a,
+        b: base.b,
+        c: base.c,
+        counts: base.counts,
+        p: base.p,
+        unique: base.unique,
+        finalOutput: base.output,
+        readDone: false,
+        sortDone: false,
+        showCounts: false,
+        output: '',
+        stage: '準備',
+        token: '尚未讀取',
+        path: [],
+        skipped: [],
+        checked: {},
+        activeCondition: '',
+        ...extra
+      };
+    }
+
+    function buildSteps(sample){
+      const base = makeBase(sample);
+      const list = [];
+
+      list.push({
+        line: 1,
+        activeNode: 'input',
+        result: '尚未輸出',
+        message: '先看輸入資料，這題一次讀三個數字。',
+        visualState: state(base, {
+          stage: '準備讀取',
+          token: '準備讀整行輸入',
+          path: []
+        })
+      });
+
+      list.push({
+        line: 1,
+        activeNode: 'input',
+        result: '尚未輸出',
+        message: `第 1 行讀入三個值：a=${base.raw[0]}、b=${base.raw[1]}、c=${base.raw[2]}。`,
+        visualState: state(base, {
+          stage: '讀取輸入',
+          token: base.raw.join('、'),
+          readDone: true,
+          path: ['input']
+        })
+      });
+
+      list.push({
+        line: 2,
+        activeNode: 'sort',
+        result: '尚未輸出',
+        message: `第 2 行由大到小排序，變成 a=${base.a}、b=${base.b}、c=${base.c}。`,
+        visualState: state(base, {
+          stage: '反向排序',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          path: ['input', 'sort']
+        })
+      });
+
+      list.push({
+        line: 3,
+        activeNode: 'c1',
+        result: '尚未輸出',
+        message: `檢查 a==b and b==c，也就是 ${base.a}==${base.b} 且 ${base.b}==${base.c}。`,
+        visualState: state(base, {
+          stage: '判斷三數是否相等',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          path: ['input', 'sort'],
+          checked: { c1: base.c1 },
+          activeCondition: 'c1'
+        })
+      });
+
+      if (base.c1){
+        list.push({
+          line: 4,
+          activeNode: 'p3',
+          result: `輸出：${base.output}`,
+          message: `三個數字都相同，所以最多次數 P=3，只輸出一個 ${base.a}。`,
+          visualState: state(base, {
+            stage: '輸出答案',
+            token: '整行已讀完',
+            readDone: true,
+            sortDone: true,
+            showCounts: true,
+            output: base.output,
+            path: ['input', 'sort', 'c1', 'p3'],
+            checked: { c1: true },
+            skipped: ['c2', 'c3', 'p2ab', 'p2bc', 'p1']
+          })
+        });
+        return list;
+      }
+
+      list.push({
+        line: 5,
+        activeNode: 'c2',
+        result: '尚未輸出',
+        message: `上一個條件不成立。接著檢查 a!=b and b==c：${base.a}!=${base.b} 且 ${base.b}==${base.c}。`,
+        visualState: state(base, {
+          stage: '判斷後兩個是否相等',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          path: ['input', 'sort', 'c1'],
+          checked: { c1: false, c2: base.c2 },
+          skipped: ['p3'],
+          activeCondition: 'c2'
+        })
+      });
+
+      if (base.c2){
+        list.push({
+          line: 6,
+          activeNode: 'p2ab',
+          result: `輸出：${base.output}`,
+          message: `後兩個一樣，最多次數 P=2。去重後由大到小輸出 ${base.unique.join('、')}。`,
+          visualState: state(base, {
+            stage: '輸出答案',
+            token: '整行已讀完',
+            readDone: true,
+            sortDone: true,
+            showCounts: true,
+            output: base.output,
+            path: ['input', 'sort', 'c1', 'c2', 'p2ab'],
+            checked: { c1: false, c2: true },
+            skipped: ['p3', 'c3', 'p2bc', 'p1']
+          })
+        });
+        return list;
+      }
+
+      list.push({
+        line: 7,
+        activeNode: 'c3',
+        result: '尚未輸出',
+        message: `前兩個條件都不成立。再檢查 a==b and b!=c：${base.a}==${base.b} 且 ${base.b}!=${base.c}。`,
+        visualState: state(base, {
+          stage: '判斷前兩個是否相等',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          path: ['input', 'sort', 'c1', 'c2'],
+          checked: { c1: false, c2: false, c3: base.c3 },
+          skipped: ['p3', 'p2ab'],
+          activeCondition: 'c3'
+        })
+      });
+
+      if (base.c3){
+        list.push({
+          line: 8,
+          activeNode: 'p2bc',
+          result: `輸出：${base.output}`,
+          message: `前兩個一樣，最多次數 P=2。a 和 b 相同，輸出 b 就代表留下這個數字一次。`,
+          visualState: state(base, {
+            stage: '輸出答案',
+            token: '整行已讀完',
+            readDone: true,
+            sortDone: true,
+            showCounts: true,
+            output: base.output,
+            path: ['input', 'sort', 'c1', 'c2', 'c3', 'p2bc'],
+            checked: { c1: false, c2: false, c3: true },
+            skipped: ['p3', 'p2ab', 'p1']
+          })
+        });
+        return list;
+      }
+
+      list.push({
+        line: 9,
+        activeNode: 'elseNode',
+        result: '尚未輸出',
+        message: '三個相等的判斷都失敗，所以會進入 else：三數不相等。',
+        visualState: state(base, {
+          stage: '進入 else',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          path: ['input', 'sort', 'c1', 'c2', 'c3'],
+          checked: { c1: false, c2: false, c3: false },
+          skipped: ['p3', 'p2ab', 'p2bc'],
+          activeCondition: 'else'
+        })
+      });
+
+      list.push({
+        line: 10,
+        activeNode: 'p1',
+        result: `輸出：${base.output}`,
+        message: `三個數字都不同，最多次數 P=1，排序後直接輸出 a、b、c。`,
+        visualState: state(base, {
+          stage: '輸出答案',
+          token: '整行已讀完',
+          readDone: true,
+          sortDone: true,
+          showCounts: true,
+          output: base.output,
+          path: ['input', 'sort', 'c1', 'c2', 'c3', 'elseNode', 'p1'],
+          checked: { c1: false, c2: false, c3: false },
+          skipped: ['p3', 'p2ab', 'p2bc']
+        })
+      });
+
+      return list;
+    }
+
+    function chip(value, label = ''){
+      const el = document.createElement('span');
+      el.className = label ? 'chip labelled' : 'chip';
+      if (label){
+        const lab = document.createElement('span');
+        lab.className = 'chip-label';
+        lab.textContent = label;
+        const val = document.createElement('span');
+        val.className = 'chip-value';
+        val.textContent = value;
+        el.append(lab, val);
+      } else {
+        el.textContent = value;
+      }
+      return el;
+    }
+
+    function renderChips(container, values, labels = []){
+      container.innerHTML = '';
+      values.forEach((v, i) => {
+        container.appendChild(chip(v, labels[i] || ''));
+        if (i < values.length - 1){
+          const arrow = document.createElement('span');
+          arrow.className = 'arrow-text';
+          arrow.textContent = '→';
+          container.appendChild(arrow);
+        }
+      });
+    }
+
+    function renderStateCards(st){
+      renderChips(inputChips, st.raw, st.readDone ? ['原 a', '原 b', '原 c'] : ['待讀', '待讀', '待讀']);
+
+      if (st.sortDone){
+        renderChips(sortedChips, st.sorted, ['a 最大', 'b 中間', 'c 最小']);
+      } else {
+        sortedChips.innerHTML = '<span class="small-note">尚未執行 sorted(..., reverse=True)</span>';
+      }
+
+      if (st.showCounts){
+        renderChips(uniqueChips, st.unique, st.unique.map((_, i) => i === 0 ? '最大' : '去重'));
+      } else {
+        uniqueChips.innerHTML = '<span class="small-note">排序後才容易看出去重結果</span>';
+      }
+
+      positionInfo.innerHTML = `
+        <div><strong>目前 token：</strong>${st.token}</div>
+        <div><strong>目前動作：</strong>${st.stage}</div>
+        <div><strong>程式想法：</strong>先排序，再用 if 找重複情況。</div>
+      `;
+      stageText.textContent = st.stage;
+    }
+
+    function renderCounts(st){
+      countRows.innerHTML = '';
+      if (!st.showCounts){
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3">尚未排序，所以先不統計。</td>';
+        countRows.appendChild(tr);
+        return;
+      }
+      st.counts.forEach(item => {
+        const tr = document.createElement('tr');
+        const isMax = item.count === st.p;
+        tr.innerHTML = `
+          <td><strong>${item.value}</strong></td>
+          <td>${item.count}</td>
+          <td>${isMax ? '是，P 可看成 ' + st.p : '不是'}</td>
+        `;
+        countRows.appendChild(tr);
+      });
+    }
+
+    const branchDefs = [
+      { id: 'c1', title: '第 3 行：a==b and b==c', desc: '三個數字全部一樣 → P=3' },
+      { id: 'c2', title: '第 5 行：a!=b and b==c', desc: '後兩個一樣 → P=2，輸出 a、b' },
+      { id: 'c3', title: '第 7 行：a==b and b!=c', desc: '前兩個一樣 → P=2，輸出 b、c' },
+      { id: 'else', title: '第 9 行：else', desc: '以上都不是 → 三個都不同，P=1' }
+    ];
+
+    function renderBranches(st){
+      branchList.innerHTML = '';
+      branchDefs.forEach(def => {
+        const div = document.createElement('div');
+        const val = st.checked[def.id];
+        let cls = 'branch-item';
+        if (st.activeCondition === def.id) cls += ' active';
+        else if (val === true) cls += ' true';
+        else if (val === false) cls += ' false';
+        else if (def.id === 'else' && st.activeCondition === 'else') cls += ' active';
+        div.className = cls;
+
+        let resultText = '尚未檢查';
+        if (val === true) resultText = '成立，走這條';
+        if (val === false) resultText = '不成立，往下看';
+        if (def.id === 'else' && st.path.includes('elseNode')) resultText = '進入 else';
+
+        div.innerHTML = `
+          <div class="branch-title">${def.title}</div>
+          <div class="branch-desc">${def.desc}</div>
+          <div class="branch-desc"><strong>狀態：</strong>${resultText}</div>
+        `;
+        branchList.appendChild(div);
+      });
+    }
+
+    function nodeStatus(id, st, activeId){
+      if (id === activeId) return 'node-active';
+      if (id.startsWith('p') && st.output && st.path.includes(id)) return 'node-answer';
+      if (st.path.includes(id)) return 'node-done';
+      if (st.skipped.includes(id)) return 'node-skipped';
+      return 'node-pending';
+    }
+
+    const nodeDefs = [
+      { id:'input', x:500, y:45, w:250, h:70, title:'讀取輸入', sub:'a,b,c 原始值' },
+      { id:'sort', x:500, y:135, w:290, h:70, title:'由大到小排序', sub:'a ≥ b ≥ c' },
+      { id:'c1', x:500, y:230, w:310, h:78, title:'a==b 且 b==c？', sub:'三個都一樣嗎' },
+      { id:'p3', x:810, y:340, w:250, h:70, title:'print("3",a)', sub:'P=3，留一個數字' },
+      { id:'c2', x:260, y:340, w:330, h:78, title:'a!=b 且 b==c？', sub:'後兩個一樣嗎' },
+      { id:'p2ab', x:550, y:455, w:270, h:70, title:'print("2",a,b)', sub:'P=2，輸出 a、b' },
+      { id:'c3', x:175, y:455, w:330, h:78, title:'a==b 且 b!=c？', sub:'前兩個一樣嗎' },
+      { id:'p2bc', x:120, y:560, w:270, h:70, title:'print("2",b,c)', sub:'P=2，輸出 b、c' },
+      { id:'elseNode', x:360, y:560, w:250, h:70, title:'else', sub:'三個都不一樣' },
+      { id:'p1', x:635, y:560, w:270, h:70, title:'print("1",a,b,c)', sub:'P=1，輸出三個' }
+    ];
+
+    const edges = [
+      { from:'input', to:'sort', label:'' },
+      { from:'sort', to:'c1', label:'' },
+      { from:'c1', to:'p3', label:'成立' },
+      { from:'c1', to:'c2', label:'不成立' },
+      { from:'c2', to:'p2ab', label:'成立' },
+      { from:'c2', to:'c3', label:'不成立' },
+      { from:'c3', to:'p2bc', label:'成立' },
+      { from:'c3', to:'elseNode', label:'不成立' },
+      { from:'elseNode', to:'p1', label:'輸出' }
+    ];
+
+    function getNode(id){ return nodeDefs.find(n => n.id === id); }
+
+    function edgePath(from, to){
+      const a = getNode(from);
+      const b = getNode(to);
+      const ax = a.x;
+      const ay = a.y + a.h / 2;
+      const bx = b.x;
+      const by = b.y - b.h / 2;
+      if (Math.abs(ax - bx) < 10){
+        return `M ${ax} ${ay} L ${bx} ${by}`;
+      }
+      const midY = (ay + by) / 2;
+      return `M ${ax} ${ay} C ${ax} ${midY}, ${bx} ${midY}, ${bx} ${by}`;
+    }
+
+    function edgeStatus(edge, st, activeId){
+      const hasFrom = st.path.includes(edge.from);
+      const hasTo = st.path.includes(edge.to);
+      if (hasFrom && edge.to === activeId) return 'active';
+      if (hasFrom && hasTo) return 'done';
+      if (st.skipped.includes(edge.to)) return 'skipped';
+      return '';
+    }
+
+    function conditionSuffix(id, st){
+      if (id === 'c1' && typeof st.checked.c1 === 'boolean') return st.checked.c1 ? '結果：成立' : '結果：不成立';
+      if (id === 'c2' && typeof st.checked.c2 === 'boolean') return st.checked.c2 ? '結果：成立' : '結果：不成立';
+      if (id === 'c3' && typeof st.checked.c3 === 'boolean') return st.checked.c3 ? '結果：成立' : '結果：不成立';
+      if (id.startsWith('p') && st.output) return `輸出：${st.output}`;
+      return '';
+    }
+
+    function renderTree(st, activeId){
+      treeSvg.innerHTML = `
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"></path>
+          </marker>
+        </defs>
+      `;
+
+      edges.forEach(edge => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', edgePath(edge.from, edge.to));
+        const status = edgeStatus(edge, st, activeId);
+        path.setAttribute('class', `edge ${status}`);
+        treeSvg.appendChild(path);
+
+        if (edge.label){
+          const from = getNode(edge.from);
+          const to = getNode(edge.to);
+          const tx = (from.x + to.x) / 2;
+          const ty = (from.y + to.y) / 2 + 10;
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', tx);
+          label.setAttribute('y', ty);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('class', 'edge-label');
+          label.textContent = edge.label;
+          treeSvg.appendChild(label);
+        }
+      });
+
+      nodeDefs.forEach(n => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', `tree-node ${nodeStatus(n.id, st, activeId)}`);
+        g.setAttribute('transform', `translate(${n.x - n.w/2}, ${n.y - n.h/2})`);
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'node-rect');
+        rect.setAttribute('width', n.w);
+        rect.setAttribute('height', n.h);
+        rect.setAttribute('rx', '16');
+        rect.setAttribute('ry', '16');
+        g.appendChild(rect);
+
+        const main = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        main.setAttribute('class', 'node-text-main');
+        main.setAttribute('x', n.w / 2);
+        main.setAttribute('y', 30);
+        main.setAttribute('text-anchor', 'middle');
+        main.textContent = n.title;
+        g.appendChild(main);
+
+        const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        sub.setAttribute('class', 'node-text-sub');
+        sub.setAttribute('x', n.w / 2);
+        sub.setAttribute('y', 56);
+        sub.setAttribute('text-anchor', 'middle');
+        sub.textContent = conditionSuffix(n.id, st) || n.sub;
+        g.appendChild(sub);
+
+        treeSvg.appendChild(g);
+      });
+    }
+
+    function updateCodeHighlight(line){
+      document.querySelectorAll('.code-line').forEach(el => {
+        el.classList.toggle('active', Number(el.dataset.line) === line);
+      });
+      const active = document.querySelector(`.code-line[data-line="${line}"]`);
+      if (active){
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    function renderStep(){
+      const step = steps[stepIndex];
+      if (!step) return;
+
+      stepText.textContent = `步驟 ${stepIndex + 1} / ${steps.length}`;
+      answerText.textContent = step.result;
+      messageText.textContent = step.message;
+
+      const st = step.visualState;
+      renderStateCards(st);
+      renderCounts(st);
+      renderBranches(st);
+      renderTree(st, step.activeNode);
+      updateCodeHighlight(step.line);
+    }
+
+    function setSample(index){
+      stopPlay();
+      steps = buildSteps(samples[index]);
+      stepIndex = 0;
+      renderStep();
+    }
+
+    function nextStep(){
+      if (stepIndex < steps.length - 1){
+        stepIndex += 1;
+        renderStep();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep(){
+      if (stepIndex > 0){
+        stepIndex -= 1;
+        renderStep();
+      }
+    }
+
+    function resetStep(){
+      stopPlay();
+      stepIndex = 0;
+      renderStep();
+    }
+
+    function startPlay(){
+      if (playing) return;
+      playing = true;
+      timerId = setInterval(() => {
+        if (stepIndex >= steps.length - 1){
+          stopPlay();
+          return;
+        }
+        nextStep();
+      }, 1100);
+    }
+
+    function stopPlay(){
+      playing = false;
+      if (timerId){
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', prevStep);
+    document.getElementById('nextBtn').addEventListener('click', nextStep);
+    document.getElementById('playBtn').addEventListener('click', startPlay);
+    document.getElementById('pauseBtn').addEventListener('click', stopPlay);
+    document.getElementById('resetBtn').addEventListener('click', resetStep);
+    document.getElementById('sampleSelect').addEventListener('change', e => setSample(Number(e.target.value)));
+
+    const modal = document.getElementById('problemModal');
+    document.getElementById('problemBtn').addEventListener('click', () => {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    });
+    modal.addEventListener('click', e => {
+      if (e.target === modal){
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.code === 'ArrowRight'){
+        e.preventDefault();
+        nextStep();
+      } else if (e.code === 'ArrowLeft'){
+        e.preventDefault();
+        prevStep();
+      } else if (e.code === 'Space'){
+        e.preventDefault();
+        playing ? stopPlay() : startPlay();
+      }
+    });
+
+    const splitter = document.getElementById('splitter');
+    const leftPane = document.getElementById('leftPane');
+    const app = document.getElementById('app');
+    let resizing = false;
+
+    splitter.addEventListener('mousedown', () => {
+      resizing = true;
+      document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!resizing) return;
+      const rect = app.getBoundingClientRect();
+      const percent = ((e.clientX - rect.left) / rect.width) * 100;
+      const clamped = Math.max(35, Math.min(72, percent));
+      leftPane.style.flexBasis = clamped + '%';
+    });
+
+    window.addEventListener('mouseup', () => {
+      resizing = false;
+      document.body.style.userSelect = '';
+    });
+
+    window.addEventListener('resize', () => {
+      syncToolbarHeight();
+    });
+
+    renderCode();
+    syncToolbarHeight();
+    setSample(0);
+    setTimeout(syncToolbarHeight, 100);
+  </script>
+</body>
+</html>

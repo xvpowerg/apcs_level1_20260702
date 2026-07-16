@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>o711. 裝飲料｜單一大容器計算板</title>
+  <style>
+    :root{
+      --toolbar-h:132px;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --line:#d8e0eb;
+      --text:#172033;
+      --muted:#64748b;
+      --blue:#2563eb;
+      --blue-soft:#dbeafe;
+      --green:#059669;
+      --green-soft:#d1fae5;
+      --orange:#ea580c;
+      --orange-soft:#ffedd5;
+      --red:#dc2626;
+      --red-soft:#fee2e2;
+      --yellow:#f59e0b;
+      --yellow-soft:#fef3c7;
+      --purple:#7c3aed;
+      --code-bg:#0f172a;
+      --code-active:#334155;
+      --shadow:0 7px 24px rgba(15,23,42,.09);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--text);
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+      font-size:16px;
+      line-height:1.55;
+    }
+
+    button,select{
+      font-family:inherit;
+      font-size:15px;
+      padding:7px 11px;
+      border:1px solid #cbd5e1;
+      border-radius:10px;
+      background:#fff;
+      color:var(--text);
+      cursor:pointer;
+    }
+    button:hover,select:hover{border-color:#94a3b8}
+    button.primary{color:#fff;border-color:var(--blue);background:var(--blue)}
+
+    .topbar{
+      position:fixed;
+      z-index:100;
+      top:0;left:0;right:0;
+      height:var(--toolbar-h);
+      padding:10px 14px;
+      background:rgba(255,255,255,.98);
+      border-bottom:1px solid var(--line);
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .title-row{
+      min-height:32px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .title-row h1{
+      margin:0;
+      color:#0b3aa9;
+      font-size:22px;
+      letter-spacing:.4px;
+    }
+
+    .version{
+      display:inline-flex;
+      margin-left:8px;
+      padding:3px 9px;
+      border:1px solid #bfdbfe;
+      border-radius:999px;
+      background:var(--blue-soft);
+      color:#1d4ed8;
+      font-size:13px;
+      vertical-align:middle;
+    }
+
+    .title-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .toolbar{
+      display:grid;
+      grid-template-columns:auto auto auto auto auto minmax(135px,.7fr) minmax(210px,1.1fr) minmax(310px,2fr);
+      gap:8px;
+      align-items:stretch;
+    }
+
+    .status-box,.message-box{
+      min-width:0;
+      min-height:40px;
+      padding:7px 10px;
+      border:1px solid var(--line);
+      border-radius:11px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      gap:7px;
+      overflow:hidden;
+    }
+
+    .message-box{border-color:#bfdbfe;background:#eff6ff}
+    .status-box strong{white-space:nowrap}
+    .status-box span,.message-box span{
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+
+    .main{
+      margin-top:var(--toolbar-h);
+      height:calc(100vh - var(--toolbar-h));
+      display:flex;
+      overflow:hidden;
+      min-width:0;
+    }
+
+    .left-pane{
+      flex:0 0 66%;
+      min-width:520px;
+      max-width:84%;
+      height:100%;
+      padding:12px;
+      min-height:0;
+
+      /* 左頁是唯一的垂直捲動容器 */
+      overflow-y:auto;
+      overflow-x:hidden;
+      overscroll-behavior:contain;
+      scrollbar-gutter:stable;
+      padding-bottom:24px;
+    }
+
+    .divider{
+      flex:0 0 10px;
+      width:10px;
+      position:relative;
+      border-left:1px solid #cbd5e1;
+      border-right:1px solid #cbd5e1;
+      background:linear-gradient(90deg,#e5e7eb,#cbd5e1,#e5e7eb);
+      cursor:col-resize;
+      touch-action:none;
+      user-select:none;
+    }
+
+    .divider::after{
+      content:"";
+      position:absolute;
+      top:50%;left:50%;
+      width:4px;height:56px;
+      border-radius:999px;
+      background:#94a3b8;
+      transform:translate(-50%,-50%);
+    }
+
+    .divider:hover,.divider.dragging{
+      background:linear-gradient(90deg,#bfdbfe,#60a5fa,#bfdbfe);
+    }
+
+    .right-pane{
+      flex:1 1 0;
+      min-width:0;
+      height:100%;
+      padding:12px;
+      overflow:auto;
+      background:#0b1120;
+    }
+
+    /* 左邊只保留一張完整教學板：大容器 + 同一張計算表 */
+    .teaching-board{
+      width:100%;
+
+      /* 內容可以自然往下延伸，由 left-pane 統一捲動 */
+      height:auto;
+      min-height:100%;
+      overflow:visible;
+
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      box-shadow:0 4px 18px rgba(15,23,42,.07);
+
+      display:grid;
+      grid-template-rows:
+        auto
+        minmax(520px,auto)
+        auto;
+    }
+
+    .board-header{
+      padding:10px 14px;
+      border-bottom:1px solid var(--line);
+      background:#f8fafc;
+      display:grid;
+      grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);
+      grid-template-areas:
+        "question formula"
+        "sample sample";
+      gap:10px 12px;
+      align-items:start;
+    }
+
+    .board-question{
+      grid-area:question;
+      font-size:17px;
+      line-height:1.6;
+    }
+
+    .board-question p{
+      margin:0;
+    }
+
+    .board-question p + p{
+      margin-top:4px;
+    }
+
+    .board-question strong{color:#0b3aa9}
+
+    .core-formula{
+      grid-area:formula;
+      padding:8px 12px;
+      border:1px solid #c7d2fe;
+      border-radius:12px;
+      background:#eef2ff;
+      color:#312e81;
+      font-weight:900;
+      text-align:center;
+      line-height:1.65;
+      white-space:normal;
+    }
+
+    .sample-overview{
+      grid-area:sample;
+      display:grid;
+      grid-template-columns:120px minmax(180px,.62fr) minmax(0,1.4fr) minmax(150px,.55fr);
+      gap:8px;
+      align-items:stretch;
+      min-width:0;
+    }
+
+    .sample-overview-title,
+    .sample-overview-box{
+      min-width:0;
+      border:1px solid #dbe4f0;
+      border-radius:11px;
+      background:#fff;
+    }
+
+    .sample-overview-title{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+      color:#0b3aa9;
+      font-size:17px;
+      font-weight:900;
+      text-align:center;
+    }
+
+    .sample-overview-box{
+      padding:7px 9px;
+    }
+
+    .sample-overview-box .box-title{
+      margin-bottom:3px;
+      color:#64748b;
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .sample-overview-box pre{
+      margin:0;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:15px;
+      line-height:1.42;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+
+    .sample-meaning-lines{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      line-height:1.42;
+    }
+
+    .sample-output-value{
+      color:#b45309;
+      font-size:22px;
+      font-weight:900;
+    }
+
+    .sample-output-note{
+      margin-top:2px;
+      color:#475569;
+      font-size:13px;
+      line-height:1.4;
+    }
+
+    .board-main{
+      min-height:520px;
+      overflow:visible;
+      padding:10px 12px;
+      background:linear-gradient(180deg,#ffffff 0%,#edf6ff 100%);
+    }
+
+    .layer-table{display:none}
+
+    .cup-stage{
+      width:100%;
+      height:520px;
+      min-height:520px;
+      position:relative;
+      overflow:hidden;
+      border:1px solid #dbe4f0;
+      border-radius:16px;
+      background:linear-gradient(180deg,#f8fbff 0%,#eaf4ff 100%);
+    }
+
+    #cupSvg{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .board-calculation{
+      min-height:250px;
+      padding:9px 12px 11px;
+      border-top:1px solid var(--line);
+      background:#eef2ff;
+
+      /* 不建立第二個垂直捲軸 */
+      overflow:visible;
+
+      display:grid;
+      grid-template-rows:auto auto;
+      gap:8px;
+    }
+
+    .status-content{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:7px;
+    }
+
+    .status-row{
+      min-width:0;
+      padding:6px 8px;
+      border:1px solid #dbe4f0;
+      border-radius:10px;
+      background:#fff;
+    }
+    .status-row .name{
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .status-row .value{
+      margin-top:1px;
+      font-size:16px;
+      font-weight:900;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+    .status-row.important{
+      border-color:#fbbf24;
+      background:#fffbeb;
+    }
+    .status-row.important .value{color:#92400e}
+
+    .calculation-area{
+      min-height:0;
+      overflow:hidden;
+      padding:0;
+      border:0;
+      background:transparent;
+    }
+
+    .calculation-title{
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      font-size:17px;
+      font-weight:900;
+      color:#312e81;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid transparent;
+      font-size:13px;
+      font-weight:900;
+    }
+    .tag.blue{background:var(--blue-soft);color:#1d4ed8;border-color:#bfdbfe}
+    .tag.green{background:var(--green-soft);color:#047857;border-color:#a7f3d0}
+    .tag.orange{background:var(--orange-soft);color:#c2410c;border-color:#fed7aa}
+    .tag.red{background:var(--red-soft);color:#b91c1c;border-color:#fecaca}
+    .tag.yellow{background:var(--yellow-soft);color:#92400e;border-color:#fde68a}
+    .tag.purple{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
+
+    .calc-message{
+      margin-left:auto;
+      min-width:0;
+      color:#475569;
+      font-size:15px;
+      font-weight:700;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+
+    .calc-table-wrap{
+      min-height:0;
+
+      /* 計算表太寬時只做水平捲動，上下仍交給左頁 */
+      overflow-x:auto;
+      overflow-y:visible;
+
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      background:#fff;
+    }
+
+    .calc-table{
+      width:100%;
+      height:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-size:15px;
+    }
+
+    .calc-table th,
+    .calc-table td{
+      padding:6px 8px;
+      border-right:1px solid #e2e8f0;
+      border-bottom:1px solid #e2e8f0;
+      text-align:center;
+      vertical-align:middle;
+      overflow-wrap:anywhere;
+    }
+    .calc-table th:last-child,
+    .calc-table td:last-child{border-right:none}
+    .calc-table tr:last-child td{border-bottom:none}
+    .calc-table th{
+      background:#f8fafc;
+      color:#334155;
+      font-weight:900;
+    }
+    .calc-table .row-lower td:first-child{background:#eff6ff;color:#1d4ed8;font-weight:900}
+    .calc-table .row-upper td:first-child{background:#f5f3ff;color:#6d28d9;font-weight:900}
+    .calc-table .row-total td{background:#fffbeb;font-weight:900;color:#92400e}
+    .calc-table .formula-cell{
+      font-family:Consolas,"Courier New",monospace;
+      font-weight:800;
+      color:#0f172a;
+    }
+    .calc-note{
+      margin-top:4px;
+      color:#334155;
+      font-size:14px;
+      font-weight:700;
+      text-align:left;
+    }
+
+    /* 右側：完整註解程式碼 */
+    .code-card{
+      min-width:0;
+      min-height:calc(100vh - var(--toolbar-h) - 24px);
+      overflow:hidden;
+      border:1px solid #263247;
+      border-radius:16px;
+      background:var(--code-bg);
+      color:#e5e7eb;
+    }
+
+    .code-head{
+      padding:10px 12px;
+      border-bottom:1px solid #263247;
+      background:#111827;
+    }
+
+    .code-head h2{margin:0 0 7px;font-size:18px;color:#fff}
+
+    .current-code-explain{
+      min-height:58px;
+      padding:9px 10px;
+      border:1px solid #475569;
+      border-radius:11px;
+      background:#1e293b;
+      color:#e2e8f0;
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+      line-height:1.55;
+    }
+    .current-code-explain strong{color:#fde68a}
+
+    .code-scroll{max-width:100%;overflow:auto}
+    .code-lines{
+      min-width:900px;
+      padding:8px 0 20px;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:15px;
+      line-height:1.55;
+    }
+
+    .code-line{
+      display:grid;
+      grid-template-columns:54px minmax(0,1fr);
+      min-height:25px;
+      padding-right:14px;
+      white-space:pre;
+    }
+
+    .code-line .ln{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      padding-right:12px;
+      margin-right:12px;
+      border-right:1px solid #263247;
+      color:#64748b;
+      user-select:none;
+    }
+
+    .code-line .txt{display:flex;align-items:center;color:#e5e7eb}
+    .code-line.active{background:var(--code-active);box-shadow:inset 5px 0 0 var(--yellow)}
+    .code-line.active .ln{color:#fde68a;font-weight:900}
+    .code-line.active .txt{color:#fff;font-weight:800}
+
+    .modal-backdrop{
+      position:fixed;
+      z-index:200;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(15,23,42,.48);
+    }
+    .modal-backdrop.show{display:flex}
+
+    .modal{
+      width:min(980px,96vw);
+      max-height:70vh;
+      padding:16px;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#fff;
+      box-shadow:0 22px 65px rgba(0,0,0,.28);
+    }
+
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      margin-bottom:12px;
+      padding-bottom:10px;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-head h2{margin:0;font-size:21px}
+
+    .problem-body{font-size:16px;line-height:1.75}
+    .problem-body h3{margin:16px 0 6px;font-size:18px}
+    .problem-body ul{margin-top:6px;padding-left:24px}
+
+    .problem-note{
+      margin:10px 0;
+      padding:10px;
+      border:1px solid #fed7aa;
+      border-radius:12px;
+      background:#fff7ed;
+      color:#7c2d12;
+    }
+
+    .io-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .io-box{padding:10px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
+    .io-box pre{margin:6px 0 0;font-size:15px;line-height:1.5;white-space:pre-wrap}
+
+    @media(max-width:1180px){
+      :root{--toolbar-h:174px}
+      .toolbar{grid-template-columns:repeat(3,auto) 1fr}
+      .message-box{grid-column:1/-1}
+      .teaching-board{
+        grid-template-rows:
+          auto
+          minmax(520px,auto)
+          auto;
+      }
+      .status-content{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .board-header{grid-template-columns:1fr}
+      .core-formula{white-space:normal}
+    }
+
+    @media(max-width:820px){
+      :root{--toolbar-h:218px}
+      body{overflow:auto}
+      .topbar{position:sticky;height:auto}
+      .main{margin-top:0;height:auto;min-height:100vh;overflow:visible;flex-direction:column}
+      .left-pane,.right-pane{flex:0 0 auto;width:100%;min-width:0;max-width:none;height:auto;overflow:visible}
+      .left-pane{padding:10px}
+      .divider{width:100%;height:10px;flex:0 0 10px;cursor:row-resize}
+      .divider::after{width:56px;height:4px}
+      .teaching-board{
+        height:auto;
+        min-height:0;
+        grid-template-rows:
+          auto
+          minmax(500px,auto)
+          auto;
+      }
+      .cup-stage{
+        height:500px;
+        min-height:500px;
+      }
+      .board-header{grid-template-columns:1fr;grid-template-areas:"question" "formula" "sample"}
+      .sample-overview{grid-template-columns:1fr 1fr}
+      .sample-overview-title{grid-column:1 / -1}
+      .status-content{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .calc-table{font-size:14px}
+      .calc-table th,.calc-table td{padding:5px 4px}
+      .io-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="title-row">
+      <h1>o711. 裝飲料｜單一大容器計算板 <span class="version">題目範例修正版 v8</span></h1>
+      <div class="title-actions">
+        <select id="sampleSelect" title="切換範例"></select>
+        <button id="problemBtn">題目說明</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button id="prevBtn">← 上一步</button>
+      <button id="nextBtn" class="primary">下一步 →</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn">暫停</button>
+      <button id="resetBtn">重設</button>
+      <div class="status-box"><strong>步驟</strong><span id="stepText">0 / 0</span></div>
+      <div class="status-box"><strong>目前答案</strong><span id="resultText">尚未開始</span></div>
+      <div class="message-box"><span id="messageText">按「下一步」開始觀察水位。</span></div>
+    </div>
+  </header>
+
+  <main class="main" id="mainArea">
+    <section class="left-pane" id="leftPane">
+      <section class="teaching-board">
+        <div class="board-header">
+          <div class="board-question">
+            <p><strong>題目：</strong>杯子由上下兩層組成。下層底面積是 w1 × w1、高度是 h1；上層底面積是 w2 × w2、高度是 h2。</p>
+            <p>杯子一開始是空的，每次倒入的水會留在杯中累積。請找出所有倒水過程中，最大的「單次水位上升高度」。</p>
+          </div>
+          <div class="core-formula">
+            容量 = 底面積 × 高度<br>
+            高度 = 水量 ÷ 底面積
+          </div>
+          <div id="sampleOverview" class="sample-overview"></div>
+        </div>
+
+        <div class="board-main">
+          <div id="layerTable" class="layer-table"></div>
+          <div class="cup-stage">
+            <svg id="cupSvg" viewBox="0 0 900 540" preserveAspectRatio="xMidYMid meet" aria-label="裝飲料大容器動畫"></svg>
+          </div>
+        </div>
+
+        <div class="board-calculation">
+          <div class="status-content" id="statusContent"></div>
+          <div class="calculation-area" id="calculationArea"></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="divider" id="divider" title="拖曳調整左右寬度"></div>
+
+    <section class="right-pane">
+      <section class="code-card">
+        <div class="code-head">
+          <h2>完整 Python 程式碼（完整註解修正版）</h2>
+          <div class="current-code-explain" id="currentCodeExplain">
+            <strong>目前程式說明：</strong>按「下一步」後，這裡會解釋目前反白的程式碼。
+          </div>
+        </div>
+        <div class="code-scroll">
+          <div class="code-lines" id="codeLines"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>題目說明：o711. 裝飲料</h2>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+      <div class="problem-body">
+        <p>杯子由上下兩個長方體組成。</p>
+        <ul>
+          <li>下層底面積是 w1 × w1，高度是 h1。</li>
+          <li>上層底面積是 w2 × w2，高度是 h2。</li>
+        </ul>
+
+        <p>杯子一開始是空的。接著會倒入 n 次飲料，每次倒入一筆體積 v。</p>
+        <p>每次倒入後，飲料會留在杯子裡累積，不會重新把杯子清空。</p>
+        <p>請輸出所有倒水過程中，最大的「單次水位上升高度」。</p>
+
+        <div class="problem-note"><b>水會累積：</b>前一次倒入的水會留在杯子中，下一次從原本水位繼續增加。</div>
+        <div class="problem-note"><b>題目問單次增加量：</b>水位從 3 cm 變成 8 cm，本次增加量是 5 cm，不是 8 cm。</div>
+        <div class="problem-note"><b>上下層面積不同：</b>相同水量在較窄的下層升得較高，在較寬的上層升得較少。</div>
+        <div class="problem-note"><b>杯子滿了：</b>後面的水不會再讓水位升高，所以可以停止計算。</div>
+
+        <h3>輸入說明</h3>
+        <ul>
+          <li>第一行：n，倒水次數。</li>
+          <li>第二行：w1、w2、h1、h2。</li>
+          <li>第三行：n 個倒入水量。</li>
+        </ul>
+
+        <h3>輸出說明</h3>
+        <p>輸出所有倒水過程中，最大的單次水位上升高度。</p>
+
+        <h3>範例</h3>
+        <div class="io-grid">
+          <div class="io-box"><b>範例輸入 #1</b><pre>1
+4 6 8 5
+200</pre></div>
+          <div class="io-box"><b>範例輸出 #1</b><pre>10</pre></div>
+          <div class="io-box"><b>範例輸入 #2</b><pre>2
+5 10 12 8
+400 600</pre></div>
+          <div class="io-box"><b>範例輸出 #2</b><pre>13</pre></div>
+          <div class="io-box"><b>範例輸入 #3</b><pre>5
+16 44 28 17
+2560 1280 1536 1024 10448</pre></div>
+          <div class="io-box"><b>範例輸出 #3</b><pre>10</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const samples = [
+      {name:'範例 #1', n:1, w1:4, w2:6, h1:8, h2:5, vs:[200], output:10},
+      {name:'範例 #2', n:2, w1:5, w2:10, h1:12, h2:8, vs:[400,600], output:13},
+      {name:'範例 #3', n:5, w1:16, w2:44, h1:28, h2:17, vs:[2560,1280,1536,1024,10448], output:10}
+    ];
+
+    const fullCode = `n = int(input())  # 讀入總共要倒幾次飲料
+
+# 讀入杯子的四個尺寸：
+# w1：下層寬度
+# w2：上層寬度
+# h1：下層高度
+# h2：上層高度
+w1, w2, h1, h2 = map(int, input().split())
+
+# 讀入每一次倒入的飲料體積
+# vs 是一個串列，例如 [200] 或 [400, 600]
+vs = list(map(int, input().split()))
+
+# ---------------------------------------------------------
+# 計算上下兩層的底面積
+# 因為底部是正方形，所以底面積 = 寬度 × 寬度
+# ---------------------------------------------------------
+a1 = w1 * w1  # 下層底面積
+a2 = w2 * w2  # 上層底面積
+
+# ---------------------------------------------------------
+# 計算一開始上下兩層還能裝多少水
+# 容量 = 底面積 × 高度
+# v1、v2 記錄的是「剩餘容量」，不是高度
+# ---------------------------------------------------------
+v1 = a1 * h1  # 下層剩餘容量
+v2 = a2 * h2  # 上層剩餘容量
+
+maxh = 0  # 記錄目前看過的最大「單次水位上升高度」
+
+# 逐一取出每一次倒入的飲料體積 v
+for v in vs:
+
+    # -----------------------------------------------------
+    # 情況 1：這次倒入的水，全部都放得進下層
+    # -----------------------------------------------------
+    if v <= v1:
+        h = v // a1  # 本次水位只在下層上升，算出上升幾公分
+
+        # 這次的水已經放進下層
+        # 所以下層剩餘容量要減少
+        v1 -= v
+
+    # -----------------------------------------------------
+    # 情況 2：下層放不下全部的水，但上下兩層合計放得下
+    # 水會先補滿下層，剩下的部分再進入上層
+    # -----------------------------------------------------
+    elif v1 < v <= v1 + v2:
+
+        # 先保存原本的 v1
+        # old_v1 就是「把下層補滿需要的水量」
+        old_v1 = v1
+
+        # 下層補滿高度
+        lower_h = old_v1 // a1
+
+        # 扣掉補滿下層用掉的水，剩下的水才會進入上層
+        upper_v = v - old_v1
+
+        # 上層增加高度
+        upper_h = upper_v // a2
+
+        # 本次總上升高度 = 下層補滿高度 + 上層增加高度
+        h = lower_h + upper_h
+
+        # 下層已經裝滿，所以剩餘容量變成 0
+        v1 = 0
+
+        # 上層只扣掉真正進入上層的水量
+        v2 -= upper_v
+
+    # -----------------------------------------------------
+    # 情況 3：這次倒入的水超過杯子的剩餘總容量
+    # 杯子會被裝滿，多出來的水不會再增加水位
+    # -----------------------------------------------------
+    else:
+        # 下層還能增加的高度
+        lower_h = v1 // a1
+
+        # 上層還能增加的高度
+        upper_h = v2 // a2
+
+        # 本次最多還能增加的高度
+        h = lower_h + upper_h
+
+        # 杯子已經滿了，上下層剩餘容量都變成 0
+        v1, v2 = 0, 0
+
+        # 杯子裝滿前，仍然要更新最大單次上升高度
+        maxh = max(h, maxh)
+
+        # 杯子滿了，後面的水不會再增加水位，所以提前結束
+        break
+
+    # 比較本次上升高度 h 和目前最大值 maxh
+    # 留下比較大的數字
+    maxh = max(h, maxh)
+
+# 輸出所有倒水過程中，最大的單次水位上升高度
+print(maxh)`;
+
+    const codeLines = fullCode.split('\n');
+
+    const lineExplain = new Map([
+      ['n = int(input())','讀入倒水次數 n。'],
+      ['w1, w2, h1, h2 = map(int, input().split())','讀入上下兩層的寬度與高度。'],
+      ['vs = list(map(int, input().split()))','讀入每一次倒入的水量。'],
+      ['a1 = w1 * w1','計算下層底面積。'],
+      ['a2 = w2 * w2','計算上層底面積。'],
+      ['v1 = a1 * h1','計算下層一開始的剩餘容量。'],
+      ['v2 = a2 * h2','計算上層一開始的剩餘容量。'],
+      ['maxh = 0','最大單次上升高度先設為 0。'],
+      ['for v in vs:','逐一處理每一次倒入的水量。'],
+      ['if v <= v1:','判斷本次水量是否全部放得進下層。'],
+      ['h = v // a1','把水量除以下層底面積，得到下層新增高度。'],
+      ['v1 -= v','下層裝水後，更新下層剩餘容量。'],
+      ['elif v1 < v <= v1 + v2:','下層不夠，但上下層合計還放得下，水會跨到上層。'],
+      ['old_v1 = v1','保存下層補滿需要的水量。'],
+      ['lower_h = old_v1 // a1','把下層使用水量換算成下層補滿高度。'],
+      ['upper_v = v - old_v1','算出真正進入上層的水量。'],
+      ['upper_h = upper_v // a2','把上層使用水量換算成上層增加高度。'],
+      ['h = lower_h + upper_h','上下兩段高度相加，得到本次總上升高度。'],
+      ['v1 = 0','下層已滿，剩餘容量變成 0。'],
+      ['v2 -= upper_v','上層只扣除真正進入上層的水量。'],
+      ['else:','本次水量會把杯子裝滿。'],
+      ['lower_h = v1 // a1','計算下層剩餘可增加高度。'],
+      ['upper_h = v2 // a2','計算上層剩餘可增加高度。'],
+      ['v1, v2 = 0, 0','杯子已滿，上下層剩餘容量都歸零。'],
+      ['maxh = max(h, maxh)','比較本次高度和目前最大值。'],
+      ['break','杯子已滿，後面的水不會再增加水位。'],
+      ['print(maxh)','輸出最大的單次水位上升高度。']
+    ]);
+
+    function findLine(text, occurrence=1){
+      let count=0;
+      for(let i=0;i<codeLines.length;i++){
+        const t=codeLines[i].trim();
+        if(t===text || t.startsWith(text)){
+          count++;
+          if(count===occurrence) return i+1;
+        }
+      }
+      return 1;
+    }
+
+    const L={
+      n:findLine('n = int(input())'),
+      dims:findLine('w1, w2, h1, h2 = map(int, input().split())'),
+      vs:findLine('vs = list(map(int, input().split()))'),
+      a1:findLine('a1 = w1 * w1'),
+      a2:findLine('a2 = w2 * w2'),
+      v1:findLine('v1 = a1 * h1'),
+      v2:findLine('v2 = a2 * h2'),
+      maxInit:findLine('maxh = 0'),
+      loop:findLine('for v in vs:'),
+      ifLower:findLine('if v <= v1:'),
+      lowerOnlyH:findLine('h = v // a1'),
+      lowerRemain:findLine('v1 -= v'),
+      cross:findLine('elif v1 < v <= v1 + v2:'),
+      oldV1:findLine('old_v1 = v1'),
+      lowerCross:findLine('lower_h = old_v1 // a1'),
+      upperV:findLine('upper_v = v - old_v1'),
+      upperCross:findLine('upper_h = upper_v // a2'),
+      totalCross:findLine('h = lower_h + upper_h',1),
+      lowerZero:findLine('v1 = 0'),
+      upperRemain:findLine('v2 -= upper_v'),
+      full:findLine('else:'),
+      lowerFull:findLine('lower_h = v1 // a1'),
+      upperFull:findLine('upper_h = v2 // a2'),
+      totalFull:findLine('h = lower_h + upper_h',2),
+      bothZero:findLine('v1, v2 = 0, 0'),
+      maxFull:findLine('maxh = max(h, maxh)',1),
+      breakLine:findLine('break'),
+      maxNormal:findLine('maxh = max(h, maxh)',2),
+      print:findLine('print(maxh)')
+    };
+
+    const dom={
+      sampleSelect:document.getElementById('sampleSelect'),
+      prevBtn:document.getElementById('prevBtn'),
+      nextBtn:document.getElementById('nextBtn'),
+      playBtn:document.getElementById('playBtn'),
+      pauseBtn:document.getElementById('pauseBtn'),
+      resetBtn:document.getElementById('resetBtn'),
+      stepText:document.getElementById('stepText'),
+      resultText:document.getElementById('resultText'),
+      messageText:document.getElementById('messageText'),
+      sampleOverview:document.getElementById('sampleOverview'),
+      layerTable:document.getElementById('layerTable'),
+      cupSvg:document.getElementById('cupSvg'),
+      statusContent:document.getElementById('statusContent'),
+      calculationArea:document.getElementById('calculationArea'),
+      codeLines:document.getElementById('codeLines'),
+      currentCodeExplain:document.getElementById('currentCodeExplain'),
+      divider:document.getElementById('divider'),
+      mainArea:document.getElementById('mainArea'),
+      leftPane:document.getElementById('leftPane'),
+      problemBtn:document.getElementById('problemBtn'),
+      problemModal:document.getElementById('problemModal'),
+      closeModalBtn:document.getElementById('closeModalBtn')
+    };
+
+    let sampleIndex=0;
+    let steps=[];
+    let stepIndex=0;
+    let timer=null;
+
+    function esc(s){
+      return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+    }
+
+    function fmt(n){
+      if(n===null || n===undefined) return '—';
+      if(typeof n==='number' && !Number.isInteger(n)) return String(Math.round(n*1000)/1000);
+      return String(n);
+    }
+
+    function cm(n){return n===null || n===undefined ? '—' : `${fmt(n)} cm`}
+    function clone(obj){return JSON.parse(JSON.stringify(obj))}
+
+    function calcData(title,tag,formula,substitution,bullets,meanings,conclusion){
+      return {title,tag,formula,substitution,bullets,meanings,conclusion};
+    }
+
+    function initialState(s){
+      const a1=s.w1*s.w1;
+      const a2=s.w2*s.w2;
+      const cap1=a1*s.h1;
+      const cap2=a2*s.h2;
+      return {
+        n:s.n,w1:s.w1,w2:s.w2,h1:s.h1,h2:s.h2,vs:[...s.vs],output:s.output,
+        a1,a2,cap1,cap2,
+        v1:null,v2:null,maxh:null,
+        currentIndex:-1,currentV:null,
+        beforeHeight:0,currentHeight:0,afterHeight:0,
+        lowerUse:0,lowerRise:0,upperUse:0,upperRise:0,totalRise:null,
+        phase:'準備中',branch:'準備中',
+        calc:calcData('準備開始','準備','尚未開始','先讀入題目資料',['按「下一步」開始。'],[],'目前還沒有答案。')
+      };
+    }
+
+    function actualHeight(st){
+      if(st.v1===null || st.v2===null) return 0;
+      const lowerFilled=st.cap1-st.v1;
+      const upperFilled=st.cap2-st.v2;
+      if(lowerFilled<st.cap1) return lowerFilled/st.a1;
+      return st.h1+upperFilled/st.a2;
+    }
+
+    function snapshot(st,line,message,result){
+      const copy=clone(st);
+      if(copy.v1!==null && copy.v2!==null) copy.currentHeight=actualHeight(copy);
+      steps.push({line,message,result,visual:copy});
+    }
+
+    function generateSteps(s){
+      steps=[];
+      const st=initialState(s);
+
+      st.calc=calcData('讀入倒水次數','準備','n = int(input())',`n = ${s.n}`,[`總共會倒 ${s.n} 次飲料。`],[['n',`倒水次數 ${s.n}`]],'先知道要處理幾次倒水。');
+      snapshot(st,L.n,`讀入 n=${s.n}。`,`倒水次數 ${s.n}`);
+
+      st.calc=calcData('讀入杯子尺寸','準備','w1、w2、h1、h2',`w1=${s.w1}, w2=${s.w2}, h1=${s.h1}, h2=${s.h2}`,[`下層寬 ${s.w1}、高 ${s.h1}。`,`上層寬 ${s.w2}、高 ${s.h2}。`],[['w1、h1','下層尺寸'],['w2、h2','上層尺寸']],'接著計算上下層的面積與容量。');
+      snapshot(st,L.dims,'讀入上下兩層尺寸。','尺寸已讀取');
+
+      st.calc=calcData('讀入每次倒入量','準備','vs = 每次倒入量',`vs = [${s.vs.join(', ')}]`,['串列中每一個數字代表某一次倒入水量。'],s.vs.map((v,i)=>[`第 ${i+1} 次`,`${v} 的水量`]),'之後按照順序一杯一杯處理。');
+      snapshot(st,L.vs,`讀入每次水量：${s.vs.join(', ')}。`,'水量已讀取');
+
+      st.calc=calcData('計算下層底面積','初始化','a1 = w1 × w1',`a1 = ${s.w1} × ${s.w1} = ${st.a1}`,[`下層每升高 1 cm，需要 ${st.a1} 的水量。`],[String(st.a1)].map(x=>[x,'下層底面積']),'下層底面積算完。');
+      snapshot(st,L.a1,`下層底面積 a1=${st.a1}。`,`a1=${st.a1}`);
+
+      st.calc=calcData('計算上層底面積','初始化','a2 = w2 × w2',`a2 = ${s.w2} × ${s.w2} = ${st.a2}`,[`上層每升高 1 cm，需要 ${st.a2} 的水量。`],[String(st.a2)].map(x=>[x,'上層底面積']),'上層底面積算完。');
+      snapshot(st,L.a2,`上層底面積 a2=${st.a2}。`,`a2=${st.a2}`);
+
+      st.v1=st.cap1;
+      st.calc=calcData('計算下層總容量','初始化','v1 = a1 × h1',`v1 = ${st.a1} × ${st.h1} = ${st.cap1}`,[`${st.cap1} 是下層總容量，不是高度。`],[[String(st.a1),'下層底面積'],[String(st.h1),'下層高度'],[String(st.cap1),'下層總容量']],'一開始下層剩餘容量等於總容量。');
+      snapshot(st,L.v1,`下層總容量=${st.cap1}。`,`v1=${st.v1}`);
+
+      st.v2=st.cap2;
+      st.calc=calcData('計算上層總容量','初始化','v2 = a2 × h2',`v2 = ${st.a2} × ${st.h2} = ${st.cap2}`,[`${st.cap2} 是上層總容量，不是高度。`],[[String(st.a2),'上層底面積'],[String(st.h2),'上層高度'],[String(st.cap2),'上層總容量']],'一開始上層剩餘容量等於總容量。');
+      snapshot(st,L.v2,`上層總容量=${st.cap2}。`,`v2=${st.v2}`);
+
+      st.maxh=0;
+      st.calc=calcData('初始化答案','初始化','maxh = 0','maxh = 0',['還沒有倒水，最大單次上升高度先設成 0。'],[['0','目前最大單次上升高度']],'之後每次算完 h 都和 maxh 比較。');
+      snapshot(st,L.maxInit,'maxh 先設為 0。','maxh=0');
+
+      for(let i=0;i<s.vs.length;i++){
+        if(st.v1===0 && st.v2===0) break;
+
+        const v=s.vs[i];
+        st.currentIndex=i;
+        st.currentV=v;
+        st.beforeHeight=actualHeight(st);
+        st.afterHeight=st.beforeHeight;
+        st.lowerUse=0;st.lowerRise=0;st.upperUse=0;st.upperRise=0;st.totalRise=null;
+        st.phase='倒水前';st.branch='等待判斷';
+        st.calc=calcData(`第 ${i+1} 次倒水`,'倒水前','for v in vs',`v = ${v}`,[`倒水前水位 ${fmt(st.beforeHeight)} cm。`,`本次倒入 ${v} 的水量。`,`先判斷下層是否放得下。`],[[String(v),'本次倒入水量'],[String(st.v1),'下層剩餘容量'],[String(st.v2),'上層剩餘容量']],'下一步決定水會停在哪一層。');
+        snapshot(st,L.loop,`第 ${i+1} 次倒水，v=${v}。`,`第 ${i+1}/${st.n} 次`);
+
+        if(v<=st.v1){
+          st.phase='判斷';st.branch='只在下層';
+          st.calc=calcData('下層還放得下','只在下層','if v <= v1',`${v} <= ${st.v1}`,[`本次水量 ${v} 沒有超過下層剩餘容量 ${st.v1}。`,`所以水全部進入下層。`],[[String(v),'本次水量'],[String(st.v1),'下層剩餘容量']],'這次只用下層底面積計算高度。');
+          snapshot(st,L.ifLower,`v=${v} ≤ v1=${st.v1}，水只在下層。`,'只在下層');
+
+          st.lowerUse=v;
+          st.lowerRise=Math.floor(v/st.a1);
+          st.totalRise=st.lowerRise;
+          st.afterHeight=st.beforeHeight+st.totalRise;
+          st.phase='下層上升';
+          st.calc=calcData('計算下層新增高度','只在下層','h = v ÷ a1',`h = ${v} ÷ ${st.a1} = ${st.lowerRise} cm`,[`${v} 是下層使用水量。`,`${st.a1} 是下層底面積。`,`${st.lowerRise} 是「下層新增高度」，不是水量。`],[[String(v),'下層使用水量'],[String(st.a1),'下層底面積'],[String(st.lowerRise),`下層新增高度 ${st.lowerRise} cm`]],`本次總上升高度 h=${st.lowerRise} cm。`);
+          snapshot(st,L.lowerOnlyH,`${v}÷${st.a1}=${st.lowerRise}，這是下層新增高度。`,`h=${st.lowerRise} cm`);
+
+          const oldV1=st.v1;
+          st.v1-=v;
+          st.currentHeight=actualHeight(st);
+          st.afterHeight=st.currentHeight;
+          st.calc=calcData('更新下層剩餘容量','只在下層','v1 = v1 - v',`v1 = ${oldV1} - ${v} = ${st.v1}`,[`這次的水已經放進下層。`,`所以下層剩餘容量由 ${oldV1} 變成 ${st.v1}。`],[[String(oldV1),'倒水前下層剩餘容量'],[String(v),'本次使用水量'],[String(st.v1),'倒水後下層剩餘容量']],`倒水後水位 ${fmt(st.currentHeight)} cm。`);
+          snapshot(st,L.lowerRemain,`下層剩餘容量更新為 ${st.v1}。`,`v1=${st.v1}`);
+
+          const oldMax=st.maxh;
+          st.maxh=Math.max(st.totalRise,st.maxh);
+          st.phase='完成本次';
+          st.calc=calcData('更新最大單次上升高度','完成本次','maxh = max(h, maxh)',`maxh = max(${st.totalRise}, ${oldMax}) = ${st.maxh}`,[`${st.totalRise} 是本次上升高度。`,`${oldMax} 是先前最大值。`,`留下較大的 ${st.maxh}。`],[[String(st.totalRise),'本次上升高度'],[String(oldMax),'先前最大值'],[String(st.maxh),'目前最大值']],`目前 maxh=${st.maxh} cm。`);
+          snapshot(st,L.maxNormal,`更新 maxh=${st.maxh}。`,`maxh=${st.maxh}`);
+        }
+        else if(v<=st.v1+st.v2){
+          st.phase='判斷';st.branch='跨到上層';
+          st.calc=calcData('下層不夠裝，會跨到上層','跨到上層','v1 < v <= v1 + v2',`${st.v1} < ${v} <= ${st.v1+st.v2}`,[`本次水量 ${v} 超過下層剩餘容量 ${st.v1}。`,`但上下層合計還放得下。`,`所以先補滿下層，再裝上層。`],[[String(v),'本次水量'],[String(st.v1),'下層剩餘容量'],[String(st.v1+st.v2),'上下層合計剩餘容量']],'這次要分成上下兩段計算。');
+          snapshot(st,L.cross,'下層不夠裝，剩下的水會進上層。','跨到上層');
+
+          const oldV1=st.v1;
+          st.calc=calcData('保存下層補滿所需水量','跨到上層','old_v1 = v1',`old_v1 = ${oldV1}`,[`${oldV1} 是下層補滿需要的水量。`,`先保存，因為後面 v1 會變成 0。`],[[String(oldV1),'下層補滿需要的水量']],`下層會先使用 ${oldV1} 的水。`);
+          snapshot(st,L.oldV1,`old_v1=${oldV1}。`,`old_v1=${oldV1}`);
+
+          st.lowerUse=oldV1;
+          st.lowerRise=Math.floor(oldV1/st.a1);
+          st.totalRise=st.lowerRise;
+          st.afterHeight=st.beforeHeight+st.lowerRise;
+          st.phase='先補滿下層';
+          st.calc=calcData('先算下層補滿高度','跨到上層','lower_h = old_v1 ÷ a1',`lower_h = ${oldV1} ÷ ${st.a1} = ${st.lowerRise} cm`,[`${oldV1} 是下層使用水量。`,`${st.a1} 是下層底面積。`,`${st.lowerRise} 是「下層補滿高度」，表示下層水位增加 ${st.lowerRise} cm。`],[[String(oldV1),'下層使用水量'],[String(st.a1),'下層底面積'],[String(st.lowerRise),`下層補滿高度 ${st.lowerRise} cm`]],`這個 ${st.lowerRise} 是高度，不是容量。`);
+          snapshot(st,L.lowerCross,`下層補滿高度=${st.lowerRise} cm。`,`下層 +${st.lowerRise} cm`);
+
+          st.upperUse=v-oldV1;
+          st.calc=calcData('算出真正進入上層的水量','跨到上層','upper_v = v - old_v1',`upper_v = ${v} - ${oldV1} = ${st.upperUse}`,[`本次總共倒入 ${v}。`,`下層先使用 ${oldV1}。`,`剩下 ${st.upperUse} 才進入上層。`],[[String(v),'本次總倒入量'],[String(oldV1),'下層使用量'],[String(st.upperUse),'進入上層水量']],`上層使用水量=${st.upperUse}。`);
+          snapshot(st,L.upperV,`進入上層的水量=${st.upperUse}。`,`上層用水 ${st.upperUse}`);
+
+          st.upperRise=Math.floor(st.upperUse/st.a2);
+          st.totalRise=st.lowerRise+st.upperRise;
+          st.afterHeight=st.beforeHeight+st.totalRise;
+          st.phase='再裝上層';
+          st.calc=calcData('計算上層增加高度','跨到上層','upper_h = upper_v ÷ a2',`upper_h = ${st.upperUse} ÷ ${st.a2} = ${st.upperRise} cm`,[`${st.upperUse} 是上層使用水量。`,`${st.a2} 是上層底面積。`,`${st.upperRise} 是「上層增加高度」，表示上層水位增加 ${st.upperRise} cm。`],[[String(st.upperUse),'上層使用水量'],[String(st.a2),'上層底面積'],[String(st.upperRise),`上層增加高度 ${st.upperRise} cm`]],`這個 ${st.upperRise} 是高度，不是水量。`);
+          snapshot(st,L.upperCross,`上層增加高度=${st.upperRise} cm。`,`上層 +${st.upperRise} cm`);
+
+          st.phase='合計本次高度';
+          st.calc=calcData('合計本次總上升高度','跨到上層','h = lower_h + upper_h',`h = ${st.lowerRise} + ${st.upperRise} = ${st.totalRise} cm`,[`${st.lowerRise} 是下層補滿高度。`,`${st.upperRise} 是上層增加高度。`,`${st.totalRise} 才是本次總上升高度。`],[[String(st.lowerRise),'下層補滿高度'],[String(st.upperRise),'上層增加高度'],[String(st.totalRise),'本次總上升高度 h']],`本次水位總共上升 ${st.totalRise} cm。`);
+          snapshot(st,L.totalCross,`本次總上升=${st.totalRise} cm。`,`h=${st.totalRise} cm`);
+
+          st.v1=0;
+          snapshot(st,L.lowerZero,'下層已滿，v1=0。','v1=0');
+
+          const oldV2=st.v2;
+          st.v2-=st.upperUse;
+          st.currentHeight=actualHeight(st);
+          st.afterHeight=st.currentHeight;
+          st.calc=calcData('更新上層剩餘容量','跨到上層','v2 = v2 - upper_v',`v2 = ${oldV2} - ${st.upperUse} = ${st.v2}`,[`只有真正進入上層的 ${st.upperUse} 才從 v2 扣掉。`,`下層使用量不能再扣一次。`],[[String(oldV2),'倒水前上層剩餘容量'],[String(st.upperUse),'上層實際使用量'],[String(st.v2),'倒水後上層剩餘容量']],`倒水後水位 ${fmt(st.currentHeight)} cm。`);
+          snapshot(st,L.upperRemain,`上層剩餘容量=${st.v2}。`,`v2=${st.v2}`);
+
+          const oldMax=st.maxh;
+          st.maxh=Math.max(st.totalRise,st.maxh);
+          st.phase='完成本次';
+          st.calc=calcData('更新最大單次上升高度','完成本次','maxh = max(h, maxh)',`maxh = max(${st.totalRise}, ${oldMax}) = ${st.maxh}`,[`${st.totalRise} 是本次總上升高度。`,`和先前最大值 ${oldMax} 比較。`],[[String(st.totalRise),'本次總上升高度'],[String(oldMax),'先前最大值'],[String(st.maxh),'目前最大值']],`目前 maxh=${st.maxh} cm。`);
+          snapshot(st,L.maxNormal,`更新 maxh=${st.maxh}。`,`maxh=${st.maxh}`);
+        }
+        else{
+          st.phase='判斷';st.branch='杯子裝滿';
+          const remain=st.v1+st.v2;
+          st.calc=calcData('本次會把杯子裝滿','杯子裝滿','v > v1 + v2',`${v} > ${remain}`,[`本次水量 ${v} 超過杯子剩餘總容量 ${remain}。`,`多出來的水不會再增加水位。`],[[String(v),'本次水量'],[String(remain),'杯子剩餘總容量']],'只算杯子剩下還能增加的高度。');
+          snapshot(st,L.full,'本次水量超過剩餘總容量，杯子會滿。','杯子裝滿');
+
+          st.lowerUse=st.v1;
+          st.lowerRise=Math.floor(st.v1/st.a1);
+          st.phase='下層剩餘高度';
+          st.calc=calcData('下層還能增加多少高度','杯子裝滿','lower_h = v1 ÷ a1',`lower_h = ${st.lowerUse} ÷ ${st.a1} = ${st.lowerRise} cm`,[`${st.lowerUse} 是下層剩餘水量。`,`${st.lowerRise} 是下層剩餘可增加高度。`],[[String(st.lowerUse),'下層剩餘水量'],[String(st.a1),'下層底面積'],[String(st.lowerRise),'下層剩餘可增加高度']],`下層還能增加 ${st.lowerRise} cm。`);
+          snapshot(st,L.lowerFull,`下層還能增加 ${st.lowerRise} cm。`,`下層 +${st.lowerRise} cm`);
+
+          st.upperUse=st.v2;
+          st.upperRise=Math.floor(st.v2/st.a2);
+          st.totalRise=st.lowerRise+st.upperRise;
+          st.afterHeight=st.h1+st.h2;
+          st.phase='上層剩餘高度';
+          st.calc=calcData('上層還能增加多少高度','杯子裝滿','upper_h = v2 ÷ a2',`upper_h = ${st.upperUse} ÷ ${st.a2} = ${st.upperRise} cm`,[`${st.upperUse} 是上層剩餘水量。`,`${st.upperRise} 是上層剩餘可增加高度。`],[[String(st.upperUse),'上層剩餘水量'],[String(st.a2),'上層底面積'],[String(st.upperRise),'上層剩餘可增加高度']],`杯子裝滿前，本次共能增加 ${st.totalRise} cm。`);
+          snapshot(st,L.upperFull,`上層還能增加 ${st.upperRise} cm。`,`上層 +${st.upperRise} cm`);
+
+          st.phase='合計本次高度';
+          st.calc=calcData('合計裝滿前總上升高度','杯子裝滿','h = lower_h + upper_h',`h = ${st.lowerRise} + ${st.upperRise} = ${st.totalRise} cm`,[`${st.lowerRise} 是下層剩餘增加高度。`,`${st.upperRise} 是上層剩餘增加高度。`,`${st.totalRise} 是本次總上升高度。`],[[String(st.lowerRise),'下層增加高度'],[String(st.upperRise),'上層增加高度'],[String(st.totalRise),'本次總上升高度']],`杯子這次會裝滿。`);
+          snapshot(st,L.totalFull,`裝滿前本次總上升=${st.totalRise} cm。`,`h=${st.totalRise} cm`);
+
+          st.v1=0;st.v2=0;
+          st.currentHeight=actualHeight(st);
+          snapshot(st,L.bothZero,'杯子已滿，v1、v2 都是 0。','杯子已滿');
+
+          const oldMax=st.maxh;
+          st.maxh=Math.max(st.totalRise,st.maxh);
+          st.phase='完成本次';
+          st.calc=calcData('裝滿前仍要更新最大值','杯子裝滿','maxh = max(h, maxh)',`maxh = max(${st.totalRise}, ${oldMax}) = ${st.maxh}`,['即使杯子已滿，也要把本次上升高度和 maxh 比較。'],[[String(st.totalRise),'本次上升高度'],[String(oldMax),'先前最大值'],[String(st.maxh),'目前最大值']],`目前 maxh=${st.maxh} cm。`);
+          snapshot(st,L.maxFull,`更新 maxh=${st.maxh}。`,`maxh=${st.maxh}`);
+
+          st.calc=calcData('提前結束','杯子裝滿','break','杯子已滿，停止迴圈',['後面的水不會再增加水位，所以不必繼續。'],[],'迴圈提前結束。');
+          snapshot(st,L.breakLine,'杯子已滿，break 提前結束。','停止倒水');
+          break;
+        }
+      }
+
+      st.currentIndex=-1;st.currentV=null;
+      st.lowerUse=0;st.lowerRise=0;st.upperUse=0;st.upperRise=0;st.totalRise=null;
+      st.phase='輸出答案';st.branch='完成';
+      st.beforeHeight=actualHeight(st);st.afterHeight=st.beforeHeight;
+      st.calc=calcData('輸出答案','完成','print(maxh)',`print(${st.maxh})`,['maxh 記錄所有倒水過程中最大的單次上升高度。'],[[String(st.maxh),`最大單次上升高度 ${st.maxh} cm`]],`最後輸出 ${st.maxh}。`);
+      snapshot(st,L.print,`輸出最大單次上升高度 ${st.maxh}。`,`答案 ${st.maxh}`);
+    }
+
+    function buildCode(){
+      dom.codeLines.innerHTML=codeLines.map((line,i)=>`
+        <div class="code-line" data-line="${i+1}">
+          <span class="ln">${i+1}</span>
+          <span class="txt">${esc(line)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderSampleOptions(){
+      dom.sampleSelect.innerHTML=samples.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
+      dom.sampleSelect.value=String(sampleIndex);
+    }
+
+    function renderSampleOverview(v){
+      dom.sampleOverview.innerHTML = `
+        <div class="sample-overview-title">目前範例</div>
+
+        <div class="sample-overview-box">
+          <div class="box-title">範例輸入</div>
+          <pre>${esc(v.n)}
+${esc(`${v.w1} ${v.w2} ${v.h1} ${v.h2}`)}
+${esc(v.vs.join(' '))}</pre>
+        </div>
+
+        <div class="sample-overview-box">
+          <div class="box-title">輸入白話翻譯</div>
+          <div class="sample-meaning-lines">
+            <div>總共倒 <b>${v.n}</b> 次飲料。</div>
+            <div>下層：寬度 <b>${v.w1}</b>，高度 <b>${v.h1} cm</b>。</div>
+            <div>上層：寬度 <b>${v.w2}</b>，高度 <b>${v.h2} cm</b>。</div>
+            <div>每次倒入量：<b>${esc(v.vs.join('、'))}</b>。</div>
+          </div>
+        </div>
+
+        <div class="sample-overview-box">
+          <div class="box-title">範例輸出</div>
+          <div class="sample-output-value">${v.output}</div>
+          <div class="sample-output-note">代表最大的單次水位上升高度是 ${v.output} cm。</div>
+        </div>
+      `;
+    }
+
+    function renderLayers(v){
+      dom.layerTable.innerHTML = '';
+    }
+
+    function renderStatus(v){
+      dom.statusContent.innerHTML=`
+        <div class="status-row"><div class="name">目前階段</div><div class="value">${esc(v.phase)}</div></div>
+        <div class="status-row"><div class="name">本次倒入 v</div><div class="value">${v.currentV===null?'—':v.currentV}</div></div>
+        <div class="status-row"><div class="name">倒水前水位</div><div class="value">${cm(v.beforeHeight)}</div></div>
+        <div class="status-row"><div class="name">倒水後水位</div><div class="value">${cm(v.afterHeight)}</div></div>
+        <div class="status-row important"><div class="name">本次總上升 h</div><div class="value">${v.totalRise===null?'尚未算出':cm(v.totalRise)}</div></div>
+        <div class="status-row important"><div class="name">目前 maxh</div><div class="value">${v.maxh===null?'尚未設定':cm(v.maxh)}</div></div>
+      `;
+    }
+
+    function renderCup(v){
+      const totalH=v.h1+v.h2;
+      const topY=34;
+      const bottomY=498;
+      const drawH=bottomY-topY;
+      const cx=440;
+      const maxW=560;
+      const maxCupW=Math.max(v.w1,v.w2,1);
+      const lowerW=Math.max(210,Math.round(maxW*v.w1/maxCupW));
+      const upperW=Math.max(210,Math.round(maxW*v.w2/maxCupW));
+      const lowerL=cx-lowerW/2;
+      const upperL=cx-upperW/2;
+      const cupRight=Math.max(lowerL+lowerW,upperL+upperW);
+      const cupLeft=Math.min(lowerL,upperL);
+      const boundaryY=bottomY-(v.h1/totalH)*drawH;
+      const yFor=h=>bottomY-(Math.max(0,Math.min(totalH,h))/totalH)*drawH;
+      const currentHeight=v.v1===null?0:actualHeight(v);
+      const currentY=yFor(currentHeight);
+      const lowerFilled=Math.min(currentHeight,v.h1);
+      const upperFilled=Math.max(0,currentHeight-v.h1);
+      const lowerWaterY=yFor(lowerFilled);
+      const upperWaterY=yFor(v.h1+upperFilled);
+      const lowerUsed=v.v1===null?0:v.cap1-v.v1;
+      const upperUsed=v.v2===null?0:v.cap2-v.v2;
+      const lowerOccupied=lowerUsed/v.a1;
+      const upperOccupied=upperUsed/v.a2;
+      const v1Text=v.v1===null?'尚未計算':v.v1;
+      const v2Text=v.v2===null?'尚未計算':v.v2;
+
+      let preview='';
+      let arrows='';
+      if(v.totalRise!==null && v.totalRise>0){
+        const target=Math.min(totalH,v.beforeHeight+v.totalRise);
+        const targetY=yFor(target);
+        preview=`<line x1="${cupLeft-28}" y1="${targetY}" x2="${cupRight+28}" y2="${targetY}" stroke="#f59e0b" stroke-width="4" stroke-dasharray="10 8"/>`;
+
+        const arrowX1=cupLeft-55;
+        const arrowX2=arrowX1-42;
+        if(v.lowerRise>0){
+          const startY=yFor(v.beforeHeight);
+          const endY=yFor(Math.min(v.h1,v.beforeHeight+v.lowerRise));
+          arrows+=`<line x1="${arrowX1}" y1="${startY}" x2="${arrowX1}" y2="${endY}" stroke="#059669" stroke-width="6" marker-end="url(#greenArrow)"/>`;
+        }
+        if(v.upperRise>0){
+          const startY=yFor(v.h1);
+          const endY=yFor(v.h1+v.upperRise);
+          arrows+=`<line x1="${arrowX2}" y1="${startY}" x2="${arrowX2}" y2="${endY}" stroke="#ea580c" stroke-width="6" marker-end="url(#orangeArrow)"/>`;
+        }
+      }
+
+      const upperCenterY=topY+(boundaryY-topY)/2;
+      const lowerCenterY=boundaryY+(bottomY-boundaryY)/2;
+      const textStroke='paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;';
+
+      dom.cupSvg.innerHTML=`
+        <defs>
+          <marker id="greenArrow" markerWidth="11" markerHeight="11" refX="5" refY="5" orient="auto-start-reverse"><path d="M0,0 L11,5.5 L0,11 Z" fill="#059669"></path></marker>
+          <marker id="orangeArrow" markerWidth="11" markerHeight="11" refX="5" refY="5" orient="auto-start-reverse"><path d="M0,0 L11,5.5 L0,11 Z" fill="#ea580c"></path></marker>
+          <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60a5fa" stop-opacity=".76"/><stop offset="100%" stop-color="#2563eb" stop-opacity=".93"/></linearGradient>
+        </defs>
+
+        <rect x="0" y="0" width="900" height="540" fill="transparent"/>
+
+        <rect x="${upperL}" y="${topY}" width="${upperW}" height="${boundaryY-topY}" fill="#fff" opacity=".93" stroke="#64748b" stroke-width="5" rx="11"/>
+        <rect x="${lowerL}" y="${boundaryY}" width="${lowerW}" height="${bottomY-boundaryY}" fill="#fff" opacity=".93" stroke="#64748b" stroke-width="5" rx="11"/>
+        <line x1="${cupLeft-28}" y1="${boundaryY}" x2="${cupRight+28}" y2="${boundaryY}" stroke="#475569" stroke-width="3" stroke-dasharray="11 9"/>
+
+        ${lowerFilled>0?`<rect x="${lowerL+5}" y="${lowerWaterY}" width="${lowerW-10}" height="${bottomY-lowerWaterY-5}" fill="url(#water)" rx="7"/>`:''}
+        ${upperFilled>0?`<rect x="${upperL+5}" y="${upperWaterY}" width="${upperW-10}" height="${boundaryY-upperWaterY}" fill="url(#water)" rx="7"/>`:''}
+
+        <line x1="${cupLeft-35}" y1="${currentY}" x2="${cupRight+35}" y2="${currentY}" stroke="#1d4ed8" stroke-width="4"/>
+        ${preview}
+        ${arrows}
+
+        <text x="${cx}" y="${upperCenterY-70}" text-anchor="middle" fill="#111827" style="font-size:28px;font-weight:900;${textStroke}">上層</text>
+        <text x="${cx}" y="${upperCenterY-32}" text-anchor="middle" fill="#334155" style="font-size:22px;font-weight:900;${textStroke}">底面積 a2 = ${v.a2}　高度 h2 = ${v.h2} cm</text>
+        <text x="${cx}" y="${upperCenterY+8}" text-anchor="middle" fill="#172033" style="font-size:25px;font-weight:900;${textStroke}">總容量 = ${v.cap2}</text>
+        <text x="${cx}" y="${upperCenterY+47}" text-anchor="middle" fill="#6d28d9" style="font-size:22px;font-weight:900;${textStroke}">剩餘容量 v2 = ${v2Text}</text>
+        <text x="${cx}" y="${upperCenterY+84}" text-anchor="middle" fill="#475569" style="font-size:20px;font-weight:900;${textStroke}">目前占用高度 = ${fmt(upperOccupied)} cm</text>
+
+        <text x="${cx}" y="${lowerCenterY-70}" text-anchor="middle" fill="#111827" style="font-size:28px;font-weight:900;${textStroke}">下層</text>
+        <text x="${cx}" y="${lowerCenterY-32}" text-anchor="middle" fill="#334155" style="font-size:22px;font-weight:900;${textStroke}">底面積 a1 = ${v.a1}　高度 h1 = ${v.h1} cm</text>
+        <text x="${cx}" y="${lowerCenterY+8}" text-anchor="middle" fill="#172033" style="font-size:25px;font-weight:900;${textStroke}">總容量 = ${v.cap1}</text>
+        <text x="${cx}" y="${lowerCenterY+47}" text-anchor="middle" fill="#1d4ed8" style="font-size:22px;font-weight:900;${textStroke}">剩餘容量 v1 = ${v1Text}</text>
+        <text x="${cx}" y="${lowerCenterY+84}" text-anchor="middle" fill="#475569" style="font-size:20px;font-weight:900;${textStroke}">目前占用高度 = ${fmt(lowerOccupied)} cm</text>
+
+        <text x="${Math.min(855,cupRight+42)}" y="${Math.max(28,currentY-12)}" text-anchor="start" fill="#1d4ed8" style="font-size:21px;font-weight:900;${textStroke}">目前水位 ${fmt(currentHeight)} cm</text>
+      `;
+    }
+
+    function renderCalculation(v){
+      const f=v.calc;
+      const cls=f.tag==='只在下層'?'green':f.tag==='跨到上層'?'orange':f.tag==='杯子裝滿'?'red':f.tag==='完成本次'?'yellow':f.tag==='完成'?'purple':'blue';
+      const lowerReady=v.totalRise!==null || v.lowerUse>0;
+      const upperReady=v.totalRise!==null || v.upperUse>0;
+      const lowerUse=lowerReady?fmt(v.lowerUse):'—';
+      const upperUse=upperReady?fmt(v.upperUse):'—';
+      const lowerFormula=lowerReady?`${fmt(v.lowerUse)} ÷ ${v.a1}`:'—';
+      const upperFormula=upperReady?`${fmt(v.upperUse)} ÷ ${v.a2}`:'—';
+      const lowerResult=lowerReady?cm(v.lowerRise):'—';
+      const upperResult=upperReady?cm(v.upperRise):'—';
+      const totalFormula=v.totalRise===null?'—':`${fmt(v.lowerRise)} + ${fmt(v.upperRise)}`;
+      const totalResult=v.totalRise===null?'—':cm(v.totalRise);
+      const shortExplain=(f.bullets||[]).slice(0,2).join('；');
+
+      dom.calculationArea.innerHTML=`
+        <div class="calculation-title">
+          <span class="tag ${cls}">${esc(f.tag)}</span>
+          ${esc(f.title)}
+          <span class="calc-message">${esc(shortExplain || f.conclusion)}</span>
+        </div>
+        <div class="calc-table-wrap">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th style="width:13%;">處理位置</th>
+                <th style="width:15%;">使用水量</th>
+                <th style="width:14%;">底面積</th>
+                <th style="width:27%;">高度計算</th>
+                <th style="width:16%;">得到高度</th>
+                <th style="width:15%;">高度意思</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="row-lower">
+                <td>下層</td>
+                <td>${lowerUse}</td>
+                <td>a1 = ${v.a1}</td>
+                <td class="formula-cell">${lowerFormula}</td>
+                <td>${lowerResult}</td>
+                <td>${lowerReady?'下層增加高度':'—'}</td>
+              </tr>
+              <tr class="row-upper">
+                <td>上層</td>
+                <td>${upperUse}</td>
+                <td>a2 = ${v.a2}</td>
+                <td class="formula-cell">${upperFormula}</td>
+                <td>${upperResult}</td>
+                <td>${upperReady?'上層增加高度':'—'}</td>
+              </tr>
+              <tr class="row-total">
+                <td>本次合計</td>
+                <td colspan="2">本次總上升高度 h</td>
+                <td class="formula-cell">${totalFormula}</td>
+                <td>${totalResult}</td>
+                <td>${v.totalRise===null?'尚未算出':'本次總上升'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function highlightCode(lineNo){
+      document.querySelectorAll('.code-line').forEach(el=>el.classList.toggle('active',Number(el.dataset.line)===lineNo));
+      const active=document.querySelector(`.code-line[data-line="${lineNo}"]`);
+      if(active){
+        active.scrollIntoView({block:'nearest',inline:'nearest'});
+        const raw=codeLines[lineNo-1].trim();
+        let exp='這一行是註解或空白，用來幫助閱讀程式。';
+        for(const [key,value] of lineExplain.entries()){
+          if(raw===key || raw.startsWith(key)){exp=value;break;}
+        }
+        dom.currentCodeExplain.innerHTML=`<strong>目前程式說明：</strong>${esc(exp)}`;
+      }
+    }
+
+    function render(){
+      const step=steps[stepIndex];
+      if(!step) return;
+      const v=step.visual;
+      dom.stepText.textContent=`${stepIndex+1} / ${steps.length}`;
+      dom.resultText.textContent=step.result;
+      dom.messageText.textContent=step.message;
+      renderSampleOverview(v);
+      renderLayers(v);
+      renderCup(v);
+      renderStatus(v);
+      renderCalculation(v);
+      highlightCode(step.line);
+    }
+
+    function go(delta){stepIndex=Math.max(0,Math.min(steps.length-1,stepIndex+delta));render()}
+    function stopPlay(){if(timer){clearInterval(timer);timer=null}}
+    function startPlay(){if(timer)return;timer=setInterval(()=>{if(stepIndex>=steps.length-1){stopPlay();return}go(1)},1050)}
+    function reset(){stopPlay();stepIndex=0;render()}
+    function loadSample(index){stopPlay();sampleIndex=index;dom.sampleSelect.value=String(index);generateSteps(samples[index]);stepIndex=0;render()}
+
+    function setupDrag(){
+      let dragging=false;
+      const verticalMode=()=>window.innerWidth<=820;
+      dom.divider.addEventListener('pointerdown',e=>{
+        dragging=true;
+        dom.divider.classList.add('dragging');
+        dom.divider.setPointerCapture?.(e.pointerId);
+        document.body.style.userSelect='none';
+        document.body.style.cursor=verticalMode()?'row-resize':'col-resize';
+        e.preventDefault();
+      });
+      window.addEventListener('pointermove',e=>{
+        if(!dragging)return;
+        const rect=dom.mainArea.getBoundingClientRect();
+        if(verticalMode()){
+          const pct=Math.max(30,Math.min(70,(e.clientY-rect.top)/rect.height*100));
+          dom.leftPane.style.flexBasis=pct+'%';
+        }else{
+          const pct=Math.max(42,Math.min(84,(e.clientX-rect.left)/rect.width*100));
+          dom.leftPane.style.flexBasis=pct+'%';
+        }
+        e.preventDefault();
+      });
+      window.addEventListener('pointerup',()=>{
+        if(!dragging)return;
+        dragging=false;
+        dom.divider.classList.remove('dragging');
+        document.body.style.userSelect='';
+        document.body.style.cursor='';
+      });
+    }
+
+    function setupEvents(){
+      dom.prevBtn.addEventListener('click',()=>go(-1));
+      dom.nextBtn.addEventListener('click',()=>go(1));
+      dom.playBtn.addEventListener('click',startPlay);
+      dom.pauseBtn.addEventListener('click',stopPlay);
+      dom.resetBtn.addEventListener('click',reset);
+      dom.sampleSelect.addEventListener('change',e=>loadSample(Number(e.target.value)));
+      dom.problemBtn.addEventListener('click',()=>dom.problemModal.classList.add('show'));
+      dom.closeModalBtn.addEventListener('click',()=>dom.problemModal.classList.remove('show'));
+      dom.problemModal.addEventListener('click',e=>{if(e.target===dom.problemModal)dom.problemModal.classList.remove('show')});
+      document.addEventListener('keydown',e=>{
+        const tag=(document.activeElement?.tagName||'').toLowerCase();
+        if(tag==='input'||tag==='textarea'||tag==='select')return;
+        if(e.code==='ArrowRight'){e.preventDefault();go(1)}
+        else if(e.code==='ArrowLeft'){e.preventDefault();go(-1)}
+        else if(e.code==='Space'){e.preventDefault();timer?stopPlay():startPlay()}
+      });
+      setupDrag();
+    }
+
+    buildCode();
+    renderSampleOptions();
+    setupEvents();
+    loadSample(0);
+  </script>
+</body>
+</html>
