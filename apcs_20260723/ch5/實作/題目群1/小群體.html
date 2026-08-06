@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APCS 小群體｜一步一步動畫教學</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-height: 122px;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --line: #d8dee9;
+      --text: #172033;
+      --muted: #667085;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --warn: #f59e0b;
+      --done: #059669;
+      --danger: #e11d48;
+      --code-bg: #111827;
+      --code-text: #dbeafe;
+      --code-muted: #93a4bd;
+      --code-active: rgba(245, 158, 11, 0.28);
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, select {
+      font-family: inherit;
+    }
+
+    #toolbar {
+      position: fixed;
+      z-index: 50;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--toolbar-height);
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 3px 14px rgba(15, 23, 42, 0.08);
+      padding: 10px 14px 8px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+    }
+
+    .toolbarTop {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .titleBlock {
+      min-width: 240px;
+      padding-right: 8px;
+      border-right: 1px solid var(--line);
+    }
+
+    .titleBlock h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .titleBlock .sub {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .buttonGroup {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid #c8d3e5;
+      background: #fff;
+      color: #1f2a44;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s ease;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: #94a3b8; }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn.primary:hover { background: var(--primary-dark); }
+    .btn.activeCase { background: #e0ecff; border-color: #76a5ff; color: #1d4ed8; }
+    .btn.ghost { background: #f8fafc; }
+
+    .stepStatus {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+      justify-content: flex-end;
+    }
+
+    #stepCounter {
+      font-weight: 900;
+      color: #0f172a;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      padding: 7px 10px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    #speedSelect {
+      border: 1px solid #c8d3e5;
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: #fff;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .toolbarInfo {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 10px;
+      min-height: 42px;
+      align-items: stretch;
+    }
+
+    #resultBadge, #messageText {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      overflow: hidden;
+    }
+
+    #resultBadge {
+      font-weight: 900;
+      color: #064e3b;
+      background: #ecfdf5;
+      border-color: #bbf7d0;
+      white-space: nowrap;
+    }
+
+    #messageText {
+      color: #1f2937;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    #main {
+      margin-top: var(--toolbar-height);
+      height: calc(100vh - var(--toolbar-height));
+      display: flex;
+      min-height: 0;
+    }
+
+    .pane {
+      min-height: 0;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    #leftPane {
+      flex: 0 0 58%;
+      min-width: 360px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+    }
+
+    #rightPane {
+      flex: 1 1 auto;
+      min-width: 360px;
+      display: flex;
+      flex-direction: column;
+      background: var(--code-bg);
+    }
+
+    #splitter {
+      flex: 0 0 9px;
+      background: linear-gradient(90deg, #e5e7eb, #cbd5e1, #e5e7eb);
+      cursor: col-resize;
+      position: relative;
+      z-index: 10;
+    }
+
+    #splitter::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 54px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: #94a3b8;
+      box-shadow: 0 -10px 0 #94a3b8, 0 10px 0 #94a3b8;
+    }
+
+    .paneHeader {
+      flex: 0 0 42px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fbfdff;
+      color: #1e293b;
+      font-weight: 900;
+    }
+
+    .paneHeader small {
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    #visualCanvas {
+      flex: 1 1 56%;
+      min-height: 250px;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 12px 12px, rgba(37, 99, 235, 0.08) 1px, transparent 1.5px),
+        linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+      background-size: 24px 24px, 100% 100%;
+    }
+
+    #statePanel {
+      flex: 0 0 44%;
+      min-height: 260px;
+      max-height: 430px;
+      overflow: hidden;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: static;
+      z-index: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    .listPanelHeader {
+      flex: 0 0 auto;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-weight: 1000;
+      font-size: 16px;
+    }
+
+    .listPanelHeader small {
+      color: #475569;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .listPanelBody {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 12px 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    #graphSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 固定版：已完全移除浮動視窗樣式，List 只會放在左側區塊內。 */
+
+    .kvGrid {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 6px 8px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .kvKey { color: #64748b; font-weight: 900; }
+    .kvVal { color: #0f172a; font-weight: 800; word-break: break-word; }
+
+    .chips {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip {
+      min-width: 30px;
+      padding: 3px 5px;
+      border-radius: 9px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      text-align: center;
+      font-weight: 900;
+      color: #334155;
+      position: relative;
+    }
+
+    .chip.visited { background: #dcfce7; border-color: #86efac; color: #065f46; }
+    .chip.current { outline: 3px solid rgba(245, 158, 11, 0.45); background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .chip small { display: block; font-size: 9px; font-weight: 700; color: #64748b; }
+    .stateSectionTitle {
+      margin: 12px 0 6px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .stateHelp {
+      margin: 6px 0 0;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .summaryPills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pill.good { background: #ecfdf5; border-color: #86efac; color: #065f46; }
+    .pill.warn { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+    .pill.info { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+    .visitedTableWrap {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid #dbe4f0;
+      border-radius: 12px;
+      background: #ffffff;
+    }
+
+    .visitedTable {
+      width: 100%;
+      min-width: 430px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+
+    .visitedTable th,
+    .visitedTable td {
+      padding: 7px 8px;
+      border-bottom: 1px solid #edf2f7;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .visitedTable th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 1000;
+    }
+
+    .visitedTable tr:last-child td { border-bottom: 0; }
+
+    .visitedTable tr.rowTrue td { background: #ecfdf5; }
+    .visitedTable tr.rowFalse td { background: #ffffff; }
+    .visitedTable tr.rowI td { box-shadow: inset 4px 0 0 #2563eb; }
+    .visitedTable tr.rowX td { outline: 2px solid rgba(245, 158, 11, 0.8); outline-offset: -2px; background: #fffbeb; }
+    .visitedTable tr.rowActive td { font-weight: 1000; }
+
+    .personCell {
+      font-size: 16px;
+      font-weight: 1000;
+      color: #0f172a;
+    }
+
+    .arrowCell {
+      color: #475569;
+      font-weight: 900;
+    }
+
+    .boolTrue,
+    .boolFalse {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 108px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid;
+      font-weight: 1000;
+    }
+
+    .boolTrue { background: #dcfce7; border-color: #86efac; color: #065f46; }
+    .boolFalse { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
+
+    .markBadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      margin: 0 2px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 1000;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    .markBadge.i { background: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
+    .markBadge.x { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .markBadge.now { background: #ffe4e6; border-color: #fb7185; color: #be123c; }
+
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-top: 8px;
+      color: #475569;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .legendItem {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 2px solid #64748b;
+      background: #fff;
+    }
+    .dot.done { background: #dcfce7; border-color: #059669; }
+    .dot.current { background: #fef3c7; border-color: #f59e0b; }
+
+    .codeHeader {
+      flex: 0 0 42px;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #0b1220;
+    }
+
+    #codeScroller {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px 0 24px;
+    }
+
+    .codeLine {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      min-height: 28px;
+      align-items: center;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--code-text);
+      border-left: 5px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .lineNo {
+      color: var(--code-muted);
+      text-align: right;
+      padding-right: 12px;
+      user-select: none;
+      font-size: 13px;
+    }
+
+    .codeText {
+      white-space: pre;
+      padding-left: 8px;
+      padding-right: 16px;
+    }
+
+    .codeLine.active {
+      background: var(--code-active);
+      border-left-color: var(--warn);
+    }
+
+    .codeLine.active .lineNo {
+      color: #fde68a;
+      font-weight: 900;
+    }
+
+    .codeLine.blank .codeText::after {
+      content: "";
+    }
+
+    .edge {
+      stroke: #8aa0bc;
+      stroke-width: 2.5;
+      fill: none;
+      opacity: 0.72;
+      transition: 0.18s ease;
+    }
+
+    .edge.visitedEdge {
+      stroke: #10b981;
+      opacity: 0.9;
+      stroke-width: 3.2;
+    }
+
+    .edge.activeEdge {
+      stroke: #ef4444;
+      stroke-width: 5.2;
+      opacity: 1;
+      filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+    }
+
+    .groupBox {
+      fill: rgba(255, 255, 255, 0.58);
+      stroke: rgba(148, 163, 184, 0.55);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 6;
+    }
+
+    .groupLabel {
+      fill: #475569;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .node circle {
+      stroke-width: 3;
+      transition: 0.18s ease;
+      filter: drop-shadow(0 5px 8px rgba(15, 23, 42, 0.15));
+    }
+
+    .node.unvisited circle {
+      fill: #ffffff;
+      stroke: #64748b;
+    }
+
+    .node.visited circle {
+      fill: #dcfce7;
+      stroke: #059669;
+    }
+
+    .node.current circle {
+      fill: #fef3c7;
+      stroke: #f59e0b;
+      stroke-width: 5;
+      filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.55));
+    }
+
+    .node .nodeText {
+      fill: #111827;
+      font-size: 24px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    .node .nodeSub {
+      fill: #475569;
+      font-size: 11px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    .node.current .nodeText { fill: #78350f; }
+    .node.visited .nodeText { fill: #064e3b; }
+
+    .modalBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modalBackdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(1080px, 96vw);
+      max-height: min(86vh, 900px);
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+      border: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modalHeader {
+      padding: 14px 18px;
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modalHeader h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #1e3a8a;
+    }
+
+    .modalClose {
+      border: 1px solid #93c5fd;
+      background: #fff;
+      color: #1d4ed8;
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .modalBody {
+      padding: 18px 22px 26px;
+      overflow: auto;
+      line-height: 1.75;
+      font-size: 16px;
+    }
+
+    .modalBody h3 {
+      margin: 18px 0 8px;
+      color: #0f172a;
+      font-size: 18px;
+      border-left: 5px solid #2563eb;
+      padding-left: 10px;
+    }
+
+    .modalBody p { margin: 8px 0; }
+
+    .exampleGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .card h4 { margin: 0 0 8px; color: #1e293b; }
+
+    .plainCode {
+      background: #0f172a;
+      color: #dbeafe;
+      border-radius: 12px;
+      padding: 10px 12px;
+      overflow: auto;
+      font-family: Consolas, "Courier New", monospace;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    .hintBox {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #78350f;
+      font-weight: 700;
+    }
+
+
+    .inputListWrap {
+      max-width: 100%;
+      overflow: auto;
+      border: 1px solid #dbe4f0;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+    }
+
+    .inputListTable {
+      width: 100%;
+      min-width: 560px;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+
+    .inputListTable th,
+    .inputListTable td {
+      padding: 8px 9px;
+      border-bottom: 1px solid #edf2f7;
+      border-right: 1px solid #edf2f7;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .inputListTable th:first-child,
+    .inputListTable td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 1000;
+      min-width: 92px;
+      box-shadow: 2px 0 0 rgba(226,232,240,0.8);
+    }
+
+    .inputListTable tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .inputListTable tr:last-child td,
+    .inputListTable tr:last-child th { border-bottom: 0; }
+    .inputListTable td:last-child,
+    .inputListTable th:last-child { border-right: 0; }
+
+    .personNum {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 30px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 17px;
+      font-weight: 1000;
+      color: #0f172a;
+    }
+
+    .friendArrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      font-weight: 1000;
+    }
+
+    .statusTag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 1000;
+    }
+
+    .statusTag.notReady { background: #f1f5f9; border-color: #cbd5e1; color: #64748b; }
+    .statusTag.todo { background: #ffffff; border-color: #cbd5e1; color: #475569; }
+    .statusTag.done { background: #dcfce7; border-color: #86efac; color: #065f46; }
+    .statusTag.current { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+    .statusTag.checking { background: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
+    .statusTag.skip { background: #ede9fe; border-color: #a78bfa; color: #5b21b6; }
+
+    .listCellCurrent {
+      outline: 3px solid rgba(245, 158, 11, 0.65);
+      outline-offset: -3px;
+      background: #fffbeb !important;
+    }
+
+    .listCellI {
+      box-shadow: inset 0 -4px 0 rgba(37, 99, 235, 0.7);
+      background: #eff6ff !important;
+    }
+
+    .groupProgressCard {
+      margin-top: 10px;
+      border: 1px solid #bfdbfe;
+      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .groupProgressTitle {
+      color: #1e3a8a;
+      font-size: 15px;
+      font-weight: 1000;
+      margin-bottom: 6px;
+    }
+
+    .pathText {
+      color: #0f172a;
+      font-size: 16px;
+      line-height: 1.45;
+      font-weight: 1000;
+      word-break: break-word;
+    }
+
+    .pathText .returnTo {
+      color: #dc2626;
+      font-weight: 1000;
+    }
+
+    .completedGroupList {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .completedGroupItem {
+      border: 1px solid #bbf7d0;
+      background: #ecfdf5;
+      color: #064e3b;
+      border-radius: 12px;
+      padding: 7px 9px;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .miniNote {
+      margin-top: 7px;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+
+    .inputCardGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .personCard {
+      border: 1px solid #dbe4f0;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      transition: 0.15s ease;
+      min-height: 112px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .personCard.grouped {
+      background: #ecfdf5;
+      border-color: #86efac;
+    }
+
+    .personCard.currentI {
+      box-shadow: inset 0 0 0 3px rgba(37, 99, 235, 0.38), 0 2px 8px rgba(15, 23, 42, 0.06);
+      background: #eff6ff;
+    }
+
+    .personCard.currentX {
+      box-shadow: inset 0 0 0 3px rgba(245, 158, 11, 0.58), 0 2px 10px rgba(245, 158, 11, 0.18);
+      background: #fffbeb;
+    }
+
+    .personCard.activeNode {
+      transform: translateY(-1px);
+    }
+
+    .personCardTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .personCardStatus {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .personCardMarks {
+      min-height: 25px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #94a3b8;
+      font-weight: 900;
+    }
+
+    .sectionDivider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 10px 0;
+    }
+
+    @media (max-width: 980px) {
+      :root { --toolbar-height: 160px; }
+      .toolbarTop { flex-wrap: wrap; align-items: flex-start; }
+      .titleBlock { min-width: 100%; border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+      .stepStatus { margin-left: 0; }
+      .toolbarInfo { grid-template-columns: 1fr; }
+      #leftPane, #rightPane { min-width: 280px; }
+      .exampleGrid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header id="toolbar">
+    <div class="toolbarTop">
+      <div class="titleBlock">
+        <h1>第 2 題 小群體</h1>
+        <div class="sub">白話教學・固定 List 分群法・無浮動視窗</div>
+      </div>
+
+      <div class="buttonGroup" aria-label="控制列">
+        <button class="btn ghost" id="openProblemBtn">題目說明</button>
+        <button class="btn activeCase" id="case0Btn">範例一</button>
+        <button class="btn" id="case1Btn">範例二</button>
+        <button class="btn" id="prevBtn">上一步</button>
+        <button class="btn primary" id="nextBtn">下一步</button>
+        <button class="btn" id="playBtn">播放</button>
+        <button class="btn" id="resetBtn">重設</button>
+      </div>
+
+      <div class="stepStatus">
+        <select id="speedSelect" title="播放速度">
+          <option value="1200">慢速</option>
+          <option value="850" selected>正常</option>
+          <option value="500">快速</option>
+        </select>
+        <div id="stepCounter">步驟 1 / 1</div>
+      </div>
+    </div>
+
+    <div class="toolbarInfo">
+      <div id="resultBadge">目前答案：尚未開始</div>
+      <div id="messageText">按「下一步」開始觀察程式如何數出小群體。</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="leftPane" class="pane">
+      <div class="paneHeader">
+        <span>左側：好友箭頭圖 + 輸入 List</span>
+        <small>上方看箭頭，下方固定顯示完整輸入 List</small>
+      </div>
+      <div id="visualCanvas">
+        <svg id="graphSvg" role="img" aria-label="小群體好友箭頭圖"></svg>
+      </div>
+
+      <div id="statePanel" class="staticListPanel">
+        <div class="listPanelHeader">
+          <span>輸入 List 與群體進度</span>
+          <small>固定在左側版面內，不覆蓋任何內容</small>
+        </div>
+        <div class="listPanelBody" id="stateBody"></div>
+      </div>
+    </section>
+
+    <div id="splitter" title="拖曳調整左右寬度"></div>
+
+    <section id="rightPane" class="pane">
+      <div class="paneHeader codeHeader">
+        <span>右側：完整 Python 程式碼</span>
+        <small>會同步高亮目前執行行</small>
+      </div>
+      <div id="codeScroller">
+        <div id="codeBlock"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modalBackdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modalHeader">
+        <h2 id="problemTitle">題目文字版：小群體</h2>
+        <button class="modalClose" id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="modalBody">
+        <h3>問題描述</h3>
+        <p>有一群人在一起時，會依照「最好朋友」的關係形成一個一個小群體。</p>
+        <p>共有 \(N\) 個人，編號從 \(0\) 到 \(N-1\)。每個人都寫下他最好朋友的編號。最好朋友可能是自己。</p>
+        <p>題目保證：好友編號中，\(0\) 到 \(N-1\) 每個數字剛好出現一次。也就是每個人剛好被某個人指到一次。</p>
+        <p>從任意一個人開始，一直走到他的好友、好友的好友、好友的好友的好友，最後一定會繞回來，形成一個小群體。</p>
+        <div class="hintBox">本題要做的事很單純：數看看總共有幾個「好友圈圈」。</div>
+
+        <h3>輸入格式</h3>
+        <p>第一行是一個正整數 \(N\)，代表總共有幾個人。</p>
+        <p>第二行有 \(N\) 個整數，依序代表 \(0\) 的好友、\(1\) 的好友、一直到 \(N-1\) 的好友。</p>
+
+        <h3>輸出格式</h3>
+        <p>輸出小群體的個數，最後以換行結尾。</p>
+
+        <h3>範例</h3>
+        <div class="exampleGrid">
+          <div class="card">
+            <h4>範例一輸入</h4>
+            <div class="plainCode">10
+4 7 2 9 6 0 8 1 5 3</div>
+            <h4>範例一輸出</h4>
+            <div class="plainCode">4</div>
+            <p>小群體是：{0,4,6,8,5}、{1,7}、{2}、{3,9}。</p>
+          </div>
+          <div class="card">
+            <h4>範例二輸入</h4>
+            <div class="plainCode">3
+0 2 1</div>
+            <h4>範例二輸出</h4>
+            <div class="plainCode">2</div>
+            <p>小群體是：{0}、{1,2}。</p>
+          </div>
+        </div>
+
+        <h3>評分重點</h3>
+        <p>資料量最大可到 \(N=50000\)，所以不適合一直在群體裡慢慢搜尋。程式內用 visited 做記錄；畫面上改用「未分群 / 第幾群」來呈現，學生會比較直覺。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CODE_LINES = [
+      'N = int(input())',
+      'BF = list(map(int, input().split()))',
+      '',
+      'visited = [False] * N',
+      'ans = 0',
+      '',
+      'for i in range(N):',
+      '    if visited[i]:',
+      '        continue',
+      '',
+      '    ans += 1',
+      '',
+      '    x = i',
+      '    while not visited[x]:',
+      '        visited[x] = True',
+      '        x = BF[x]',
+      '',
+      'print(ans)'
+    ];
+
+    const EXAMPLES = [
+      {
+        name: '範例一',
+        N: 10,
+        BF: [4, 7, 2, 9, 6, 0, 8, 1, 5, 3],
+        expected: 4,
+        inputText: '10\\n4 7 2 9 6 0 8 1 5 3'
+      },
+      {
+        name: '範例二',
+        N: 3,
+        BF: [0, 2, 1],
+        expected: 2,
+        inputText: '3\\n0 2 1'
+      }
+    ];
+
+    let currentExampleIndex = 0;
+    let steps = [];
+    let stepIndex = 0;
+    let playing = false;
+    let playTimer = null;
+    let layout = null;
+
+    const el = {
+      graphSvg: document.getElementById('graphSvg'),
+      codeBlock: document.getElementById('codeBlock'),
+      codeScroller: document.getElementById('codeScroller'),
+      stepCounter: document.getElementById('stepCounter'),
+      resultBadge: document.getElementById('resultBadge'),
+      messageText: document.getElementById('messageText'),
+      stateBody: document.getElementById('stateBody'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      speedSelect: document.getElementById('speedSelect'),
+      case0Btn: document.getElementById('case0Btn'),
+      case1Btn: document.getElementById('case1Btn'),
+      splitter: document.getElementById('splitter'),
+      leftPane: document.getElementById('leftPane'),
+      main: document.getElementById('main'),
+      statePanel: document.getElementById('statePanel'),
+      visualCanvas: document.getElementById('visualCanvas'),
+      problemModal: document.getElementById('problemModal'),
+      openProblemBtn: document.getElementById('openProblemBtn'),
+      closeProblemBtn: document.getElementById('closeProblemBtn')
+    };
+
+    function renderCode() {
+      el.codeBlock.innerHTML = '';
+      CODE_LINES.forEach((line, idx) => {
+        const row = document.createElement('div');
+        row.className = 'codeLine' + (line === '' ? ' blank' : '');
+        row.dataset.line = String(idx + 1);
+
+        const no = document.createElement('div');
+        no.className = 'lineNo';
+        no.textContent = idx + 1;
+
+        const text = document.createElement('div');
+        text.className = 'codeText';
+        text.textContent = line;
+
+        row.appendChild(no);
+        row.appendChild(text);
+        el.codeBlock.appendChild(row);
+      });
+    }
+
+    function setActiveLine(lineNo) {
+      document.querySelectorAll('.codeLine').forEach(row => {
+        row.classList.toggle('active', Number(row.dataset.line) === lineNo);
+      });
+      const active = document.querySelector(`.codeLine[data-line="${lineNo}"]`);
+      if (active) {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    function computeCycles(N, BF) {
+      const seen = Array(N).fill(false);
+      const groups = [];
+      for (let i = 0; i < N; i++) {
+        if (seen[i]) continue;
+        const path = [];
+        let x = i;
+        while (!seen[x]) {
+          seen[x] = true;
+          path.push(x);
+          x = BF[x];
+        }
+        groups.push(path);
+      }
+      return groups;
+    }
+
+    function computeLayout(example) {
+      const N = example.N;
+      const BF = example.BF;
+      const groups = computeCycles(N, BF);
+      const positions = {};
+      const groupBoxes = [];
+      const margin = 38;
+      const maxRowWidth = 940;
+      let cursorX = margin;
+      let cursorY = margin;
+      let rowH = 0;
+      let usedW = 0;
+
+      groups.forEach((group, gi) => {
+        const len = group.length;
+        const radius = len === 1 ? 0 : Math.max(58, Math.min(126, 24 * len + 34));
+        const boxW = Math.max(176, radius * 2 + 90);
+        const boxH = Math.max(158, radius * 2 + 94);
+
+        if (cursorX + boxW > maxRowWidth && cursorX > margin) {
+          cursorX = margin;
+          cursorY += rowH + 34;
+          rowH = 0;
+        }
+
+        const cx = cursorX + boxW / 2;
+        const cy = cursorY + boxH / 2 + 8;
+        groupBoxes.push({ x: cursorX, y: cursorY, w: boxW, h: boxH, label: `小群體 ${gi + 1}`, nodes: group.slice() });
+
+        if (len === 1) {
+          positions[group[0]] = { x: cx, y: cy, group: gi };
+        } else {
+          group.forEach((node, idx) => {
+            const angle = -Math.PI / 2 + (Math.PI * 2 * idx) / len;
+            positions[node] = {
+              x: cx + Math.cos(angle) * radius,
+              y: cy + Math.sin(angle) * radius,
+              group: gi
+            };
+          });
+        }
+
+        cursorX += boxW + 30;
+        rowH = Math.max(rowH, boxH);
+        usedW = Math.max(usedW, cursorX);
+      });
+
+      const viewW = Math.max(720, Math.min(maxRowWidth + margin, usedW + margin));
+      const viewH = Math.max(420, cursorY + rowH + margin);
+      return { positions, groupBoxes, groups, viewW, viewH };
+    }
+
+    function makeSteps(example) {
+      const N = example.N;
+      const BF = example.BF;
+      const resultText = () => {
+        if (ans === null) return '目前答案：尚未建立';
+        return `目前答案 ans = ${ans}`;
+      };
+
+      let visited = null;          // 程式內部仍照原始解法使用
+      let groupOf = null;          // 畫面用：第 i 個人目前屬於第幾群
+      let ans = null;
+      let currentI = null;
+      let currentX = null;
+      let currentGroupNo = null;
+      let currentPath = [];
+      let completedGroups = [];
+      let groupStatus = '尚未開始分群';
+      const list = [];
+
+      function copyCompletedGroups() {
+        return completedGroups.map(g => ({
+          groupNo: g.groupNo,
+          path: g.path.slice(),
+          returnTo: g.returnTo
+        }));
+      }
+
+      function snap(activeLine, message, options = {}) {
+        list.push({
+          activeLine,
+          message,
+          visited: visited ? visited.slice() : null,
+          groupOf: groupOf ? groupOf.slice() : null,
+          ans,
+          currentI,
+          currentX,
+          currentGroupNo,
+          currentPath: currentPath.slice(),
+          completedGroups: copyCompletedGroups(),
+          groupStatus,
+          activeNode: options.activeNode ?? currentX ?? currentI,
+          activeEdge: options.activeEdge ?? null,
+          result: options.result ?? resultText(),
+          phase: options.phase ?? 'normal'
+        });
+      }
+
+      snap(1, `讀取 N。這一筆是 ${N}，代表總共有 ${N} 個人。`, { result: '目前答案：尚未建立' });
+      snap(2, `讀取 BF 好友表。BF[i] 代表第 i 個人的最好朋友，左邊 List 會完整顯示輸入內容。`, { result: '目前答案：尚未建立' });
+      visited = Array(N).fill(false);
+      groupOf = Array(N).fill(null);
+      groupStatus = '建立分群狀態表：全部都是未分群';
+      snap(4, `建立紀錄表。畫面不直接顯示 visited[x]，而是用「未分群 / 第幾群」表示。`);
+      ans = 0;
+      snap(5, `建立 ans = 0。ans 用來數目前找到幾個小群體。`);
+
+      for (let i = 0; i < N; i++) {
+        currentI = i;
+        currentX = null;
+        currentGroupNo = null;
+        currentPath = [];
+        groupStatus = `for 迴圈檢查第 ${i} 個人`;
+        snap(7, `for 迴圈看第 ${i} 個人。`, { activeNode: i });
+
+        if (visited[i]) {
+          groupStatus = `第 ${i} 個人已經在第 ${groupOf[i]} 群，跳過`;
+          snap(8, `檢查第 ${i} 個人：他已經在第 ${groupOf[i]} 群。`, { activeNode: i, phase: 'skipCheck' });
+          snap(9, `所以不用重複走，直接跳過第 ${i} 個人。`, { activeNode: i, phase: 'skip' });
+          continue;
+        }
+
+        groupStatus = `第 ${i} 個人還沒分群，準備建立新群`;
+        snap(8, `檢查第 ${i} 個人：他還沒有分到任何群。`, { activeNode: i, phase: 'newCheck' });
+
+        ans += 1;
+        currentGroupNo = ans;
+        currentPath = [];
+        groupStatus = `第 ${currentGroupNo} 群開始`;
+        snap(11, `發現第 ${currentGroupNo} 群，ans 加 1。`, { activeNode: i, phase: 'groupStart' });
+
+        currentX = i;
+        groupStatus = `第 ${currentGroupNo} 群開始，從 ${i} 出發`;
+        snap(13, `設定 x = ${i}。第 ${currentGroupNo} 群從 ${i} 開始走。`, { activeNode: i, phase: 'setX' });
+
+        while (true) {
+          if (visited[currentX]) {
+            const returnTo = currentX;
+            groupStatus = `第 ${currentGroupNo} 群完成`;
+            completedGroups.push({ groupNo: currentGroupNo, path: currentPath.slice(), returnTo });
+            snap(14, `現在走到 ${currentX}，它已經在第 ${groupOf[currentX]} 群，表示第 ${currentGroupNo} 群繞回來了，這一群完成。`, {
+              activeNode: currentX,
+              phase: 'groupComplete'
+            });
+            currentGroupNo = null;
+            currentPath = [];
+            break;
+          }
+
+          groupStatus = `第 ${currentGroupNo} 群進行中`;
+          snap(14, `現在 x = ${currentX}，這個人還沒分群，所以繼續走。`, {
+            activeNode: currentX,
+            phase: 'checking'
+          });
+
+          visited[currentX] = true;
+          groupOf[currentX] = currentGroupNo;
+          currentPath.push(currentX);
+          groupStatus = `第 ${currentGroupNo} 群進行中：${currentPath.join(' → ')}`;
+          snap(15, `把第 ${currentX} 個人放進第 ${currentGroupNo} 群。`, {
+            activeNode: currentX,
+            phase: 'markGroup'
+          });
+
+          const from = currentX;
+          const to = BF[currentX];
+          currentX = to;
+          groupStatus = `第 ${currentGroupNo} 群進行中：${currentPath.join(' → ')}，下一個走到 ${to}`;
+          snap(16, `看好友表：${from} 的好友是 ${to}，所以走到 ${to}。`, {
+            activeNode: to,
+            activeEdge: { from, to },
+            phase: 'move'
+          });
+        }
+      }
+
+      currentI = null;
+      currentX = null;
+      currentGroupNo = null;
+      currentPath = [];
+      groupStatus = '所有人都檢查完，分群完成';
+      snap(18, `for 迴圈全部結束，印出 ans = ${ans}。這就是小群體數量。`, {
+        activeNode: null,
+        result: `最後答案：${ans}`,
+        phase: 'finish'
+      });
+
+      return list;
+    }
+
+    function renderGraph(step) {
+      const example = EXAMPLES[currentExampleIndex];
+      const N = example.N;
+      const BF = example.BF;
+      const svg = el.graphSvg;
+      const ns = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+      svg.setAttribute('viewBox', `0 0 ${layout.viewW} ${layout.viewH}`);
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+      const defs = document.createElementNS(ns, 'defs');
+      defs.innerHTML = `
+        <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 12 6 L 0 12 z" fill="#8aa0bc"></path>
+        </marker>
+        <marker id="arrowVisited" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 12 6 L 0 12 z" fill="#10b981"></path>
+        </marker>
+        <marker id="arrowActive" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 12 6 L 0 12 z" fill="#ef4444"></path>
+        </marker>
+      `;
+      svg.appendChild(defs);
+
+      const groupLayer = document.createElementNS(ns, 'g');
+      layout.groupBoxes.forEach((box) => {
+        const rect = document.createElementNS(ns, 'rect');
+        rect.setAttribute('x', box.x + 5);
+        rect.setAttribute('y', box.y + 5);
+        rect.setAttribute('width', box.w - 10);
+        rect.setAttribute('height', box.h - 10);
+        rect.setAttribute('rx', '20');
+        rect.setAttribute('class', 'groupBox');
+        groupLayer.appendChild(rect);
+
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', box.x + 20);
+        label.setAttribute('y', box.y + 31);
+        label.setAttribute('class', 'groupLabel');
+        label.textContent = box.label;
+        groupLayer.appendChild(label);
+      });
+      svg.appendChild(groupLayer);
+
+      const edgeLayer = document.createElementNS(ns, 'g');
+      const nodeR = 28;
+      for (let from = 0; from < N; from++) {
+        const to = BF[from];
+        const p1 = layout.positions[from];
+        const p2 = layout.positions[to];
+        const path = document.createElementNS(ns, 'path');
+        const isActive = step.activeEdge && step.activeEdge.from === from && step.activeEdge.to === to;
+        const isVisited = step.groupOf && step.groupOf[from] !== null && step.groupOf[from] !== undefined;
+        path.setAttribute('d', makeEdgePath(p1, p2, from, to, nodeR));
+        path.setAttribute('class', 'edge' + (isVisited ? ' visitedEdge' : '') + (isActive ? ' activeEdge' : ''));
+        path.setAttribute('marker-end', isActive ? 'url(#arrowActive)' : (isVisited ? 'url(#arrowVisited)' : 'url(#arrow)'));
+        edgeLayer.appendChild(path);
+      }
+      svg.appendChild(edgeLayer);
+
+      const nodeLayer = document.createElementNS(ns, 'g');
+      for (let i = 0; i < N; i++) {
+        const p = layout.positions[i];
+        const g = document.createElementNS(ns, 'g');
+        const groupNo = step.groupOf ? step.groupOf[i] : null;
+        const isGrouped = groupNo !== null && groupNo !== undefined;
+        const current = step.activeNode === i;
+        g.setAttribute('class', 'node ' + (isGrouped ? 'visited' : 'unvisited') + (current ? ' current' : ''));
+        g.setAttribute('transform', `translate(${p.x}, ${p.y})`);
+
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('r', nodeR);
+        g.appendChild(circle);
+
+        const text = document.createElementNS(ns, 'text');
+        text.setAttribute('class', 'nodeText');
+        text.setAttribute('y', '-3');
+        text.textContent = i;
+        g.appendChild(text);
+
+        const sub = document.createElementNS(ns, 'text');
+        sub.setAttribute('class', 'nodeSub');
+        sub.setAttribute('y', '21');
+        sub.textContent = isGrouped ? `第${groupNo}群` : '未分';
+        g.appendChild(sub);
+
+        nodeLayer.appendChild(g);
+      }
+      svg.appendChild(nodeLayer);
+    }
+
+    function makeEdgePath(p1, p2, from, to, nodeR) {
+      if (from === to) {
+        const x = p1.x;
+        const y = p1.y;
+        return `M ${x + nodeR * 0.65} ${y - nodeR * 0.75} C ${x + 70} ${y - 90}, ${x - 70} ${y - 90}, ${x - nodeR * 0.65} ${y - nodeR * 0.75}`;
+      }
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+      const ux = dx / len;
+      const uy = dy / len;
+      const sx = p1.x + ux * (nodeR + 7);
+      const sy = p1.y + uy * (nodeR + 7);
+      const ex = p2.x - ux * (nodeR + 10);
+      const ey = p2.y - uy * (nodeR + 10);
+      const px = -uy;
+      const py = ux;
+      const curve = from < to ? 20 : -20;
+      const mx = (sx + ex) / 2 + px * curve;
+      const my = (sy + ey) / 2 + py * curve;
+      return `M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`;
+    }
+
+    function renderStatePanel(step) {
+      const example = EXAMPLES[currentExampleIndex];
+      const BF = example.BF;
+      const N = example.N;
+      const currentI = step.currentI === null || step.currentI === undefined ? '尚未進入 for' : step.currentI;
+      const currentX = step.currentX === null || step.currentX === undefined ? '尚未設定' : step.currentX;
+      const ans = step.ans === null || step.ans === undefined ? '尚未建立' : step.ans;
+      const groupStatus = step.groupStatus || '尚未開始';
+
+      function pathWithReturn(path, returnTo) {
+        if (!path || path.length === 0) return '尚未開始走';
+        if (returnTo === null || returnTo === undefined) return path.join(' → ');
+        return `${path.join(' → ')} → <span class="returnTo">回到 ${returnTo}</span>`;
+      }
+
+      function statusInfo(idx) {
+        if (!step.groupOf) return { text: '尚未建立', cls: 'notReady' };
+        const groupNo = step.groupOf[idx];
+        if (step.phase === 'skip' && step.currentI === idx) return { text: `跳過`, cls: 'skip' };
+        if (step.currentX === idx && step.phase !== 'finish') {
+          if (groupNo !== null && groupNo !== undefined) return { text: `第${groupNo}群`, cls: 'current' };
+          return { text: '正在走到這裡', cls: 'current' };
+        }
+        if (step.currentI === idx && (groupNo === null || groupNo === undefined) && step.phase !== 'finish') {
+          return { text: '正在檢查', cls: 'checking' };
+        }
+        if (groupNo !== null && groupNo !== undefined) return { text: `第${groupNo}群`, cls: 'done' };
+        return { text: '未分群', cls: 'todo' };
+      }
+
+      const personCells = Array.from({ length: N }, (_, idx) => {
+        const classes = [];
+        if (step.currentI === idx) classes.push('listCellI');
+        if (step.currentX === idx) classes.push('listCellCurrent');
+        return `<td class="${classes.join(' ')}"><span class="personNum">${idx}</span></td>`;
+      }).join('');
+
+      const friendCells = BF.map((v, idx) => {
+        const classes = [];
+        if (step.activeEdge && step.activeEdge.from === idx) classes.push('listCellCurrent');
+        return `<td class="${classes.join(' ')}"><span class="friendArrow">${idx} → ${v}</span></td>`;
+      }).join('');
+
+      const statusCells = Array.from({ length: N }, (_, idx) => {
+        const info = statusInfo(idx);
+        const classes = [];
+        if (step.currentI === idx) classes.push('listCellI');
+        if (step.currentX === idx) classes.push('listCellCurrent');
+        return `<td class="${classes.join(' ')}"><span class="statusTag ${info.cls}">${info.text}</span></td>`;
+      }).join('');
+
+      const markerCells = Array.from({ length: N }, (_, idx) => {
+        const badges = [];
+        if (step.currentI === idx) badges.push('<span class="markBadge i">for i</span>');
+        if (step.currentX === idx) badges.push('<span class="markBadge x">走到 x</span>');
+        if (step.activeNode === idx) badges.push('<span class="markBadge now">高亮</span>');
+        return `<td>${badges.length ? badges.join('') : '—'}</td>`;
+      }).join('');
+
+      const inputCards = Array.from({ length: N }, (_, idx) => {
+        const info = statusInfo(idx);
+        const cardClasses = ['personCard'];
+        const groupNo = step.groupOf ? step.groupOf[idx] : null;
+        if (groupNo !== null && groupNo !== undefined) cardClasses.push('grouped');
+        if (step.currentI === idx) cardClasses.push('currentI');
+        if (step.currentX === idx) cardClasses.push('currentX');
+        if (step.activeNode === idx) cardClasses.push('activeNode');
+
+        const badges = [];
+        if (step.currentI === idx) badges.push('<span class="markBadge i">for i</span>');
+        if (step.currentX === idx) badges.push('<span class="markBadge x">走到 x</span>');
+        if (step.activeNode === idx) badges.push('<span class="markBadge now">高亮</span>');
+
+        return `
+          <div class="${cardClasses.join(' ')}">
+            <div class="personCardTop">
+              <span class="personNum">${idx}</span>
+              <span class="friendArrow">${idx} → ${BF[idx]}</span>
+            </div>
+            <div class="personCardStatus">
+              <span class="statusTag ${info.cls}">${info.text}</span>
+            </div>
+            <div class="personCardMarks">${badges.length ? badges.join('') : '—'}</div>
+          </div>
+        `;
+      }).join('');
+
+      const completedHtml = step.completedGroups && step.completedGroups.length
+        ? step.completedGroups.map(g => `
+            <div class="completedGroupItem">第 ${g.groupNo} 群完成：${pathWithReturn(g.path, g.returnTo)}</div>
+          `).join('')
+        : '<div class="miniNote">目前還沒有完成的群體。</div>';
+
+      const currentPathText = step.currentPath && step.currentPath.length
+        ? step.currentPath.join(' → ')
+        : '尚未開始走';
+
+      el.stateBody.innerHTML = `
+        <div class="kvGrid">
+          <div class="kvKey">範例</div><div class="kvVal">${example.name}，N = ${N}</div>
+          <div class="kvKey">目前 i</div><div class="kvVal">${currentI}</div>
+          <div class="kvKey">目前 x</div><div class="kvVal">${currentX}</div>
+          <div class="kvKey">目前 ans</div><div class="kvVal">${ans}</div>
+        </div>
+
+        <div class="summaryPills">
+          <span class="pill info">for i：正在檢查哪個人</span>
+          <span class="pill warn">x：正在沿著好友走</span>
+          <span class="pill good">群體狀態：${groupStatus}</span>
+        </div>
+
+        <div class="stateSectionTitle">
+          <span>完整輸入 List</span>
+          <span>人編號與好友 BF[i]</span>
+        </div>
+        <div class="groupProgressCard">
+          <div class="groupProgressTitle">${groupStatus}</div>
+          <div class="pathText">目前走法：${currentPathText}</div>
+        </div>
+
+        <div class="sectionDivider"></div>
+
+        <div class="inputCardGrid" aria-label="輸入 List 與分群狀態">
+          ${inputCards}
+        </div>
+        <div class="miniNote">每張卡片都是一筆輸入：左邊是人編號，右邊是他的好友。狀態會從「未分群」變成「第幾群」。</div>
+
+        <div class="stateSectionTitle">
+          <span>已完成群體</span>
+          <span>看到「回到」就代表一群完成</span>
+        </div>
+        <div class="completedGroupList">
+          ${completedHtml}
+        </div>
+
+        <div class="legend">
+          <span class="legendItem"><span class="dot"></span>未分群</span>
+          <span class="legendItem"><span class="dot done"></span>已分群</span>
+          <span class="legendItem"><span class="dot current"></span>目前處理</span>
+        </div>
+      `;
+    }
+
+    function render() {
+      const step = steps[stepIndex];
+      if (!step) return;
+      setActiveLine(step.activeLine);
+      renderGraph(step);
+      renderStatePanel(step);
+      el.stepCounter.textContent = `步驟 ${stepIndex + 1} / ${steps.length}`;
+      el.resultBadge.textContent = step.result;
+      el.messageText.textContent = step.message;
+      el.prevBtn.disabled = stepIndex === 0;
+      el.nextBtn.disabled = stepIndex === steps.length - 1;
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex += 1;
+        render();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep() {
+      if (stepIndex > 0) {
+        stepIndex -= 1;
+        render();
+      }
+    }
+
+    function resetSteps() {
+      stopPlay();
+      stepIndex = 0;
+      render();
+    }
+
+    function startPlay() {
+      if (playing) return;
+      playing = true;
+      el.playBtn.textContent = '暫停';
+      playTimer = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          stopPlay();
+          return;
+        }
+        nextStep();
+      }, Number(el.speedSelect.value));
+    }
+
+    function stopPlay() {
+      playing = false;
+      el.playBtn.textContent = '播放';
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+    }
+
+    function togglePlay() {
+      if (playing) stopPlay();
+      else startPlay();
+    }
+
+    function setExample(index) {
+      stopPlay();
+      currentExampleIndex = index;
+      const example = EXAMPLES[currentExampleIndex];
+      layout = computeLayout(example);
+      steps = makeSteps(example);
+      stepIndex = 0;
+      el.case0Btn.classList.toggle('activeCase', index === 0);
+      el.case1Btn.classList.toggle('activeCase', index === 1);
+      render();
+    }
+
+    function setupSplitter() {
+      let dragging = false;
+      el.splitter.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        el.splitter.setPointerCapture(e.pointerId);
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const rect = el.main.getBoundingClientRect();
+        const minLeft = 340;
+        const minRight = 340;
+        let newLeft = e.clientX - rect.left;
+        newLeft = Math.max(minLeft, Math.min(rect.width - minRight, newLeft));
+        el.leftPane.style.flexBasis = `${newLeft}px`;
+      });
+      window.addEventListener('pointerup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.cursor = '';
+      });
+    }
+
+    function openProblemModal() {
+      el.problemModal.classList.add('show');
+      el.problemModal.setAttribute('aria-hidden', 'false');
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el.problemModal]);
+      }
+    }
+
+    function closeProblemModal() {
+      el.problemModal.classList.remove('show');
+      el.problemModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function setupEvents() {
+      el.nextBtn.addEventListener('click', nextStep);
+      el.prevBtn.addEventListener('click', prevStep);
+      el.resetBtn.addEventListener('click', resetSteps);
+      el.playBtn.addEventListener('click', togglePlay);
+      el.case0Btn.addEventListener('click', () => setExample(0));
+      el.case1Btn.addEventListener('click', () => setExample(1));
+      el.speedSelect.addEventListener('change', () => {
+        if (playing) {
+          stopPlay();
+          startPlay();
+        }
+      });
+      el.openProblemBtn.addEventListener('click', openProblemModal);
+      el.closeProblemBtn.addEventListener('click', closeProblemModal);
+      el.problemModal.addEventListener('click', (e) => {
+        if (e.target === el.problemModal) closeProblemModal();
+      });
+      window.addEventListener('keydown', (e) => {
+        if (el.problemModal.classList.contains('show')) {
+          if (e.key === 'Escape') closeProblemModal();
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+    }
+
+    function init() {
+      renderCode();
+      setupEvents();
+      setupSplitter();
+      setExample(0);
+    }
+
+    init();
+  </script>
+</body>
+</html>

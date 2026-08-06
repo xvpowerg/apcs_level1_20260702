@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字串解碼｜固定畫面白話動畫（排版修正版）</title>
+<style>
+:root{
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --line:#d8e0ec;
+  --text:#1f2937;
+  --muted:#64748b;
+  --blue:#2563eb;
+  --blue-soft:#dbeafe;
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --orange:#ea580c;
+  --orange-soft:#ffedd5;
+  --pink:#db2777;
+  --pink-soft:#fce7f3;
+  --yellow:#f59e0b;
+  --yellow-soft:#fef3c7;
+  --used:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:var(--text);background:var(--bg)}
+body{display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden}
+button,select{font:inherit}
+
+/* 工具列不再使用固定高度，內容換行時會自然把主畫面往下推，不會蓋住畫面 */
+.toolbar{
+  position:relative;z-index:50;
+  background:#fff;border-bottom:1px solid var(--line);padding:8px 12px;
+  display:flex;flex-direction:column;gap:7px;
+  box-shadow:0 2px 10px rgba(15,23,42,.06)
+}
+.toolbar-row{display:flex;align-items:center;gap:8px;row-gap:6px;flex-wrap:wrap;min-width:0}
+.title{font-size:20px;font-weight:900;margin-right:8px;white-space:nowrap}
+.btn{border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:7px 11px;cursor:pointer;font-weight:800;min-width:70px}
+.btn:hover{background:#f8fafc}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:#1d4ed8}
+.pill{border:1px solid var(--line);border-radius:999px;background:#f8fafc;padding:5px 10px;font-weight:800;white-space:nowrap}
+.message{
+  flex:1 1 420px;min-width:260px;border:1px solid #fed7aa;background:#fff7ed;
+  border-radius:9px;padding:6px 10px;font-weight:800;line-height:1.45;
+  white-space:normal;overflow-wrap:anywhere
+}
+
+/* 主畫面直接佔用工具列以外的剩餘高度 */
+.app{min-height:0;display:flex;overflow:hidden}
+.left-pane{width:66%;min-width:0;padding:10px;overflow:auto;scrollbar-gutter:stable}
+.right-pane{flex:1;min-width:320px;min-height:0;padding:10px;background:#fff;border-left:1px solid var(--line);overflow:auto;scrollbar-gutter:stable}
+.resizer{width:8px;flex:0 0 8px;cursor:col-resize;background:linear-gradient(90deg,#e5e7eb,#cbd5e1,#e5e7eb)}
+
+/* 左側核心動畫：正常情況全部放得下；視窗真的太矮時可以捲動，不再直接裁掉內容 */
+.stage{
+  min-height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:8px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;
+  box-shadow:0 4px 20px rgba(15,23,42,.06);overflow:auto
+}
+.round-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.round-title{font-size:19px;font-weight:900}.round-note{color:var(--muted);font-weight:800}
+.phase-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.phase{border:1px solid var(--line);background:#f8fafc;border-radius:10px;padding:6px;text-align:center;font-size:14px;font-weight:900;color:#64748b;line-height:1.3}
+.phase.active{background:var(--yellow-soft);border-color:var(--yellow);color:#7c2d12}.phase.done{background:var(--green-soft);border-color:#86efac;color:#166534}
+
+.main-board{min-height:0;display:grid;grid-template-rows:auto auto minmax(200px,1fr) auto;gap:8px}
+.source-card{border:1px solid var(--line);border-radius:13px;padding:7px 9px;background:#fbfdff}
+.row-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px;font-weight:900}
+.row-help{font-size:14px;color:var(--muted);text-align:right;line-height:1.35}
+.chip-row{display:flex;justify-content:center;gap:8px;min-height:41px;align-items:center;flex-wrap:nowrap;padding-top:3px}
+.chip{width:39px;height:39px;border-radius:10px;border:2px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;position:relative;transition:.25s transform,.25s background,.25s opacity,.25s border-color}
+.chip .idx{position:absolute;top:-14px;font-size:11px;color:#94a3b8;font-weight:700}
+.chip.current{background:var(--yellow-soft);border-color:var(--yellow);transform:translateY(-2px) scale(1.07);box-shadow:0 5px 14px rgba(245,158,11,.25)}
+.chip.used{background:var(--used);border-color:#cbd5e1;color:#94a3b8;opacity:.65}
+.chip.bit0{background:var(--blue-soft);border-color:#60a5fa}.chip.bit1{background:var(--green-soft);border-color:#4ade80}
+.chip.current.bit0,.chip.current.bit1{background:var(--yellow-soft);border-color:var(--yellow)}
+.arrow-line{text-align:center;color:var(--orange);font-weight:900;font-size:14px;line-height:1.25;margin-top:2px}
+
+/* 主要動畫卡一定保留足夠高度，並允許內容在極端尺寸下捲動 */
+.work-card{
+  min-height:200px;border:2px solid #bfdbfe;background:#eff6ff;border-radius:15px;padding:10px;
+  display:grid;grid-template-columns:minmax(145px,180px) minmax(0,1fr);gap:10px;
+  align-items:stretch;overflow:auto
+}
+.pick-box{border:1px solid #93c5fd;background:#fff;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;text-align:center;min-height:0}
+.pick-label{color:#64748b;font-size:14px;font-weight:800}.pick-pair{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0}
+.big-chip{width:50px;height:50px;border-radius:13px;border:3px solid var(--yellow);background:var(--yellow-soft);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900}
+.pick-rule{font-size:16px;font-weight:900;color:#1e3a8a;line-height:1.35}
+.result-box{border:1px solid #93c5fd;background:#fff;border-radius:13px;padding:9px;display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:0}
+.result-caption{font-size:14px;color:#64748b;font-weight:800}
+.result-before,.result-after{font-family:Consolas,"Microsoft JhengHei",monospace;font-size:clamp(22px,2.5vw,35px);font-weight:900;letter-spacing:3px;word-break:break-all;text-align:center;padding:3px}
+.result-before{color:#64748b}.result-after{color:#0f172a;background:var(--green-soft);border:1px solid #86efac;border-radius:10px}
+.formula{text-align:center;font-size:17px;font-weight:900;color:#1d4ed8;margin:2px 0}
+
+.special-view{min-height:176px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:7px;padding:4px;overflow:auto}
+.special-title{font-size:19px;font-weight:900}.special-main{font-size:clamp(24px,3vw,38px);font-weight:900;letter-spacing:3px}
+.ops-list{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.op-item{border:2px solid #cbd5e1;border-radius:10px;padding:7px 11px;background:#fff;font-family:Consolas,monospace;font-weight:900}.op-item.active{background:var(--yellow-soft);border-color:var(--yellow)}
+.split-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}.segment{border:2px solid #cbd5e1;border-radius:11px;background:#fff;padding:8px 12px;font-size:26px;font-weight:900}.segment.middle{background:var(--yellow-soft);border-color:var(--yellow)}.segment.right{background:var(--pink-soft);border-color:#f472b6}.segment.left{background:var(--blue-soft);border-color:#60a5fa}
+
+.history{border:1px solid var(--line);background:#f8fafc;border-radius:12px;padding:6px 9px;min-height:47px;overflow:auto}
+.history-title{font-size:13px;color:var(--muted);font-weight:800;margin-bottom:4px}.history-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:Consolas,"Microsoft JhengHei",monospace;font-size:16px;font-weight:900}.history-node{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:3px 7px}.history-node.latest{background:var(--green-soft);border-color:#4ade80}.history-arrow{color:#94a3b8}
+
+/* 原本底部兩個大規則框會擋住主要動畫，左側不再顯示 */
+.footer-rule{display:none}
+.rule-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rule-box{border-radius:10px;padding:8px;text-align:center;font-weight:900;line-height:1.45}
+.rule0{background:var(--blue-soft);border:1px solid #60a5fa;color:#1e3a8a}.rule1{background:var(--green-soft);border:1px solid #4ade80;color:#166534}
+
+.side-card{border:1px solid var(--line);background:#fff;border-radius:13px;padding:10px;margin-bottom:9px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.side-card h2,.side-card h3{margin:0 0 8px}.side-card h2{font-size:19px}.side-card h3{font-size:17px}.explain{font-size:16px;line-height:1.65;font-weight:700}.em{background:var(--yellow-soft);border-radius:6px;padding:1px 5px;font-weight:900}.mini{font-size:14px;color:var(--muted);line-height:1.6}
+.flow-list{display:grid;gap:6px}.flow-item{border:1px solid var(--line);border-radius:9px;padding:7px;background:#f8fafc;font-weight:800;line-height:1.4}.flow-item.active{background:var(--yellow-soft);border-color:var(--yellow)}.flow-item.done{background:var(--green-soft);border-color:#86efac}
+.round-summary{display:grid;grid-template-columns:105px minmax(0,1fr);gap:5px 8px}.key{color:var(--muted);font-weight:800}.value{font-weight:900;word-break:break-all}
+.notice{border:1px solid #fdba74;background:#fff7ed;border-radius:10px;padding:8px;font-weight:800;line-height:1.55}
+
+.modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:20px}.modal-backdrop.hidden{display:none}.modal{width:min(900px,96vw);max-height:82vh;overflow:auto;background:#fff;border-radius:15px;padding:16px;border:1px solid var(--line)}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding-bottom:8px}.modal h2{font-size:21px;margin:0}.modal h3{font-size:18px;margin:15px 0 6px}.modal p,.modal li{font-size:16px;line-height:1.7}.sample-pre{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:Consolas,monospace}
+
+/* 螢幕高度較小時，只做合理壓縮，不再把主要動畫縮到 130px */
+@media(max-height:760px) and (min-width:1001px){
+  .toolbar{padding:6px 10px;gap:5px}.btn{padding:5px 9px}.pill{padding:4px 9px}.message{padding:5px 9px}
+  .left-pane,.right-pane{padding:7px}.stage{gap:6px;padding:8px}.phase{padding:4px;font-size:13px}
+  .main-board{grid-template-rows:auto auto minmax(190px,1fr) auto;gap:6px}.source-card{padding:5px 8px}.row-title{margin-bottom:3px}
+  .chip-row{min-height:36px}.chip{width:34px;height:34px;font-size:18px}.chip .idx{top:-13px}.arrow-line{font-size:13px}
+  .work-card{min-height:190px;padding:8px}.history{min-height:42px;padding:4px 7px}
+  .side-card{padding:8px;margin-bottom:7px}.explain{font-size:15px;line-height:1.55}
+}
+
+@media(max-width:1000px){
+  body{height:auto;min-height:100%;display:block;overflow:auto}
+  .toolbar{position:sticky;top:0}
+  .app{display:block;overflow:visible}
+  .left-pane,.right-pane{width:100%;min-width:0;overflow:visible;padding:9px}
+  .resizer{display:none}.stage{min-height:680px;height:auto;overflow:visible}.right-pane{border-left:none;border-top:1px solid var(--line)}
+}
+
+@media(max-width:650px){
+  .title{width:100%;font-size:18px}.btn{min-width:auto;padding:6px 9px}.message{min-width:100%}
+  .phase-track{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row-title{align-items:flex-start;flex-direction:column;gap:2px}.row-help{text-align:left}
+  .work-card{grid-template-columns:1fr;min-height:330px}.pick-box{min-height:140px}.result-box{min-height:160px}
+  .chip{width:34px;height:34px;font-size:18px}.chip-row{gap:5px}
+  .rule-inline{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div class="toolbar-row">
+    <div class="title">字串解碼｜固定畫面白話動畫</div>
+    <button class="btn" id="prevBtn">上一步</button>
+    <button class="btn primary" id="nextBtn">下一步</button>
+    <button class="btn" id="playBtn">播放</button>
+    <button class="btn" id="pauseBtn">暫停</button>
+    <button class="btn" id="resetBtn">重設</button>
+    <label for="sampleSelect"><b>範例：</b></label>
+    <select id="sampleSelect"></select>
+    <label for="speedSelect"><b>速度：</b></label>
+    <select id="speedSelect">
+      <option value="1800">慢</option>
+      <option value="1200" selected>正常</option>
+      <option value="750">快</option>
+    </select>
+    <button class="btn" id="problemBtn">題目說明</button>
+  </div>
+  <div class="toolbar-row">
+    <span class="pill" id="stepInfo">步驟 1 / 1</span>
+    <span class="pill" id="statusInfo">尚未開始</span>
+    <div class="message" id="topMessage">按「下一步」開始。</div>
+  </div>
+</header>
+
+<main class="app">
+  <section class="left-pane" id="leftPane">
+    <div class="stage">
+      <div class="round-head">
+        <div class="round-title" id="roundTitle">準備開始</div>
+        <div class="round-note" id="roundNote">主角永遠是目前收到的加密字串 T</div>
+      </div>
+
+      <div class="phase-track">
+        <div class="phase" data-phase="order">① 倒著選操作</div>
+        <div class="phase" data-phase="restore">② 字母放回左／右</div>
+        <div class="phase" data-phase="swap">③ 判斷是否交換</div>
+        <div class="phase" data-phase="writeback">④ 回寫下一輪</div>
+      </div>
+
+      <div class="main-board">
+        <div class="source-card" id="eCard">
+          <div class="row-title">
+            <span>操作字串 e</span>
+            <span class="row-help" id="eHelp">解碼時從最右邊開始讀</span>
+          </div>
+          <div class="chip-row" id="eRow"></div>
+          <div class="arrow-line" id="eArrow">← 從右往左</div>
+        </div>
+
+        <div class="source-card" id="tCard">
+          <div class="row-title">
+            <span>目前加密字串 T</span>
+            <span class="row-help" id="tHelp">字串不會整串倒轉，只是從右邊依序選字</span>
+          </div>
+          <div class="chip-row" id="tRow"></div>
+          <div class="arrow-line" id="tArrow">← 每一步都在同一個 T 上選下一個字</div>
+        </div>
+
+        <div class="work-card" id="workCard">
+          <div class="pick-box" id="pickBox">
+            <div class="pick-label">目前配對</div>
+            <div class="pick-pair">
+              <div class="big-chip" id="currentBit">－</div>
+              <span style="font-size:23px;font-weight:900">配</span>
+              <div class="big-chip" id="currentChar">－</div>
+            </div>
+            <div class="pick-rule" id="pickRule">尚未開始</div>
+          </div>
+          <div class="result-box" id="resultBox">
+            <div class="result-caption">目前正在組合的解密字串 S</div>
+            <div class="result-before" id="beforeS">空白</div>
+            <div class="formula" id="formula">等待第一個字母</div>
+            <div class="result-after" id="afterS">空白</div>
+          </div>
+        </div>
+
+        <div class="history">
+          <div class="history-title">S 的成長過程</div>
+          <div class="history-flow" id="historyFlow"></div>
+        </div>
+      </div>
+
+      <div class="footer-rule">
+        <div class="rule-box rule0">看到 0：字母放到 S 的左邊</div>
+        <div class="rule-box rule1">看到 1：字母放到 S 的右邊</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="resizer" id="resizer" title="拖曳調整左右寬度"></div>
+
+  <aside class="right-pane">
+    <section class="side-card">
+      <h2>這一步在做什麼？</h2>
+      <div class="explain" id="explainText">先確認輸入。這題要從最後一次加密開始，一輪一輪往回解。</div>
+    </section>
+
+    <section class="side-card">
+      <h3>這一輪只記兩條規則</h3>
+      <div class="rule-inline">
+        <div class="rule-box rule0">看到 0：放到 S 左邊</div>
+        <div class="rule-box rule1">看到 1：放到 S 右邊</div>
+      </div>
+    </section>
+
+    <section class="side-card">
+      <h3>目前資料</h3>
+      <div class="round-summary" id="summaryPanel"></div>
+    </section>
+
+    <section class="side-card">
+      <h3>整題流程</h3>
+      <div class="flow-list">
+        <div class="flow-item" data-flow="order">1. 多組 e 倒著使用</div>
+        <div class="flow-item" data-flow="restore">2. 同一組 e 與 T 都從右往左讀</div>
+        <div class="flow-item" data-flow="restore">3. 0 放左邊，1 放右邊</div>
+        <div class="flow-item" data-flow="swap">4. 1 的數量是奇數才交換左右半邊</div>
+        <div class="flow-item" data-flow="writeback">5. 本輪答案變成下一輪的 T</div>
+      </div>
+    </section>
+
+    <section class="side-card">
+      <div class="notice">
+        <b>最重要：</b><br>
+        `CABAD` 不會先變成 `DABAC`。畫面會一直保留完整的 `CABAD`，只是依序選取 D、A、B、A、C。
+      </div>
+    </section>
+
+    <section class="side-card">
+      <h3>本題不顯示完整程式碼</h3>
+      <div class="mini">這份動畫只保留程式背後的邏輯：操作順序、字母讀取順序、放左／放右、奇偶判斷、左右交換與回寫。</div>
+    </section>
+  </aside>
+</main>
+
+<div class="modal-backdrop hidden" id="problemModal">
+  <article class="modal">
+    <div class="modal-head">
+      <h2>題目重點與範例</h2>
+      <button class="btn" id="closeProblemBtn">關閉</button>
+    </div>
+    <h3>解碼核心</h3>
+    <ol>
+      <li>加密做了很多輪，所以解碼要從最後一輪往前還原。</li>
+      <li>每一輪都從操作字串 e 的最右邊開始讀，也從目前字串 T 的最右邊開始選字。</li>
+      <li>讀到 0，把字放到 S 左邊；讀到 1，把字放到 S 右邊。</li>
+      <li>一輪全部排完後，若 e 中 1 的數量是奇數，就交換左右半邊；偶數則不交換。</li>
+      <li>把本輪結果當作下一輪的 T，繼續解碼。</li>
+    </ol>
+    <h3>範例一</h3>
+    <pre class="sample-pre">輸入
+1 5
+10110
+CABAD
+
+輸出
+BCAAD</pre>
+    <h3>範例二</h3>
+    <pre class="sample-pre">輸入
+3 6
+111110
+101101
+000000
+RETYWQ
+
+輸出
+QWERTY</pre>
+  </article>
+</div>
+
+<script>
+const samples = [
+  {
+    name: "範例一：CABAD → BCAAD",
+    m: 1,
+    n: 5,
+    ops: ["10110"],
+    encoded: "CABAD",
+    expected: "BCAAD"
+  },
+  {
+    name: "範例二：RETYWQ → QWERTY",
+    m: 3,
+    n: 6,
+    ops: ["111110", "101101", "000000"],
+    encoded: "RETYWQ",
+    expected: "QWERTY"
+  }
+];
+
+const $ = (id) => document.getElementById(id);
+let states = [];
+let stepIndex = 0;
+let timer = null;
+let currentSampleIndex = 0;
+
+function splitForSwap(text){
+  const mid = Math.floor(text.length / 2);
+  if(text.length % 2 === 0){
+    return { left:text.slice(0,mid), middle:"", right:text.slice(mid) };
+  }
+  return { left:text.slice(0,mid), middle:text[mid], right:text.slice(mid+1) };
+}
+
+function buildStates(sample){
+  const result = [];
+  const reversedOps = [...sample.ops].reverse();
+  result.push({
+    kind:"intro", phase:"order", round:0, totalRounds:sample.m,
+    originalOps:[...sample.ops], reversedOps, currentT:sample.encoded,
+    message:`收到的加密字串是 ${sample.encoded}。先確認總共有 ${sample.m} 組操作。`,
+    explain:`先把 <span class="em">${sample.encoded}</span> 當作目前的加密字串 T。整份動畫都會保留完整的 T，只用黃色框指出這一步選到哪一個字。`,
+    history:[]
+  });
+  result.push({
+    kind:"reverseOps", phase:"order", round:0, totalRounds:sample.m,
+    originalOps:[...sample.ops], reversedOps, currentT:sample.encoded,
+    message: sample.m === 1
+      ? `只有一組操作，所以 reverse 前後都是 [${sample.ops[0]}]。`
+      : `加密順序是 e0 到 e${sample.m-1}；解碼改成 e${sample.m-1} 到 e0。`,
+    explain: sample.m === 1
+      ? `這個範例只有一筆操作字串，所以操作表反轉後看起來完全沒有變：<span class="em">[${sample.ops[0]}]</span>。注意，這一步不是把 ${sample.ops[0]} 內部倒轉。`
+      : `這一步只改變「多組操作字串的使用順序」。原本 ${sample.ops.map((_,i)=>`e${i}`).join(" → ")}，解碼改成 ${sample.ops.map((_,i)=>`e${i}`).reverse().join(" → ")}。`,
+    history:[]
+  });
+
+  let T = sample.encoded;
+  reversedOps.forEach((e, roundIdx) => {
+    const originalOpIndex = sample.m - 1 - roundIdx;
+    result.push({
+      kind:"roundStart", phase:"restore", round:roundIdx+1, totalRounds:sample.m,
+      originalOpIndex, e, currentT:T, selected:-1, used:[], S:"", history:[],
+      message:`第 ${roundIdx+1} 輪：使用 e${originalOpIndex} = ${e}，目前 T = ${T}。`,
+      explain:`現在只看這一輪。操作字串是 <span class="em">${e}</span>，目前加密字串是 <span class="em">${T}</span>。兩排都會從最右邊開始。`
+    });
+    result.push({
+      kind:"direction", phase:"restore", round:roundIdx+1, totalRounds:sample.m,
+      originalOpIndex, e, currentT:T, selected:-1, used:[], S:"", history:[],
+      message:`不把 T 整串反轉；只按照右到左的順序選字：${[...T].reverse().join("、")}。`,
+      explain:`程式每一步都仍然使用完整的 <span class="em">T = ${T}</span>。只是索引從右往左，因此依序選到 ${[...T].reverse().join("、")}；e 的指令也依序是 ${[...e].reverse().join("、")}。`
+    });
+
+    let S = "";
+    const history = [];
+    for(let pos=e.length-1; pos>=0; pos--){
+      const bit = e[pos];
+      const ch = T[pos];
+      const before = S;
+      const after = bit === "1" ? S + ch : ch + S;
+      history.push(after);
+      result.push({
+        kind:"char", phase:"restore", round:roundIdx+1, totalRounds:sample.m,
+        originalOpIndex, e, currentT:T, selected:pos,
+        used:Array.from({length:e.length-1-pos},(_,k)=>e.length-1-k),
+        bit, ch, before, after, S:after, history:[...history],
+        message:`指令 ${bit} 配字母 ${ch}：把 ${ch} 放到 S 的${bit === "0" ? "左邊" : "右邊"}，得到 ${after}。`,
+        explain: bit === "0"
+          ? `目前選到 e[${pos}] = <span class="em">0</span>，同一位置的字母是 <span class="em">${ch}</span>。0 代表放左邊，所以是「${ch} + ${before || "空白"}」，結果變成 <span class="em">${after}</span>。`
+          : `目前選到 e[${pos}] = <span class="em">1</span>，同一位置的字母是 <span class="em">${ch}</span>。1 代表放右邊，所以是「${before || "空白"} + ${ch}」，結果變成 <span class="em">${after}</span>。`
+      });
+      S = after;
+    }
+
+    result.push({
+      kind:"built", phase:"restore", round:roundIdx+1, totalRounds:sample.m,
+      originalOpIndex, e, currentT:T, selected:-1, used:Array.from({length:e.length},(_,i)=>i),
+      S, history:[...history],
+      message:`五個（或 n 個）字都放完，本輪先得到 S = ${S}。`,
+      explain:`所有字母都已放回 S。目前得到 <span class="em">${S}</span>，但還沒完成這一輪，接著要看 e 中 1 的數量。`
+    });
+
+    const ones = [...e].filter(x=>x==="1").length;
+    result.push({
+      kind:"parity", phase:"swap", round:roundIdx+1, totalRounds:sample.m,
+      originalOpIndex, e, currentT:T, S, ones, history:[...history],
+      message:`e = ${e} 共有 ${ones} 個 1，${ones%2 ? "是奇數，所以要交換" : "是偶數，所以不交換"}。`,
+      explain:`這裡判斷的是「e 裡面 1 的數量」，不是字串長度。${ones} 是${ones%2 ? "奇數，因此要交換左右半邊" : "偶數，因此 S 保持不變"}。`
+    });
+
+    if(ones % 2 === 1){
+      const parts = splitForSwap(S);
+      result.push({
+        kind:"split", phase:"swap", round:roundIdx+1, totalRounds:sample.m,
+        originalOpIndex, e, currentT:T, S, ones, parts, history:[...history],
+        message: S.length%2===0
+          ? `字串長度 ${S.length} 是偶數，切成 ${parts.left}｜${parts.right}。`
+          : `字串長度 ${S.length} 是奇數，切成 ${parts.left}｜${parts.middle}｜${parts.right}，中間字不動。`,
+        explain: S.length%2===0
+          ? `已經確定「要交換」後，才看字串長度。${S.length} 是偶數，可以平均切成左半 <span class="em">${parts.left}</span> 與右半 <span class="em">${parts.right}</span>。`
+          : `已經確定「要交換」後，才看字串長度。${S.length} 是奇數，所以切成左半 <span class="em">${parts.left}</span>、中間 <span class="em">${parts.middle}</span>、右半 <span class="em">${parts.right}</span>。`
+      });
+      const swapped = parts.right + parts.middle + parts.left;
+      result.push({
+        kind:"swap", phase:"swap", round:roundIdx+1, totalRounds:sample.m,
+        originalOpIndex, e, currentT:T, S:swapped, beforeSwap:S, ones, parts, history:[...history,swapped],
+        message:`交換後：${parts.right} + ${parts.middle || ""} + ${parts.left} = ${swapped}。`,
+        explain:`把右半移到前面、左半移到後面${parts.middle ? "，中間字保持在中間" : ""}，本輪結果變成 <span class="em">${swapped}</span>。`
+      });
+      S = swapped;
+    }else{
+      result.push({
+        kind:"noSwap", phase:"swap", round:roundIdx+1, totalRounds:sample.m,
+        originalOpIndex, e, currentT:T, S, ones, history:[...history],
+        message:`1 的數量是偶數，所以 S = ${S} 不改變。`,
+        explain:`這一輪不做左右交換，<span class="em">S 仍然是 ${S}</span>。`
+      });
+    }
+
+    result.push({
+      kind:"writeback", phase:"writeback", round:roundIdx+1, totalRounds:sample.m,
+      originalOpIndex, e, oldT:T, currentT:S, S, history:[...history,S],
+      message: roundIdx === reversedOps.length-1
+        ? `最後一輪完成，解密答案是 ${S}。`
+        : `本輪完成：把 ${S} 當作下一輪新的 T。`,
+      explain: roundIdx === reversedOps.length-1
+        ? `所有操作都已還原，最後的 <span class="em">T = ${S}</span> 就是原始字串。`
+        : `程式概念是「T ← S，S 清空」。下一輪會使用完整的 <span class="em">T = ${S}</span> 繼續往前解。`
+    });
+    T = S;
+  });
+
+  result.push({
+    kind:"final", phase:"writeback", round:sample.m, totalRounds:sample.m,
+    currentT:T, answer:T, expected:sample.expected, history:[T],
+    message:`解碼完成：${sample.encoded} → ${T}。`,
+    explain:`答案是 <span class="em">${T}</span>。整體路線是：從最後一組 e 開始，每一輪由右往左選字、0 放左、1 放右，再依 1 的奇偶決定是否交換。`
+  });
+  return result;
+}
+
+function phaseOrder(phase){ return {order:0,restore:1,swap:2,writeback:3}[phase] ?? 0; }
+
+function renderPhase(state){
+  const now = phaseOrder(state.phase);
+  document.querySelectorAll(".phase").forEach((el,idx)=>{
+    el.classList.toggle("active",idx===now);
+    el.classList.toggle("done",idx<now);
+  });
+  document.querySelectorAll(".flow-item").forEach(el=>{
+    const idx = phaseOrder(el.dataset.flow);
+    el.classList.toggle("active",idx===now);
+    el.classList.toggle("done",idx<now);
+  });
+}
+
+function renderChips(container, text, state, type){
+  container.innerHTML = "";
+  if(!text){
+    container.innerHTML = '<span style="color:#94a3b8;font-weight:900">尚未選定</span>';
+    return;
+  }
+  [...text].forEach((ch,idx)=>{
+    const div = document.createElement("div");
+    div.className = "chip";
+    if(type==="e") div.classList.add(ch==="0" ? "bit0" : "bit1");
+    if(state.selected===idx) div.classList.add("current");
+    if((state.used||[]).includes(idx)) div.classList.add("used");
+    div.innerHTML = `<span class="idx">${idx}</span>${ch}`;
+    container.appendChild(div);
+  });
+}
+
+function renderHistory(history){
+  const flow = $("historyFlow");
+  flow.innerHTML = "";
+  if(!history || history.length===0){
+    flow.innerHTML = '<span style="color:#94a3b8">尚未放入任何字母</span>';
+    return;
+  }
+  history.forEach((v,idx)=>{
+    const node = document.createElement("span");
+    node.className = "history-node" + (idx===history.length-1 ? " latest" : "");
+    node.textContent = v;
+    flow.appendChild(node);
+    if(idx<history.length-1){
+      const arrow = document.createElement("span");
+      arrow.className="history-arrow";arrow.textContent="→";flow.appendChild(arrow);
+    }
+  });
+}
+
+function renderSpecial(state){
+  const box = $("workCard");
+  const normal = ["char","roundStart","direction","built"].includes(state.kind);
+  if(normal){
+    box.innerHTML = `
+      <div class="pick-box" id="pickBox">
+        <div class="pick-label">目前配對</div>
+        <div class="pick-pair"><div class="big-chip" id="currentBit">－</div><span style="font-size:23px;font-weight:900">配</span><div class="big-chip" id="currentChar">－</div></div>
+        <div class="pick-rule" id="pickRule">尚未開始</div>
+      </div>
+      <div class="result-box" id="resultBox">
+        <div class="result-caption">目前正在組合的解密字串 S</div>
+        <div class="result-before" id="beforeS">空白</div>
+        <div class="formula" id="formula">等待第一個字母</div>
+        <div class="result-after" id="afterS">空白</div>
+      </div>`;
+    if(state.kind==="char"){
+      $("currentBit").textContent=state.bit;
+      $("currentChar").textContent=state.ch;
+      $("pickRule").textContent=state.bit==="0" ? "0：放到 S 左邊" : "1：放到 S 右邊";
+      $("beforeS").textContent=state.before || "空白";
+      $("formula").textContent=state.bit==="0"
+        ? `${state.ch} + ${state.before || "空白"}`
+        : `${state.before || "空白"} + ${state.ch}`;
+      $("afterS").textContent=state.after;
+    }else if(state.kind==="built"){
+      $("pickRule").textContent="字母全部放完";
+      $("beforeS").textContent="本輪排列完成";
+      $("formula").textContent="先得到";
+      $("afterS").textContent=state.S;
+    }else{
+      $("pickRule").textContent=state.kind==="direction" ? "準備從右邊開始" : "準備本輪解碼";
+      $("beforeS").textContent="S = 空白";
+      $("formula").textContent=state.kind==="direction" ? "下一步開始配對" : "等待選字";
+      $("afterS").textContent="空白";
+    }
+    return;
+  }
+
+  let html="";
+  if(state.kind==="intro"){
+    html=`<div class="special-view"><div class="special-title">收到加密字串</div><div class="special-main">${state.currentT}</div><div>接下來會一步一步把它還原。</div></div>`;
+  }else if(state.kind==="reverseOps"){
+    const before=state.originalOps.map((x,i)=>`<span class="op-item">e${i}: ${x}</span>`).join("");
+    const after=state.reversedOps.map((x,i)=>`<span class="op-item active">${x}</span>`).join("");
+    html=`<div class="special-view"><div class="special-title">先倒轉「多組操作」的使用順序</div><div class="ops-list">${before}</div><div style="font-size:27px;font-weight:900;color:#ea580c">↓ reverse ↓</div><div class="ops-list">${after}</div><div>${state.originalOps.length===1 ? "只有一筆，所以前後看起來一樣。" : "最後一次加密要最先還原。"}</div></div>`;
+  }else if(state.kind==="parity"){
+    html=`<div class="special-view"><div class="special-title">數 e 裡面有幾個 1</div><div class="special-main">${state.e}</div><div style="font-size:25px;font-weight:900">1 的數量 = ${state.ones}</div><div style="font-size:20px;font-weight:900;color:${state.ones%2?'#be185d':'#166534'}">${state.ones%2?'奇數：要交換左右半邊':'偶數：不交換'}</div></div>`;
+  }else if(state.kind==="split"){
+    html=`<div class="special-view"><div class="special-title">先把 S 切開</div><div class="split-row"><span class="segment left">${state.parts.left}</span>${state.parts.middle?`<span class="segment middle">${state.parts.middle}</span>`:''}<span class="segment right">${state.parts.right}</span></div><div>${state.parts.middle?'中間字保持不動，只交換左右兩邊。':'平均分成左右兩半。'}</div></div>`;
+  }else if(state.kind==="swap"){
+    html=`<div class="special-view"><div class="special-title">右半放前面，左半放後面</div><div class="split-row"><span class="segment right">${state.parts.right}</span>${state.parts.middle?`<span class="segment middle">${state.parts.middle}</span>`:''}<span class="segment left">${state.parts.left}</span></div><div class="special-main">${state.S}</div></div>`;
+  }else if(state.kind==="noSwap"){
+    html=`<div class="special-view"><div class="special-title">不需要交換</div><div style="font-size:21px;font-weight:900">1 的數量是偶數</div><div class="special-main">S = ${state.S}</div></div>`;
+  }else if(state.kind==="writeback"){
+    html=`<div class="special-view"><div class="special-title">本輪結果回寫成新的 T</div><div class="special-main">T ← ${state.currentT}</div><div>${state.round===state.totalRounds?'已完成最後一輪':'下一輪繼續使用這個完整字串。'}</div></div>`;
+  }else if(state.kind==="final"){
+    html=`<div class="special-view"><div class="special-title">解碼完成</div><div class="special-main">${samples[currentSampleIndex].encoded} → ${state.answer}</div><div style="font-size:20px;font-weight:900;color:#166534">正確答案：${state.answer}</div></div>`;
+  }
+  box.innerHTML=html;
+}
+
+function renderSummary(state){
+  const rows = [
+    ["目前階段", {order:"倒著選操作",restore:"放回字母",swap:"判斷交換",writeback:"回寫／完成"}[state.phase]],
+    ["目前輪次", state.round ? `${state.round} / ${state.totalRounds}` : "準備階段"],
+    ["操作字串 e", state.e || "尚未選定"],
+    ["目前字串 T", state.currentT || state.oldT || "－"],
+    ["目前字串 S", state.S || state.after || "空白"]
+  ];
+  $("summaryPanel").innerHTML=rows.map(([k,v])=>`<div class="key">${k}</div><div class="value">${v}</div>`).join("");
+}
+
+function renderState(){
+  const state=states[stepIndex];
+  const sample=samples[currentSampleIndex];
+  $("stepInfo").textContent=`步驟 ${stepIndex+1} / ${states.length}`;
+  $("statusInfo").textContent=state.kind==="final" ? `答案：${state.answer}` : `第 ${state.round||0} 輪`;
+  $("topMessage").textContent=state.message;
+  $("roundTitle").textContent=state.round ? `第 ${state.round} 輪解碼` : "準備與操作順序";
+  $("roundNote").textContent=state.e ? `使用 e${state.originalOpIndex} = ${state.e}` : `原始加密字串：${sample.encoded}`;
+  $("explainText").innerHTML=state.explain;
+  renderPhase(state);
+
+  const eText=state.e || "";
+  const tText=state.currentT || state.oldT || sample.encoded;
+  renderChips($("eRow"),eText,state,"e");
+  renderChips($("tRow"),tText,state,"t");
+  $("eHelp").textContent=eText ? `實際順序：${[...eText].reverse().join("、")}` : "先決定要使用哪一組 e";
+  $("tHelp").textContent=tText ? `完整保留 ${tText}，只移動目前選取位置` : "等待輸入";
+  $("eArrow").style.visibility=eText?"visible":"hidden";
+  $("tArrow").style.visibility=tText?"visible":"hidden";
+  renderSpecial(state);
+  renderHistory(state.history || []);
+  renderSummary(state);
+  $("prevBtn").disabled=stepIndex===0;
+  $("nextBtn").disabled=stepIndex===states.length-1;
+}
+
+function stopPlay(){ if(timer){clearInterval(timer);timer=null;} }
+function next(){ if(stepIndex<states.length-1){stepIndex++;renderState();}else stopPlay(); }
+function prev(){ if(stepIndex>0){stepIndex--;renderState();} }
+function reset(){ stopPlay();stepIndex=0;renderState(); }
+function play(){ stopPlay();timer=setInterval(()=>{ if(stepIndex>=states.length-1){stopPlay();return;} next(); },Number($("speedSelect").value)); }
+
+function loadSample(index){
+  stopPlay();currentSampleIndex=Number(index);states=buildStates(samples[currentSampleIndex]);stepIndex=0;renderState();
+}
+
+samples.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;$("sampleSelect").appendChild(o);});
+$("prevBtn").addEventListener("click",prev);
+$("nextBtn").addEventListener("click",next);
+$("playBtn").addEventListener("click",play);
+$("pauseBtn").addEventListener("click",stopPlay);
+$("resetBtn").addEventListener("click",reset);
+$("sampleSelect").addEventListener("change",e=>loadSample(e.target.value));
+$("speedSelect").addEventListener("change",()=>{ if(timer) play(); });
+$("problemBtn").addEventListener("click",()=>$("problemModal").classList.remove("hidden"));
+$("closeProblemBtn").addEventListener("click",()=>$("problemModal").classList.add("hidden"));
+$("problemModal").addEventListener("click",e=>{if(e.target===$("problemModal"))$("problemModal").classList.add("hidden")});
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight") next();
+  if(e.key==="ArrowLeft") prev();
+  if(e.key===" "){e.preventDefault();timer?stopPlay():play();}
+});
+
+// 可拖曳左右分隔線
+let resizing=false;
+$("resizer").addEventListener("mousedown",()=>resizing=true);
+document.addEventListener("mousemove",e=>{
+  if(!resizing || window.innerWidth<921) return;
+  const pct=Math.max(42,Math.min(76,(e.clientX/window.innerWidth)*100));
+  $("leftPane").style.width=pct+"%";
+});
+document.addEventListener("mouseup",()=>resizing=false);
+
+loadSample(0);
+</script>
+</body>
+</html>

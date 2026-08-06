@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>最少相異字母｜純邏輯動畫</title>
+  <style>
+    :root {
+      --toolbar-h: 156px;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --border: #d9e1ec;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --orange: #c2410c;
+      --orange-soft: #ffedd5;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --purple: #6d28d9;
+      --purple-soft: #ede9fe;
+      --gray-soft: #f1f5f9;
+      --shadow: 0 3px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    button, select { font: inherit; }
+
+    .toolbar {
+      position: fixed;
+      z-index: 1000;
+      inset: 0 0 auto 0;
+      min-height: 138px;
+      padding: 10px 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .title-block {
+      flex: 1 1 360px;
+      min-width: 280px;
+    }
+
+    .title-main {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .title-sub {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    button, select {
+      min-height: 38px;
+      padding: 6px 12px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled), select:hover { background: #f8fafc; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    button.primary {
+      color: #fff;
+      background: var(--blue);
+      border-color: var(--blue);
+      font-weight: 800;
+    }
+
+    button.primary:hover:not(:disabled) { background: #1d4ed8; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--gray-soft);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.phase {
+      color: #1e3a8a;
+      background: var(--blue-soft);
+      border-color: #bfdbfe;
+    }
+
+    .pill.answer {
+      color: #14532d;
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+    }
+
+    .message-box {
+      flex: 1 1 520px;
+      min-height: 42px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      color: #7c2d12;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .main {
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .left-panel, .right-panel {
+      min-width: 0;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .left-panel {
+      flex: 0 0 62%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-panel {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .splitter {
+      flex: 0 0 9px;
+      cursor: col-resize;
+      background: #e2e8f0;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .splitter:hover { background: #cbd5e1; }
+
+    .card {
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      padding: 10px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .card-body { padding: 13px; }
+    .small-note { color: var(--muted); font-size: 14px; font-weight: 500; }
+
+    .stage-card .card-body {
+      min-height: 385px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .stage-banner {
+      padding: 11px 14px;
+      color: #1e3a8a;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .input-block {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .input-label { color: var(--muted); font-weight: 800; }
+    .input-value { font-weight: 800; word-break: break-word; }
+
+    .string-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+
+    .string-title {
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .string-area .letter-row {
+      padding-top: 22px;
+    }
+
+    .letter-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .letter-box {
+      position: relative;
+      width: 52px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #cbd5e1;
+      border-radius: 11px;
+      background: #f8fafc;
+      font-size: 26px;
+      font-weight: 900;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease;
+    }
+
+    .letter-box.processed {
+      color: #1e3a8a;
+      background: var(--blue-soft);
+      border-color: #93c5fd;
+    }
+
+    .letter-box.current {
+      color: #9a3412;
+      background: var(--orange-soft);
+      border-color: #f97316;
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px rgba(249, 115, 22, .18);
+    }
+
+    .letter-box.current::after {
+      content: "目前";
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #c2410c;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .letter-box.dimmed { opacity: .38; }
+    .letter-box.lex-equal { background: var(--blue-soft); border-color: #60a5fa; }
+    .letter-box.lex-diff { background: var(--orange-soft); border-color: #f97316; transform: translateY(-4px); }
+    .letter-box.lex-winner { background: var(--green-soft); border-color: #22c55e; }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(240px, .7fr);
+      gap: 12px;
+    }
+
+    .bucket, .action-box {
+      min-height: 126px;
+      padding: 12px;
+      border-radius: 11px;
+    }
+
+    .bucket {
+      background: #f8fafc;
+      border: 2px dashed #94a3b8;
+    }
+
+    .bucket-title, .action-title {
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .bucket-letters {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .bucket-chip {
+      min-width: 45px;
+      padding: 6px 12px;
+      text-align: center;
+      color: #1e3a8a;
+      background: var(--blue-soft);
+      border: 1px solid #93c5fd;
+      border-radius: 999px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .empty-bucket { color: var(--muted); font-weight: 700; }
+
+    .count-line {
+      margin-top: 9px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .action-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .action-box.new {
+      color: #14532d;
+      background: var(--green-soft);
+      border-color: #86efac;
+    }
+
+    .action-box.repeat {
+      color: #7c2d12;
+      background: var(--orange-soft);
+      border-color: #fdba74;
+    }
+
+    .action-main { font-size: 19px; font-weight: 900; }
+    .action-sub { margin-top: 4px; font-size: 15px; font-weight: 700; }
+
+    .string-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .string-card {
+      min-width: 0;
+      padding: 11px;
+      border: 2px solid var(--border);
+      border-radius: 11px;
+      background: #fff;
+      transition: opacity .2s ease, transform .2s ease, border-color .2s ease;
+    }
+
+    .string-card.active {
+      border-color: #f97316;
+      background: #fff7ed;
+      transform: translateY(-2px);
+    }
+
+    .string-card.candidate {
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+
+    .string-card.eliminated {
+      opacity: .45;
+      border-color: #fca5a5;
+      background: #fef2f2;
+    }
+
+    .string-card.winner {
+      border-color: #7c3aed;
+      background: var(--purple-soft);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+    }
+
+    .string-name {
+      overflow-wrap: anywhere;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .string-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: 7px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--gray-soft);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .tag.green { color: #14532d; background: var(--green-soft); border-color: #86efac; }
+    .tag.red { color: #991b1b; background: var(--red-soft); border-color: #fca5a5; }
+    .tag.purple { color: #4c1d95; background: var(--purple-soft); border-color: #c4b5fd; }
+    .tag.orange { color: #9a3412; background: var(--orange-soft); border-color: #fdba74; }
+
+    .score-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 15px;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    th { color: #334155; background: #f8fafc; font-weight: 900; }
+    tr:last-child td { border-bottom: none; }
+    tr.active-row { background: #fff7ed; }
+    tr.candidate-row { background: #f0fdf4; }
+    tr.eliminated-row { color: #94a3b8; background: #fef2f2; text-decoration: line-through; }
+    tr.winner-row { background: var(--purple-soft); font-weight: 900; }
+
+    .logic-rules {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-card {
+      padding: 12px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+    }
+
+    .rule-card.primary-rule {
+      background: var(--blue-soft);
+      border-color: #93c5fd;
+    }
+
+    .rule-card.secondary-rule {
+      background: var(--purple-soft);
+      border-color: #c4b5fd;
+    }
+
+    .rule-no {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .rule-main { margin-top: 3px; font-size: 18px; font-weight: 900; }
+    .rule-sub { margin-top: 4px; font-size: 15px; }
+
+    .reasoning-box {
+      padding: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 11px;
+    }
+
+    .reasoning-title { color: #92400e; font-weight: 900; }
+    .reasoning-main { margin-top: 6px; font-size: 17px; font-weight: 800; }
+    .reasoning-detail { margin-top: 6px; color: #78350f; }
+
+    .flow-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .flow-item {
+      padding: 8px 10px;
+      border-radius: 9px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .flow-item.done { color: #14532d; background: var(--green-soft); border-color: #86efac; }
+    .flow-item.current { color: #9a3412; background: var(--orange-soft); border-color: #fdba74; font-weight: 900; }
+
+    .compare-stack {
+      display: grid;
+      gap: 18px;
+      padding: 6px 0;
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: 115px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .compare-label { font-weight: 900; text-align: right; }
+
+    .lex-note {
+      padding: 11px 13px;
+      text-align: center;
+      color: #4c1d95;
+      background: var(--purple-soft);
+      border: 1px solid #c4b5fd;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .answer-stage {
+      min-height: 310px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .answer-caption { color: var(--muted); font-size: 17px; font-weight: 800; }
+
+    .answer-word {
+      padding: 14px 26px;
+      color: #4c1d95;
+      background: var(--purple-soft);
+      border: 3px solid #8b5cf6;
+      border-radius: 16px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: clamp(30px, 5vw, 48px);
+      font-weight: 900;
+      letter-spacing: .08em;
+      box-shadow: 0 10px 25px rgba(124, 58, 237, .16);
+    }
+
+    .answer-reason {
+      max-width: 720px;
+      padding: 12px 16px;
+      color: #14532d;
+      background: var(--green-soft);
+      border: 1px solid #86efac;
+      border-radius: 11px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 1500;
+      inset: 0;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: calc(var(--toolbar-h) + 14px) 16px 20px;
+      overflow: auto;
+      background: rgba(15, 23, 42, .5);
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(900px, 96vw);
+      max-height: 72vh;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 22px 50px rgba(15, 23, 42, .25);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title { font-size: 20px; font-weight: 900; }
+    .modal-body { padding: 14px; font-size: 16px; line-height: 1.65; }
+
+    .problem-section {
+      margin-bottom: 11px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+    }
+
+    .problem-section h3 {
+      margin: 0;
+      padding: 8px 11px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      font-size: 18px;
+    }
+
+    .problem-inside { padding: 10px 12px; }
+    .problem-inside p { margin: 5px 0; }
+
+    pre.sample {
+      margin: 0;
+      padding: 11px;
+      overflow: auto;
+      color: #e2e8f0;
+      background: #0f172a;
+      border-radius: 9px;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .sample-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .left-panel { flex-basis: 58%; }
+      .string-cards { grid-template-columns: 1fr; }
+      .analysis-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 850px) {
+      .main {
+        height: auto;
+        min-height: calc(100vh - var(--toolbar-h));
+        flex-direction: column;
+        overflow: visible;
+      }
+
+      .left-panel, .right-panel {
+        flex: none;
+        width: 100%;
+        overflow: visible;
+      }
+
+      .splitter { display: none; }
+      .stage-card .card-body { min-height: 0; }
+      .compare-row { grid-template-columns: 1fr; }
+      .compare-label { text-align: left; }
+    }
+
+    @media (max-width: 620px) {
+      .toolbar { padding: 8px 9px; }
+      .title-main { font-size: 19px; }
+      button, select { padding: 5px 9px; min-height: 36px; }
+      .message-box { font-size: 15px; }
+      .left-panel, .right-panel { padding: 8px; }
+      .letter-box { width: 42px; height: 50px; font-size: 22px; }
+      .sample-grid { grid-template-columns: 1fr; }
+      .input-block { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" id="toolbar">
+    <div class="toolbar-row">
+      <div class="title-block">
+        <div class="title-main">最少相異字母｜純邏輯動畫</div>
+        <div class="title-sub">只使用題目範例，一步步從原始字串分析到答案，不需要看任何程式碼。</div>
+      </div>
+      <button id="problemBtn">題目說明</button>
+      <button id="prevBtn">← 上一步</button>
+      <button id="nextBtn" class="primary">下一步 →</button>
+      <button id="playBtn">播放</button>
+      <button id="resetBtn">重設</button>
+      <label>速度：
+        <select id="speedSelect" aria-label="播放速度">
+          <option value="1800">慢</option>
+          <option value="1100" selected>正常</option>
+          <option value="650">快</option>
+        </select>
+      </label>
+    </div>
+    <div class="toolbar-row">
+      <span class="pill" id="stepLabel">步驟 1 / 1</span>
+      <span class="pill phase" id="phaseLabel">目前階段：理解題目</span>
+      <span class="pill answer" id="answerLabel">目前答案：尚未決定</span>
+      <div class="message-box" id="messageBox">請按「下一步」，跟著題目資料一步步找出答案。</div>
+    </div>
+  </header>
+
+  <main class="main" id="mainArea">
+    <section class="left-panel" id="leftPanel" aria-label="邏輯動畫區">
+      <section class="card stage-card">
+        <div class="card-header">
+          <span>題目資料的分析過程</span>
+          <span class="small-note" id="stageNote">從題目輸入開始</span>
+        </div>
+        <div class="card-body" id="stageArea"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <span>三個原始字串的目前狀態</span>
+          <span class="small-note">原始字串會一直保留，最後輸出的也是原始字串</span>
+        </div>
+        <div class="card-body">
+          <div class="string-cards" id="stringCards"></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" title="拖曳調整左右寬度"></div>
+
+    <aside class="right-panel" aria-label="判斷規則與推理區">
+      <section class="card">
+        <div class="card-header">題目的兩層判斷規則</div>
+        <div class="card-body">
+          <div class="logic-rules">
+            <div class="rule-card primary-rule">
+              <div class="rule-no">第一順位</div>
+              <div class="rule-main">先比較「不同字母有幾種」</div>
+              <div class="rule-sub">種類越少越好。同一個字母重複出現，不會重複計算。</div>
+            </div>
+            <div class="rule-card secondary-rule">
+              <div class="rule-no">第二順位</div>
+              <div class="rule-main">只有種類數相同，才比較字典序</div>
+              <div class="rule-sub">從最左邊開始比，第一個不同的位置就決定勝負。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">目前推理</div>
+        <div class="card-body">
+          <div class="reasoning-box">
+            <div class="reasoning-title" id="reasoningTitle">現在要做什麼？</div>
+            <div class="reasoning-main" id="reasoningMain">先看懂題目要比較的條件。</div>
+            <div class="reasoning-detail" id="reasoningDetail">「相異字母」是指同一個字串中，有幾種不同的字母。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">分析成績表</div>
+        <div class="card-body">
+          <div class="score-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>原始字串</th>
+                  <th>不同字母</th>
+                  <th>種類數</th>
+                  <th>狀態</th>
+                </tr>
+              </thead>
+              <tbody id="scoreBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">解題主線</div>
+        <div class="card-body">
+          <div class="flow-list" id="flowList"></div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="problemTitle">題目說明：最少相異字母</div>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <section class="problem-section">
+          <h3>題目內容</h3>
+          <div class="problem-inside">
+            <p>字串裡面如果有太多不同的字母，就比較不和諧。</p>
+            <p>現在有 N 個字串，要找出「不同字母種類最少」的字串。</p>
+            <p>如果有多個字串的不同字母數一樣少，就輸出字典序最小的那一個。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>輸入說明</h3>
+          <div class="problem-inside">
+            <p>第一行有一個正整數 N，代表接下來有 N 個字串，且 N 不超過 1000。</p>
+            <p>接下來有 N 行，每一行有一個只包含大寫英文字母 A 到 Z 的字串。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>輸出說明</h3>
+          <div class="problem-inside">
+            <p>輸出最和諧的完整原始字串。</p>
+            <p>判斷順序不能交換：先比較不同字母種類數；只有平手時才比較字典序。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>題目範例</h3>
+          <div class="problem-inside sample-grid">
+            <div>
+              <div class="small-note">範例輸入</div>
+              <pre class="sample">3
+ABBCAAB
+AABBACC
+AAPCCSS</pre>
+            </div>
+            <div>
+              <div class="small-note">範例輸出</div>
+              <pre class="sample">AABBACC</pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const words = ['ABBCAAB', 'AABBACC', 'AAPCCSS'];
+      const completedUnique = [[], [], []];
+      const completedCount = [null, null, null];
+      const steps = [];
+
+      function addStep(step) {
+        steps.push({
+          phase: '理解題目',
+          stageNote: '',
+          message: '',
+          reasoningTitle: '現在要做什麼？',
+          reasoningMain: '',
+          reasoningDetail: '',
+          activeWord: null,
+          charIndex: null,
+          unique: [],
+          isNew: null,
+          results: [null, null, null],
+          uniqueResults: [[], [], []],
+          candidates: [],
+          eliminated: [],
+          winner: null,
+          flow: 0,
+          ...step
+        });
+      }
+
+      addStep({
+        kind: 'intro',
+        phase: '理解題目',
+        stageNote: '先看題目要找什麼',
+        message: '題目不是找最短字串，而是找「不同字母種類最少」的完整字串。',
+        reasoningMain: '先確認真正的比較目標。',
+        reasoningDetail: '同一個字母出現很多次，仍然只算一種。最後輸出的是勝出的原始字串。',
+        flow: 0
+      });
+
+      addStep({
+        kind: 'rules',
+        phase: '理解題目',
+        stageNote: '判斷順序非常重要',
+        message: '第一關先比種類數；只有種類數相同，才進入第二關比較字典序。',
+        reasoningMain: '題目有兩層判斷，而且順序不能交換。',
+        reasoningDetail: '如果一個字串只有 3 種，另一個有 4 種，3 種的直接勝出，不需要比較字典序。',
+        flow: 0
+      });
+
+      addStep({
+        kind: 'input',
+        phase: '讀取題目資料',
+        stageNote: '使用題目中的官方範例',
+        message: 'N = 3，所以接下來要完整分析三個字串。',
+        reasoningMain: '先把題目給的三個原始字串保留下來。',
+        reasoningDetail: '接下來會逐字查看 ABBCAAB、AABBACC、AAPCCSS，不能跳過任何字母。',
+        flow: 1
+      });
+
+      words.forEach((word, wordIndex) => {
+        const seen = [];
+
+        addStep({
+          kind: 'prepare',
+          phase: '計算不同字母',
+          stageNote: `準備分析第 ${wordIndex + 1} 個字串`,
+          message: `現在從最左邊開始，逐字分析 ${word}。`,
+          reasoningMain: `準備分析第 ${wordIndex + 1} 個字串：${word}`,
+          reasoningDetail: '不同字母盒一開始是空的。每遇到第一次出現的字母，種類數才增加 1。',
+          activeWord: wordIndex,
+          unique: [],
+          results: completedCount.slice(),
+          uniqueResults: completedUnique.map(x => x.slice()),
+          flow: 2
+        });
+
+        [...word].forEach((ch, charIndex) => {
+          const isNew = !seen.includes(ch);
+          if (isNew) seen.push(ch);
+
+          addStep({
+            kind: 'scan',
+            phase: '計算不同字母',
+            stageNote: `第 ${wordIndex + 1} 個字串｜查看第 ${charIndex + 1} 格`,
+            message: isNew
+              ? `${ch} 是第一次出現，放入不同字母盒，種類數變成 ${seen.length}。`
+              : `${ch} 已經出現過，同一個字母不重複計算，種類數仍是 ${seen.length}。`,
+            reasoningTitle: isNew ? '遇到新的字母' : '遇到重複字母',
+            reasoningMain: isNew
+              ? `${ch} 不在目前的不同字母盒中，所以新增 ${ch}。`
+              : `${ch} 已經在不同字母盒中，所以不能再增加種類數。`,
+            reasoningDetail: `目前不同字母：${seen.join('、')}；目前共有 ${seen.length} 種。`,
+            activeWord: wordIndex,
+            charIndex,
+            unique: seen.slice(),
+            isNew,
+            results: completedCount.slice(),
+            uniqueResults: completedUnique.map(x => x.slice()),
+            flow: 2
+          });
+        });
+
+        completedUnique[wordIndex] = seen.slice();
+        completedCount[wordIndex] = seen.length;
+
+        addStep({
+          kind: 'wordComplete',
+          phase: '計算不同字母',
+          stageNote: `第 ${wordIndex + 1} 個字串分析完成`,
+          message: `${word} 的不同字母是 ${seen.join('、')}，一共有 ${seen.length} 種。`,
+          reasoningTitle: '這個字串分析完成',
+          reasoningMain: `${word} 共有 ${seen.length} 種不同字母。`,
+          reasoningDetail: '重複出現的字母只留一份，因此字串長度不等於字母種類數。',
+          activeWord: wordIndex,
+          unique: seen.slice(),
+          results: completedCount.slice(),
+          uniqueResults: completedUnique.map(x => x.slice()),
+          flow: 2
+        });
+      });
+
+      const allCounts = completedCount.slice();
+      const allUnique = completedUnique.map(x => x.slice());
+
+      addStep({
+        kind: 'summary',
+        phase: '比較種類數',
+        stageNote: '三個字串全部分析完成',
+        message: '三個字串的種類數分別是 3、3、4，現在要找出其中最少的數字。',
+        reasoningMain: '先比較種類數，還不能直接比較字典序。',
+        reasoningDetail: 'ABBCAAB 是 3 種、AABBACC 是 3 種、AAPCCSS 是 4 種。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        flow: 3
+      });
+
+      addStep({
+        kind: 'findMin',
+        phase: '比較種類數',
+        stageNote: '找出最低種類數',
+        message: '3、3、4 當中，最少是 3 種。',
+        reasoningMain: '目前的最低種類數是 3。',
+        reasoningDetail: '種類數大於 3 的字串會在第一關被淘汰；等於 3 的字串都要保留。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        flow: 3
+      });
+
+      addStep({
+        kind: 'keepFirst',
+        phase: '篩選候選字串',
+        stageNote: '檢查 ABBCAAB',
+        message: 'ABBCAAB 有 3 種，等於最低種類數，所以保留。',
+        reasoningMain: 'ABBCAAB 進入候選名單。',
+        reasoningDetail: '它沒有直接獲勝，因為可能還有其他字串也是 3 種。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0],
+        flow: 4
+      });
+
+      addStep({
+        kind: 'keepSecond',
+        phase: '篩選候選字串',
+        stageNote: '檢查 AABBACC',
+        message: 'AABBACC 也是 3 種，與目前最低相同，所以也保留。',
+        reasoningMain: 'AABBACC 也進入候選名單。',
+        reasoningDetail: '目前有兩個字串在第一關平手，稍後必須比較字典序。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        flow: 4
+      });
+
+      addStep({
+        kind: 'eliminateThird',
+        phase: '篩選候選字串',
+        stageNote: '檢查 AAPCCSS',
+        message: 'AAPCCSS 有 4 種，4 大於最低的 3，所以在第一關淘汰。',
+        reasoningMain: 'AAPCCSS 不進入字典序比較。',
+        reasoningDetail: '它已經在第一順位輸掉，所以不論字典序如何，都不能成為答案。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        flow: 4
+      });
+
+      addStep({
+        kind: 'candidateSummary',
+        phase: '準備字典序比較',
+        stageNote: '第一關完成',
+        message: '只剩 ABBCAAB 與 AABBACC。兩者都是 3 種，因此進入第二關。',
+        reasoningMain: '第一關平手，現在才啟用第二順位。',
+        reasoningDetail: '接下來比較的是兩個完整原始字串，不是比較「A、B、C」這個字母盒。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        flow: 5
+      });
+
+      addStep({
+        kind: 'lexIntro',
+        phase: '比較字典序',
+        stageNote: '把兩個候選字串上下對齊',
+        message: '字典序從最左邊開始，一格一格往右比較。',
+        reasoningMain: '從第 1 個字母開始比較。',
+        reasoningDetail: '只有目前位置相同時，才繼續看下一格。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        lexIndex: -1,
+        flow: 5
+      });
+
+      addStep({
+        kind: 'lexEqual',
+        phase: '比較字典序',
+        stageNote: '比較第 1 格',
+        message: '第 1 格都是 A，兩者相同，還不能決定勝負，繼續看下一格。',
+        reasoningMain: 'A 和 A 相同。',
+        reasoningDetail: '第一格沒有分出大小，所以移到第二格。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        lexIndex: 0,
+        lexResult: 'equal',
+        flow: 5
+      });
+
+      addStep({
+        kind: 'lexDiff',
+        phase: '比較字典序',
+        stageNote: '比較第 2 格',
+        message: '第 2 格是 B 與 A。A 排在 B 前面，所以 AABBACC 的字典序較小。',
+        reasoningMain: '找到第一個不同的位置：B 與 A。',
+        reasoningDetail: '因為 A < B，所以第二個字串 AABBACC 勝出。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        winner: 1,
+        lexIndex: 1,
+        lexResult: 'diff',
+        flow: 5
+      });
+
+      addStep({
+        kind: 'lexStop',
+        phase: '比較字典序',
+        stageNote: '第一個不同位置已決定勝負',
+        message: '第二格已經決定大小，後面的字母不需要再比較。',
+        reasoningMain: '字典序在第一個不同的位置就停止。',
+        reasoningDetail: '後面即使還有其他不同字母，也不會改變 AABBACC 已經較小的結果。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        winner: 1,
+        lexIndex: 1,
+        lexResult: 'stop',
+        flow: 5
+      });
+
+      addStep({
+        kind: 'final',
+        phase: '得到答案',
+        stageNote: '完整推理完成',
+        message: 'AABBACC 與 ABBCAAB 都只有 3 種字母，但 AABBACC 的字典序較小。',
+        reasoningTitle: '最後答案',
+        reasoningMain: 'AABBACC',
+        reasoningDetail: '第一關種類數為 3，與 ABBCAAB 平手；第二關在第 2 格以 A < B 勝出。',
+        results: allCounts,
+        uniqueResults: allUnique,
+        candidates: [0, 1],
+        eliminated: [2],
+        winner: 1,
+        flow: 6
+      });
+
+      const els = {
+        toolbar: document.getElementById('toolbar'),
+        stageArea: document.getElementById('stageArea'),
+        stageNote: document.getElementById('stageNote'),
+        stringCards: document.getElementById('stringCards'),
+        scoreBody: document.getElementById('scoreBody'),
+        flowList: document.getElementById('flowList'),
+        stepLabel: document.getElementById('stepLabel'),
+        phaseLabel: document.getElementById('phaseLabel'),
+        answerLabel: document.getElementById('answerLabel'),
+        messageBox: document.getElementById('messageBox'),
+        reasoningTitle: document.getElementById('reasoningTitle'),
+        reasoningMain: document.getElementById('reasoningMain'),
+        reasoningDetail: document.getElementById('reasoningDetail'),
+        prevBtn: document.getElementById('prevBtn'),
+        nextBtn: document.getElementById('nextBtn'),
+        playBtn: document.getElementById('playBtn'),
+        resetBtn: document.getElementById('resetBtn'),
+        speedSelect: document.getElementById('speedSelect'),
+        problemBtn: document.getElementById('problemBtn'),
+        problemModal: document.getElementById('problemModal'),
+        closeModalBtn: document.getElementById('closeModalBtn'),
+        splitter: document.getElementById('splitter'),
+        leftPanel: document.getElementById('leftPanel'),
+        mainArea: document.getElementById('mainArea')
+      };
+
+      let current = 0;
+      let timer = null;
+
+      const flowItems = [
+        '看懂題目的兩層規則',
+        '讀取三個原始字串',
+        '逐字計算不同字母種類',
+        '找出最少種類數',
+        '淘汰種類數較大的字串',
+        '平手候選者比較字典序',
+        '輸出勝出的完整原始字串'
+      ];
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function updateToolbarHeight() {
+        const h = Math.ceil(els.toolbar.getBoundingClientRect().height);
+        document.documentElement.style.setProperty('--toolbar-h', `${h}px`);
+      }
+
+      function getVisibleResult(step, index) {
+        return step.results[index];
+      }
+
+      function getVisibleUnique(step, index) {
+        if (step.activeWord === index && ['prepare', 'scan', 'wordComplete'].includes(step.kind)) {
+          return step.unique || [];
+        }
+        return step.uniqueResults[index] || [];
+      }
+
+      function renderStringCards(step) {
+        els.stringCards.innerHTML = words.map((word, index) => {
+          const unique = getVisibleUnique(step, index);
+          const count = getVisibleResult(step, index);
+          const classes = ['string-card'];
+          let statusText = '尚未分析';
+          let tagClass = '';
+
+          if (step.activeWord === index && ['prepare', 'scan', 'wordComplete'].includes(step.kind)) {
+            classes.push('active');
+            statusText = step.kind === 'wordComplete' ? '本字串完成' : '目前分析中';
+            tagClass = 'orange';
+          }
+          if (step.candidates.includes(index)) {
+            classes.push('candidate');
+            statusText = '最低種類候選';
+            tagClass = 'green';
+          }
+          if (step.eliminated.includes(index)) {
+            classes.push('eliminated');
+            statusText = '第一關淘汰';
+            tagClass = 'red';
+          }
+          if (step.winner === index) {
+            classes.push('winner');
+            statusText = '最後勝出';
+            tagClass = 'purple';
+          }
+
+          const shownCount = count !== null ? count : (step.activeWord === index ? unique.length : '—');
+          const shownUnique = unique.length ? unique.join('、') : '尚未得到';
+
+          return `
+            <article class="${classes.join(' ')}">
+              <div class="string-name">${escapeHtml(word)}</div>
+              <div class="string-meta">不同字母：${escapeHtml(shownUnique)}</div>
+              <div class="string-meta">種類數：${escapeHtml(shownCount)}</div>
+              <span class="tag ${tagClass}">${escapeHtml(statusText)}</span>
+            </article>`;
+        }).join('');
+      }
+
+      function renderScoreTable(step) {
+        els.scoreBody.innerHTML = words.map((word, index) => {
+          const unique = getVisibleUnique(step, index);
+          const count = getVisibleResult(step, index);
+          const classes = [];
+          let status = '等待分析';
+
+          if (step.activeWord === index && ['prepare', 'scan', 'wordComplete'].includes(step.kind)) {
+            classes.push('active-row');
+            status = step.kind === 'wordComplete' ? '分析完成' : '分析中';
+          }
+          if (count !== null) status = '已完成';
+          if (step.candidates.includes(index)) {
+            classes.push('candidate-row');
+            status = '候選';
+          }
+          if (step.eliminated.includes(index)) {
+            classes.push('eliminated-row');
+            status = '淘汰';
+          }
+          if (step.winner === index) {
+            classes.push('winner-row');
+            status = '答案';
+          }
+
+          const shownCount = count !== null ? count : (step.activeWord === index ? unique.length : '—');
+          const shownUnique = unique.length ? unique.join('、') : '—';
+
+          return `
+            <tr class="${classes.join(' ')}">
+              <td><strong>${escapeHtml(word)}</strong></td>
+              <td>${escapeHtml(shownUnique)}</td>
+              <td>${escapeHtml(shownCount)}</td>
+              <td>${escapeHtml(status)}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      function renderFlow(step) {
+        els.flowList.innerHTML = flowItems.map((text, index) => {
+          let cls = 'flow-item';
+          if (index < step.flow) cls += ' done';
+          else if (index === step.flow) cls += ' current';
+          return `<div class="${cls}">${index + 1}. ${escapeHtml(text)}</div>`;
+        }).join('');
+      }
+
+      function renderLetterRow(word, step, wordIndex) {
+        return [...word].map((ch, index) => {
+          const classes = ['letter-box'];
+          if (step.kind === 'scan' && wordIndex === step.activeWord) {
+            if (index < step.charIndex) classes.push('processed');
+            if (index === step.charIndex) classes.push('current');
+          } else if (step.kind === 'wordComplete' && wordIndex === step.activeWord) {
+            classes.push('processed');
+          }
+          return `<div class="${classes.join(' ')}">${escapeHtml(ch)}</div>`;
+        }).join('');
+      }
+
+      function renderScanStage(step) {
+        const word = words[step.activeWord];
+        const currentChar = step.charIndex !== null ? word[step.charIndex] : null;
+        const isPrepare = step.kind === 'prepare';
+        const isComplete = step.kind === 'wordComplete';
+
+        let actionClass = '';
+        let actionMain = '準備從最左邊開始';
+        let actionSub = '不同字母盒目前是空的。';
+
+        if (step.kind === 'scan') {
+          actionClass = step.isNew ? 'new' : 'repeat';
+          actionMain = step.isNew
+            ? `${currentChar} 是新字母 → 加入盒子`
+            : `${currentChar} 已經有了 → 不再加入`;
+          actionSub = step.isNew
+            ? `種類數增加為 ${step.unique.length}`
+            : `種類數維持 ${step.unique.length}`;
+        } else if (isComplete) {
+          actionClass = 'new';
+          actionMain = `${word} 分析完成`;
+          actionSub = `共有 ${step.unique.length} 種不同字母`;
+        }
+
+        const chips = step.unique.length
+          ? step.unique.map(ch => `<span class="bucket-chip">${escapeHtml(ch)}</span>`).join('')
+          : '<span class="empty-bucket">目前還沒有字母</span>';
+
+        return `
+          <div class="stage-banner">逐字查看完整字串：遇到第一次出現的字母才新增一種。</div>
+          <div class="string-area">
+            <div class="string-title">第 ${step.activeWord + 1} 個字串：${escapeHtml(word)}</div>
+            <div class="letter-row">${renderLetterRow(word, step, step.activeWord)}</div>
+          </div>
+          <div class="analysis-grid">
+            <div class="bucket">
+              <div class="bucket-title">不同字母盒（相同字母只留一個）</div>
+              <div class="bucket-letters">${chips}</div>
+              <div class="count-line">目前種類數：${step.unique.length}</div>
+            </div>
+            <div class="action-box ${actionClass}">
+              <div class="action-title">本步驟動作</div>
+              <div class="action-main">${escapeHtml(actionMain)}</div>
+              <div class="action-sub">${escapeHtml(actionSub)}</div>
+            </div>
+          </div>`;
+      }
+
+      function renderIntroStage(step) {
+        if (step.kind === 'input') {
+          return `
+            <div class="stage-banner">把題目中的資料完整保留下來，接下來只分析這三個字串。</div>
+            <div class="input-block">
+              <div class="input-label">字串數量 N</div><div class="input-value">3</div>
+              <div class="input-label">第 1 個字串</div><div class="input-value">ABBCAAB</div>
+              <div class="input-label">第 2 個字串</div><div class="input-value">AABBACC</div>
+              <div class="input-label">第 3 個字串</div><div class="input-value">AAPCCSS</div>
+            </div>
+            <div class="reasoning-box">
+              <div class="reasoning-title">重要提醒</div>
+              <div class="reasoning-main">原始字串不能被改掉。</div>
+              <div class="reasoning-detail">分析時會另外記錄不同字母與種類數，但最後輸出的仍然是完整原始字串。</div>
+            </div>`;
+        }
+
+        const isRules = step.kind === 'rules';
+        return `
+          <div class="stage-banner">${isRules ? '判斷順序不能交換' : '先弄清楚「相異字母」的意思'}</div>
+          <div class="logic-rules">
+            <div class="rule-card primary-rule">
+              <div class="rule-no">第一關</div>
+              <div class="rule-main">每個字串內部，有幾種不同字母？</div>
+              <div class="rule-sub">例如一個字母重複很多次，仍然只算一種。</div>
+            </div>
+            <div class="rule-card secondary-rule">
+              <div class="rule-no">第二關</div>
+              <div class="rule-main">種類數平手，才比較完整字串的字典序</div>
+              <div class="rule-sub">從最左邊逐格比較，第一個不同的位置決定勝負。</div>
+            </div>
+          </div>
+          <div class="reasoning-box">
+            <div class="reasoning-title">不是在找什麼？</div>
+            <div class="reasoning-main">不是找最短字串，也不是直接找字典序最小的字串。</div>
+            <div class="reasoning-detail">種類數永遠是第一順位；只有第一順位相同時，字典序才有作用。</div>
+          </div>`;
+      }
+
+      function renderComparisonStage(step) {
+        const minCount = 3;
+        let title = '三個字串的分析結果';
+        let highlight = '';
+
+        if (step.kind === 'findMin') {
+          title = '找出最少的種類數';
+          highlight = `<div class="answer-reason">3、3、4 當中，最少是 <strong>${minCount} 種</strong>。</div>`;
+        } else if (['keepFirst', 'keepSecond', 'eliminateThird', 'candidateSummary'].includes(step.kind)) {
+          title = '逐一檢查是否等於最低的 3 種';
+          const candidates = step.candidates.map(i => words[i]).join('、') || '尚無';
+          const eliminated = step.eliminated.map(i => words[i]).join('、') || '尚無';
+          highlight = `
+            <div class="analysis-grid">
+              <div class="action-box new">
+                <div class="action-title">目前保留</div>
+                <div class="action-main">${escapeHtml(candidates)}</div>
+                <div class="action-sub">種類數等於 3</div>
+              </div>
+              <div class="action-box repeat">
+                <div class="action-title">目前淘汰</div>
+                <div class="action-main">${escapeHtml(eliminated)}</div>
+                <div class="action-sub">種類數大於 3</div>
+              </div>
+            </div>`;
+        }
+
+        return `
+          <div class="stage-banner">${escapeHtml(title)}</div>
+          <div class="score-table-wrap">
+            <table>
+              <thead><tr><th>原始字串</th><th>不同字母</th><th>種類數</th><th>第一關</th></tr></thead>
+              <tbody>
+                ${words.map((word, i) => {
+                  const c = step.results[i];
+                  let state = '等待判斷';
+                  let cls = '';
+                  if (step.candidates.includes(i)) { state = '保留'; cls = 'candidate-row'; }
+                  if (step.eliminated.includes(i)) { state = '淘汰'; cls = 'eliminated-row'; }
+                  return `<tr class="${cls}"><td><strong>${word}</strong></td><td>${step.uniqueResults[i].join('、')}</td><td>${c}</td><td>${state}</td></tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${highlight}`;
+      }
+
+      function renderLexStage(step) {
+        const top = words[0];
+        const bottom = words[1];
+        const compareIndex = step.lexIndex ?? -1;
+
+        function row(word, winnerRow) {
+          return [...word].map((ch, index) => {
+            const classes = ['letter-box'];
+            if (compareIndex >= 0) {
+              if (index < compareIndex) classes.push('lex-equal');
+              if (index === compareIndex) {
+                if (step.lexResult === 'equal') classes.push('lex-equal');
+                else classes.push(winnerRow && index === 1 ? 'lex-winner' : 'lex-diff');
+              }
+              if (step.lexResult === 'stop' && index > compareIndex) classes.push('dimmed');
+            }
+            return `<div class="${classes.join(' ')}">${ch}</div>`;
+          }).join('');
+        }
+
+        let note = '先看第 1 格。相同才往右移。';
+        if (step.kind === 'lexEqual') note = '第 1 格：A = A，所以繼續比較第 2 格。';
+        if (step.kind === 'lexDiff') note = '第 2 格：A < B，因此 AABBACC 較小。';
+        if (step.kind === 'lexStop') note = '第一個不同位置已決定勝負，後面全部停止比較。';
+
+        return `
+          <div class="stage-banner">字典序只比較第一關留下來的完整原始字串。</div>
+          <div class="compare-stack">
+            <div class="compare-row">
+              <div class="compare-label">ABBCAAB</div>
+              <div class="letter-row">${row(top, false)}</div>
+            </div>
+            <div class="compare-row">
+              <div class="compare-label">AABBACC</div>
+              <div class="letter-row">${row(bottom, step.winner === 1)}</div>
+            </div>
+          </div>
+          <div class="lex-note">${escapeHtml(note)}</div>`;
+      }
+
+      function renderFinalStage() {
+        return `
+          <div class="answer-stage">
+            <div class="answer-caption">最後輸出完整原始字串</div>
+            <div class="answer-word">AABBACC</div>
+            <div class="answer-reason">
+              AABBACC 與 ABBCAAB 都有 3 種不同字母；兩者平手後比較字典序，第二格 A 小於 B，所以 AABBACC 勝出。
+            </div>
+          </div>`;
+      }
+
+      function renderStage(step) {
+        if (['intro', 'rules', 'input'].includes(step.kind)) {
+          els.stageArea.innerHTML = renderIntroStage(step);
+        } else if (['prepare', 'scan', 'wordComplete'].includes(step.kind)) {
+          els.stageArea.innerHTML = renderScanStage(step);
+        } else if (['summary', 'findMin', 'keepFirst', 'keepSecond', 'eliminateThird', 'candidateSummary'].includes(step.kind)) {
+          els.stageArea.innerHTML = renderComparisonStage(step);
+        } else if (['lexIntro', 'lexEqual', 'lexDiff', 'lexStop'].includes(step.kind)) {
+          els.stageArea.innerHTML = renderLexStage(step);
+        } else {
+          els.stageArea.innerHTML = renderFinalStage();
+        }
+      }
+
+      function render() {
+        const step = steps[current];
+
+        els.stepLabel.textContent = `步驟 ${current + 1} / ${steps.length}`;
+        els.phaseLabel.textContent = `目前階段：${step.phase}`;
+        els.answerLabel.textContent = step.winner === 1 || step.kind === 'final'
+          ? '目前答案：AABBACC'
+          : '目前答案：尚未決定';
+        els.messageBox.textContent = step.message;
+        els.stageNote.textContent = step.stageNote;
+        els.reasoningTitle.textContent = step.reasoningTitle;
+        els.reasoningMain.textContent = step.reasoningMain;
+        els.reasoningDetail.textContent = step.reasoningDetail;
+
+        renderStage(step);
+        renderStringCards(step);
+        renderScoreTable(step);
+        renderFlow(step);
+
+        els.prevBtn.disabled = current === 0;
+        els.nextBtn.disabled = current === steps.length - 1;
+        els.playBtn.textContent = timer ? '暫停' : '播放';
+
+        updateToolbarHeight();
+      }
+
+      function stopPlay() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+        els.playBtn.textContent = '播放';
+      }
+
+      function next() {
+        if (current < steps.length - 1) {
+          current += 1;
+          render();
+        } else {
+          stopPlay();
+        }
+      }
+
+      function previous() {
+        if (current > 0) {
+          current -= 1;
+          render();
+        }
+      }
+
+      function togglePlay() {
+        if (timer) {
+          stopPlay();
+          return;
+        }
+        if (current >= steps.length - 1) current = 0;
+        timer = setInterval(() => {
+          if (current >= steps.length - 1) {
+            stopPlay();
+            return;
+          }
+          next();
+        }, Number(els.speedSelect.value));
+        els.playBtn.textContent = '暫停';
+      }
+
+      els.prevBtn.addEventListener('click', () => { stopPlay(); previous(); });
+      els.nextBtn.addEventListener('click', () => { stopPlay(); next(); });
+      els.playBtn.addEventListener('click', togglePlay);
+      els.resetBtn.addEventListener('click', () => { stopPlay(); current = 0; render(); });
+      els.speedSelect.addEventListener('change', () => {
+        if (timer) {
+          stopPlay();
+          togglePlay();
+        }
+      });
+
+      els.problemBtn.addEventListener('click', () => {
+        els.problemModal.classList.add('open');
+        els.problemModal.setAttribute('aria-hidden', 'false');
+      });
+
+      function closeModal() {
+        els.problemModal.classList.remove('open');
+        els.problemModal.setAttribute('aria-hidden', 'true');
+      }
+
+      els.closeModalBtn.addEventListener('click', closeModal);
+      els.problemModal.addEventListener('click', event => {
+        if (event.target === els.problemModal) closeModal();
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeModal();
+        if (els.problemModal.classList.contains('open')) return;
+        if (event.key === 'ArrowRight') { stopPlay(); next(); }
+        if (event.key === 'ArrowLeft') { stopPlay(); previous(); }
+        if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
+      });
+
+      let dragging = false;
+      els.splitter.addEventListener('pointerdown', event => {
+        if (window.innerWidth <= 850) return;
+        dragging = true;
+        els.splitter.setPointerCapture(event.pointerId);
+        document.body.style.userSelect = 'none';
+      });
+
+      els.splitter.addEventListener('pointermove', event => {
+        if (!dragging || window.innerWidth <= 850) return;
+        const rect = els.mainArea.getBoundingClientRect();
+        const min = 360;
+        const max = rect.width - 360 - els.splitter.offsetWidth;
+        const width = Math.min(max, Math.max(min, event.clientX - rect.left));
+        els.leftPanel.style.flexBasis = `${width}px`;
+      });
+
+      function endDrag() {
+        dragging = false;
+        document.body.style.userSelect = '';
+      }
+
+      els.splitter.addEventListener('pointerup', endDrag);
+      els.splitter.addEventListener('pointercancel', endDrag);
+
+      const resizeObserver = new ResizeObserver(updateToolbarHeight);
+      resizeObserver.observe(els.toolbar);
+      window.addEventListener('resize', updateToolbarHeight);
+
+      render();
+    })();
+  </script>
+</body>
+</html>

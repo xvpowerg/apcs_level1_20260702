@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>為什麼 l[-r:] + l[:-r] 可以旋轉輪盤</title>
+<style>
+:root{
+  --toolbar-h:158px;
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --border:#d8e0ea;
+  --text:#172033;
+  --muted:#5b6475;
+  --blue:#2563eb;
+  --blue-soft:#dbeafe;
+  --yellow:#fef3c7;
+  --orange:#fed7aa;
+  --green:#dcfce7;
+  --red:#fee2e2;
+  --shadow:0 2px 10px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+}
+button,select{font:inherit}
+.toolbar{
+  position:fixed;
+  inset:0 0 auto 0;
+  z-index:1000;
+  min-height:var(--toolbar-h);
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow);
+  padding:10px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.toolbar-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.title-wrap{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:22px;line-height:1.2}
+.subtitle{color:var(--muted)}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{
+  border:1px solid #bcc7d8;
+  background:#fff;
+  color:var(--text);
+  border-radius:8px;
+  padding:7px 12px;
+  cursor:pointer;
+  min-width:72px;
+}
+.btn:hover{background:#eef4ff}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.warn{background:#fff7ed;border-color:#fdba74}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+select{
+  border:1px solid #bcc7d8;
+  border-radius:8px;
+  padding:7px 10px;
+  background:#fff;
+}
+.info-grid{
+  display:grid;
+  grid-template-columns:165px 230px minmax(340px,1fr);
+  gap:10px;
+}
+.info-box{
+  border:1px solid #e1e7f0;
+  border-radius:9px;
+  background:#f8fafc;
+  padding:8px 10px;
+  min-height:56px;
+}
+.info-label{display:block;color:var(--muted);font-size:13px}
+.info-value{font-size:18px;font-weight:800;line-height:1.35}
+.main{
+  margin-top:var(--toolbar-h);
+  height:calc(100vh - var(--toolbar-h));
+  display:flex;
+  min-height:0;
+}
+.left,.right{
+  min-height:0;
+  overflow:auto;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.left{width:57%;min-width:400px}
+.right{flex:1;min-width:360px}
+.divider{
+  flex:0 0 9px;
+  width:9px;
+  background:#d4dce8;
+  border-left:1px solid #c7d0de;
+  border-right:1px solid #c7d0de;
+  cursor:col-resize;
+}
+.divider:hover{background:#b7c4d6}
+.card{
+  position:relative;
+  width:100%;
+  flex-shrink:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 1px 4px rgba(15,23,42,.04);
+  padding:12px;
+}
+.card h2{margin:0 0 10px;font-size:20px}
+.card h3{margin:0 0 8px;font-size:18px}
+.notice{
+  border-left:5px solid var(--blue);
+  background:#eff6ff;
+  border-radius:8px;
+  padding:10px 12px;
+  font-weight:700;
+}
+.code-line{
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#0f172a;
+  color:#e5e7eb;
+  padding:12px;
+  font-family:Consolas,"Courier New",monospace;
+  font-size:19px;
+  font-weight:700;
+  overflow:auto;
+  white-space:nowrap;
+}
+.code-part.a{color:#facc15}
+.code-part.b{color:#86efac}
+.code-part.plus{color:#f9a8d4}
+.visual-wrap{
+  border:1px solid #d8e0eb;
+  border-radius:9px;
+  background:#fbfdff;
+  padding:14px;
+  overflow:auto;
+}
+.index-grid{
+  display:grid;
+  gap:6px;
+  align-items:center;
+}
+.index-label{
+  color:#475569;
+  font-weight:800;
+  text-align:right;
+  padding-right:6px;
+}
+.index-cell{
+  min-width:52px;
+  height:34px;
+  border-radius:7px;
+  border:1px solid #cbd5e1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  font-family:Consolas,"Courier New",monospace;
+  font-weight:800;
+}
+.letter-cell{
+  min-width:52px;
+  height:52px;
+  border-radius:9px;
+  border:2px solid #94a3b8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#fff;
+  font-size:23px;
+  font-weight:900;
+  transition:.2s;
+}
+.letter-cell.tail{background:var(--yellow);border-color:#d97706}
+.letter-cell.head{background:var(--blue-soft);border-color:#2563eb}
+.letter-cell.result{background:var(--green);border-color:#16a34a}
+.letter-cell.focus{background:var(--orange);border-color:#ea580c}
+.slice-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.slice-block{
+  display:flex;
+  gap:6px;
+  padding:8px;
+  border-radius:9px;
+  border:2px dashed #cbd5e1;
+}
+.slice-block.tail{background:#fffbeb;border-color:#d97706}
+.slice-block.head{background:#eff6ff;border-color:#2563eb}
+.arrow{font-size:30px;font-weight:900;color:#2563eb}
+.equal{font-size:26px;font-weight:900;color:#475569}
+.step-card{border-top:6px solid var(--blue)}
+.badge{
+  display:inline-block;
+  background:#e0e7ff;
+  color:#3730a3;
+  font-weight:800;
+  border-radius:999px;
+  padding:4px 10px;
+  margin-bottom:10px;
+}
+.explain-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.explain-box{
+  border:1px solid #dfe6f0;
+  border-radius:9px;
+  background:#f8fafc;
+  padding:10px 12px;
+  min-height:88px;
+}
+.explain-box.action{background:#fff7ed}
+.explain-box.after{background:#f0fdf4}
+.explain-box.why{background:#eff6ff}
+.explain-box h3{font-size:17px;color:#334155;margin-bottom:6px}
+.big{font-size:20px;font-weight:900;line-height:1.45}
+.rule-list{display:flex;flex-direction:column;gap:8px}
+.rule{
+  border:1px solid #dce4ef;
+  border-radius:8px;
+  padding:9px 10px;
+  background:#f8fafc;
+}
+.rule strong{color:#1d4ed8}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border:1px solid #dbe3ee;padding:7px 8px;text-align:center}
+.table th{background:#eef2f7}
+.active-row td{background:#eff6ff}
+.small{color:var(--muted);font-size:15px}
+@media(max-width:980px){
+  :root{--toolbar-h:224px}
+  .info-grid{grid-template-columns:1fr}
+  .main{flex-direction:column}
+  .left,.right{width:100%!important;min-width:0;height:50%}
+  .divider{width:100%;height:9px;flex:0 0 9px;cursor:row-resize}
+}
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div class="toolbar-top">
+    <div class="title-wrap">
+      <h1>為什麼 l[-r:] + l[:-r] 可以旋轉輪盤？</h1>
+      <span class="subtitle">拆成兩段，再把順序交換</span>
+    </div>
+    <div class="controls">
+      <label>案例：
+        <select id="caseSelect">
+          <option value="r2">apcsie，右轉 2 格</option>
+          <option value="r1">eapcsi，右轉 7 格</option>
+          <option value="rn3">taiwan，左轉 3 格</option>
+          <option value="r0">taiwan，不轉</option>
+        </select>
+      </label>
+      <button class="btn" id="prevBtn">上一步</button>
+      <button class="btn primary" id="nextBtn">下一步</button>
+      <button class="btn" id="playBtn">播放</button>
+      <button class="btn" id="pauseBtn">暫停</button>
+      <button class="btn warn" id="resetBtn">重設</button>
+    </div>
+  </div>
+  <div class="info-grid">
+    <div class="info-box">
+      <span class="info-label">目前步驟</span>
+      <span class="info-value" id="stepText">步驟 1 / 1</span>
+    </div>
+    <div class="info-box">
+      <span class="info-label">目前結果</span>
+      <span class="info-value" id="resultText">準備開始</span>
+    </div>
+    <div class="info-box">
+      <span class="info-label">本步驟簡短說明</span>
+      <span class="info-value" id="messageText">請按下一步開始。</span>
+    </div>
+  </div>
+</header>
+
+<main class="main" id="mainArea">
+  <section class="left" id="leftPane">
+    <section class="card">
+      <h2>核心程式</h2>
+      <div class="code-line">
+        return <span class="code-part a">l[-r:]</span>
+        <span class="code-part plus">+</span>
+        <span class="code-part b">l[:-r]</span>
+      </div>
+      <div class="notice" style="margin-top:10px">
+        這不是讓字母自己轉動，而是把串列切成「後段」和「前段」，再把後段放到前面。
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>索引與切片動畫</h2>
+      <div class="visual-wrap">
+        <div id="indexPanel"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>兩段重新接起來</h2>
+      <div class="visual-wrap">
+        <div id="joinPanel"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>四個案例總表</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>原本</th>
+            <th>原始 r</th>
+            <th>r %= n 後</th>
+            <th>l[-r:]</th>
+            <th>l[:-r]</th>
+            <th>結果</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="divider" id="divider"></div>
+
+  <section class="right">
+    <section class="card step-card">
+      <span class="badge" id="phaseBadge">準備</span>
+      <h2 id="stepTitle">準備開始</h2>
+      <div class="explain-grid">
+        <div class="explain-box">
+          <h3>現在看到什麼</h3>
+          <div id="beforeBox" class="big">尚未開始</div>
+        </div>
+        <div class="explain-box action">
+          <h3>這一步做什麼</h3>
+          <div id="actionBox" class="big">請按下一步</div>
+        </div>
+        <div class="explain-box after">
+          <h3>得到什麼</h3>
+          <div id="afterBox" class="big">尚未計算</div>
+        </div>
+        <div class="explain-box why">
+          <h3>為什麼</h3>
+          <div id="whyBox" class="big">動畫會逐步說明。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>切片規則</h2>
+      <div class="rule-list">
+        <div class="rule"><strong>l[-r:]</strong>：從倒數第 r 個位置開始，一直取到最後。</div>
+        <div class="rule"><strong>l[:-r]</strong>：從最前面開始，取到倒數第 r 個位置之前。</div>
+        <div class="rule"><strong>+</strong>：不是數學加法，而是把兩個 list 接在一起。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>一句話記住</h2>
+      <div class="notice">
+        右轉 r 格 = 把最後 r 格剪下來，貼到最前面。
+      </div>
+    </section>
+  </section>
+</main>
+
+<script>
+const cases={
+  r2:{label:"apcsie，右轉 2 格",source:"apcsie",raw:2,n:6},
+  r1:{label:"eapcsi，右轉 7 格",source:"eapcsi",raw:7,n:6},
+  rn3:{label:"taiwan，左轉 3 格",source:"taiwan",raw:-3,n:6},
+  r0:{label:"taiwan，不轉",source:"taiwan",raw:0,n:6}
+};
+
+let currentKey="r2";
+let steps=[];
+let stepIndex=0;
+let timer=null;
+
+function pyMod(v,n){return ((v%n)+n)%n}
+
+function caseData(c){
+  const r=pyMod(c.raw,c.n);
+  const arr=[...c.source];
+  const tail=r===0?arr.slice():arr.slice(-r);
+  const head=r===0?[]:arr.slice(0,-r);
+  const result=tail.concat(head);
+  return {...c,r,arr,tail,head,result};
+}
+
+function cells(chars,cls=""){
+  return chars.map(ch=>`<span class="letter-cell ${cls}">${ch}</span>`).join("");
+}
+
+function makeIndexPanel(d,mode){
+  const cols=d.arr.length;
+  const gridCols=`88px repeat(${cols}, minmax(52px, 1fr))`;
+  let topIndexes=d.arr.map((_,i)=>`<div class="index-cell">${i}</div>`).join("");
+  let negIndexes=d.arr.map((_,i)=>`<div class="index-cell">${i-cols}</div>`).join("");
+  let letters=d.arr.map((ch,i)=>{
+    let cls="";
+    if(mode==="tail" && (d.r===0 || i>=cols-d.r)) cls="tail";
+    if(mode==="head" && d.r>0 && i<cols-d.r) cls="head";
+    if(mode==="cut" && d.r>0){
+      cls=i>=cols-d.r?"tail":"head";
+    }
+    return `<div class="letter-cell ${cls}">${ch}</div>`;
+  }).join("");
+
+  return `
+    <div class="index-grid" style="grid-template-columns:${gridCols}">
+      <div class="index-label">正索引</div>${topIndexes}
+      <div class="index-label">負索引</div>${negIndexes}
+      <div class="index-label">字母</div>${letters}
+    </div>
+  `;
+}
+
+function makeJoinPanel(d,mode){
+  if(mode==="none"){
+    return `<p class="small">等到切片完成後，這裡會顯示兩段如何重新接起來。</p>`;
+  }
+  if(mode==="parts"){
+    return `
+      <div class="slice-row">
+        <div class="slice-block tail">${cells(d.tail,"tail")}</div>
+        <span class="plus equal">+</span>
+        <div class="slice-block head">${cells(d.head,"head") || '<span class="small">空串列</span>'}</div>
+      </div>
+    `;
+  }
+  return `
+    <div class="slice-row">
+      <div class="slice-block tail">${cells(d.tail,"tail")}</div>
+      <span class="plus equal">+</span>
+      <div class="slice-block head">${cells(d.head,"head") || '<span class="small">空串列</span>'}</div>
+      <span class="arrow">→</span>
+      <div class="slice-block">${cells(d.result,"result")}</div>
+    </div>
+  `;
+}
+
+function buildSteps(key){
+  const d=caseData(cases[key]);
+  const rawMeaning=d.raw>0?`向右轉 ${d.raw} 格`:d.raw<0?`向左轉 ${Math.abs(d.raw)} 格`:"不轉";
+
+  return [
+    {
+      phase:"先看原本",
+      title:"先把字串看成一排格子",
+      message:`原本是 ${d.source}。`,
+      result:`原本：${d.source}`,
+      before:`${d.source} 不是一個整體單字，而是 ${d.n} 個格子。`,
+      action:"把每個字母放進自己的格子。",
+      after:`${d.arr.join("　")}`,
+      why:"切片是依照位置切割，所以先看清楚每個字母的位置。",
+      indexMode:"normal",
+      joinMode:"none"
+    },
+    {
+      phase:"處理 r",
+      title:"先執行 r %= n",
+      message:`${d.raw} % ${d.n} = ${d.r}`,
+      result:`真正右轉格數：${d.r}`,
+      before:`原始 r = ${d.raw}，意思是${rawMeaning}。`,
+      action:`用輪盤長度 ${d.n} 取餘數。`,
+      after:`r 變成 ${d.r}。`,
+      why:d.raw<0
+        ?`Python 的餘數會把負數轉成等價的右轉格數，所以左轉 ${Math.abs(d.raw)} 格等價於右轉 ${d.r} 格。`
+        :d.raw>=d.n
+          ?`每轉 ${d.n} 格就是完整一圈，完整圈不用真的處理。`
+          :`旋轉格數沒有超過一圈，所以 r 保持 ${d.r}。`,
+      indexMode:"normal",
+      joinMode:"none"
+    },
+    {
+      phase:"看負索引",
+      title:"理解 -r 表示倒數第 r 個位置",
+      message:`現在 r = ${d.r}，所以 -r = ${-d.r}。`,
+      result:`切割位置：索引 ${-d.r}`,
+      before:"正索引從左邊開始算；負索引從右邊開始算。",
+      action:d.r===0
+        ?"因為 -0 就是 0，所以切割位置是最前面。"
+        :`找到負索引 ${-d.r}，也就是倒數第 ${d.r} 個位置。`,
+      after:d.r===0
+        ?"位置 0 在最前面。"
+        :`切割點落在字母「${d.arr[d.n-d.r]}」前面。`,
+      why:"l[-r:] 和 l[:-r] 都使用同一個切割位置。",
+      indexMode:"cut",
+      joinMode:"none"
+    },
+    {
+      phase:"第一段",
+      title:"計算 l[-r:]",
+      message:`l[-${d.r}:] 取得後面這一段。`,
+      result:`l[-r:] = ${d.tail.join("") || "空"}`,
+      before:`從索引 ${-d.r} 開始。`,
+      action:"冒號右邊沒有數字，表示一直取到最後。",
+      after:d.tail.length?d.tail.join("　"):"空串列",
+      why:d.r===0
+        ?"l[-0:] 等於 l[0:]，所以會取得整個串列。"
+        :`因此會取得最後 ${d.r} 格。這一段將來要搬到最前面。`,
+      indexMode:"tail",
+      joinMode:"parts"
+    },
+    {
+      phase:"第二段",
+      title:"計算 l[:-r]",
+      message:`l[:-${d.r}] 取得前面剩下的部分。`,
+      result:`l[:-r] = ${d.head.join("") || "空"}`,
+      before:"從最前面開始取。",
+      action:`取到索引 ${-d.r} 之前，但不包含切割位置。`,
+      after:d.head.length?d.head.join("　"):"空串列",
+      why:d.r===0
+        ?"l[:-0] 等於 l[:0]，所以取得空串列。"
+        :`這就是原本前面的 ${d.n-d.r} 格。`,
+      indexMode:"head",
+      joinMode:"parts"
+    },
+    {
+      phase:"交換順序",
+      title:"把後段放前面，前段接後面",
+      message:`${d.tail.join("") || "空"} + ${d.head.join("") || "空"}`,
+      result:`結果：${d.result.join("")}`,
+      before:`後段：${d.tail.join("") || "空"}；前段：${d.head.join("") || "空"}`,
+      action:"先放 l[-r:]，再接上 l[:-r]。",
+      after:d.result.join("　"),
+      why:"list 的 + 代表串接。兩段內部順序不變，只交換整段位置。",
+      indexMode:"cut",
+      joinMode:"joined"
+    },
+    {
+      phase:"完成",
+      title:"右轉完成",
+      message:`${d.source} → ${d.result.join("")}`,
+      result:`最後結果：${d.result.join("")}`,
+      before:d.source,
+      action:`使用 l[-r:] + l[:-r]`,
+      after:d.result.join(""),
+      why:d.r===0
+        ?"完整串列加上空串列，所以結果不變。"
+        :`最後 ${d.r} 格被搬到最前面，因此完成右轉 ${d.r} 格。`,
+      indexMode:"normal",
+      joinMode:"joined"
+    }
+  ];
+}
+
+function renderSummary(){
+  summaryBody.innerHTML=Object.entries(cases).map(([key,c])=>{
+    const d=caseData(c);
+    return `
+      <tr class="${key===currentKey?"active-row":""}">
+        <td>${d.source}</td>
+        <td>${d.raw}</td>
+        <td>${d.r}</td>
+        <td>${d.tail.join("") || "空"}</td>
+        <td>${d.head.join("") || "空"}</td>
+        <td>${d.result.join("")}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function render(){
+  const s=steps[stepIndex];
+  const d=caseData(cases[currentKey]);
+
+  stepText.textContent=`步驟 ${stepIndex+1} / ${steps.length}`;
+  resultText.textContent=s.result;
+  messageText.textContent=s.message;
+  phaseBadge.textContent=s.phase;
+  stepTitle.textContent=s.title;
+  beforeBox.innerHTML=s.before;
+  actionBox.innerHTML=s.action;
+  afterBox.innerHTML=s.after;
+  whyBox.innerHTML=s.why;
+  indexPanel.innerHTML=makeIndexPanel(d,s.indexMode);
+  joinPanel.innerHTML=makeJoinPanel(d,s.joinMode);
+  renderSummary();
+
+  prevBtn.disabled=stepIndex===0;
+  nextBtn.disabled=stepIndex===steps.length-1;
+}
+
+function stop(){
+  if(timer){
+    clearInterval(timer);
+    timer=null;
+  }
+}
+function next(){
+  if(stepIndex<steps.length-1){
+    stepIndex++;
+    render();
+  }else stop();
+}
+function prev(){
+  if(stepIndex>0){
+    stepIndex--;
+    render();
+  }
+}
+function play(){
+  stop();
+  timer=setInterval(()=>{
+    if(stepIndex>=steps.length-1){
+      stop();
+      return;
+    }
+    next();
+  },1200);
+}
+function reset(){
+  stop();
+  stepIndex=0;
+  render();
+}
+function setCase(key){
+  stop();
+  currentKey=key;
+  steps=buildSteps(key);
+  stepIndex=0;
+  render();
+}
+
+caseSelect.addEventListener("change",e=>setCase(e.target.value));
+nextBtn.addEventListener("click",next);
+prevBtn.addEventListener("click",prev);
+playBtn.addEventListener("click",play);
+pauseBtn.addEventListener("click",stop);
+resetBtn.addEventListener("click",reset);
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight")next();
+  else if(e.key==="ArrowLeft")prev();
+  else if(e.code==="Space"){
+    e.preventDefault();
+    timer?stop():play();
+  }
+});
+
+const divider=document.getElementById("divider");
+const leftPane=document.getElementById("leftPane");
+const mainArea=document.getElementById("mainArea");
+let dragging=false;
+divider.addEventListener("pointerdown",e=>{
+  dragging=true;
+  divider.setPointerCapture(e.pointerId);
+  document.body.style.userSelect="none";
+});
+divider.addEventListener("pointerup",e=>{
+  dragging=false;
+  divider.releasePointerCapture(e.pointerId);
+  document.body.style.userSelect="";
+});
+divider.addEventListener("pointermove",e=>{
+  if(!dragging || window.innerWidth<=980)return;
+  const rect=mainArea.getBoundingClientRect();
+  let p=(e.clientX-rect.left)/rect.width;
+  p=Math.max(.35,Math.min(.72,p));
+  leftPane.style.width=`${p*100}%`;
+});
+
+setCase(currentKey);
+</script>
+</body>
+</html>

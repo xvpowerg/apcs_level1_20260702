@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>f606. 流量｜同一路線加總說明版</title>
+<style>
+:root{
+  --toolbar-h:96px;
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --line:#d7deea;
+  --text:#1f2937;
+  --muted:#64748b;
+  --blue:#dbeafe;
+  --blue-strong:#2563eb;
+  --green:#dcfce7;
+  --green-strong:#16a34a;
+  --yellow:#fef3c7;
+  --yellow-strong:#f59e0b;
+  --orange:#ffedd5;
+  --orange-strong:#ea580c;
+  --purple:#ede9fe;
+  --purple-strong:#7c3aed;
+  --red:#fee2e2;
+  --red-strong:#dc2626;
+  --gray:#f1f5f9;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+}
+button,select{font:inherit;}
+.toolbar{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:50;
+  min-height:var(--toolbar-h);
+  padding:10px 14px;
+  background:#fff;
+  border-bottom:1px solid var(--line);
+  box-shadow:0 2px 10px rgba(15,23,42,.08);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+}
+.title{
+  font-size:21px;
+  font-weight:900;
+  white-space:nowrap;
+  margin-right:4px;
+}
+.toolbar button,.toolbar select{
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:7px 11px;
+  background:#fff;
+  cursor:pointer;
+}
+.toolbar button:hover{background:#f8fafc;}
+.toolbar button.primary{background:#2563eb;color:#fff;border-color:#2563eb;}
+.toolbar .pill{
+  border:1px solid var(--line);
+  background:#f8fafc;
+  border-radius:999px;
+  padding:6px 11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.toolbar .message{
+  flex:1 1 430px;
+  min-width:280px;
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  color:#7c2d12;
+  border-radius:12px;
+  padding:7px 11px;
+  font-size:17px;
+  font-weight:800;
+}
+main{
+  padding:calc(var(--toolbar-h) + 18px) 18px 48px;
+  max-width:1400px;
+  margin:0 auto;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+  padding:16px;
+  margin-bottom:14px;
+}
+.card h2{font-size:22px;margin:0 0 10px;}
+.card h3{font-size:19px;margin:12px 0 8px;}
+.lead{
+  font-size:19px;
+  font-weight:900;
+  background:#ecfeff;
+  border:2px solid #67e8f9;
+  border-radius:14px;
+  padding:12px 14px;
+}
+.main-line{
+  display:grid;
+  grid-template-columns:1fr auto 1fr auto 1fr;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+}
+.main-line .box{
+  min-height:94px;
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+  background:#f8fafc;
+}
+.main-line .box strong{display:block;font-size:20px;margin-bottom:4px;}
+.main-line .arrow{font-size:30px;font-weight:900;color:#64748b;}
+.stage-strip{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.stage{
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  padding:11px 13px;
+  background:#f8fafc;
+  min-height:88px;
+  transition:.2s;
+}
+.stage .no{
+  display:inline-block;
+  min-width:30px;
+  text-align:center;
+  border-radius:999px;
+  padding:2px 9px;
+  background:#e2e8f0;
+  font-weight:900;
+  margin-right:6px;
+}
+.stage strong{font-size:19px;}
+.stage.active{
+  background:#fff7cc;
+  border-color:var(--yellow-strong);
+  box-shadow:0 0 0 3px rgba(245,158,11,.18);
+}
+.stage.active .no{background:var(--yellow-strong);color:#fff;}
+.status-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(150px,1fr));
+  gap:10px;
+}
+.status-card{
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:11px;
+  background:#f8fafc;
+  min-height:86px;
+}
+.status-card:nth-child(1){background:var(--blue);border-color:#93c5fd;}
+.status-card:nth-child(2){background:var(--orange);border-color:#fdba74;}
+.status-card:nth-child(3){background:var(--purple);border-color:#c4b5fd;}
+.status-card:nth-child(4){background:var(--green);border-color:#86efac;}
+.status-label{font-size:15px;color:#475569;font-weight:800;}
+.status-value{font-size:23px;font-weight:900;margin-top:5px;word-break:break-word;}
+.notice{
+  border:2px solid var(--yellow-strong);
+  background:#fffbeb;
+  border-radius:14px;
+  padding:12px 14px;
+  font-size:18px;
+  font-weight:900;
+  margin:10px 0;
+}
+.notice .rule{
+  display:block;
+  margin-top:6px;
+  font-size:20px;
+  color:#92400e;
+}
+.current-board{
+  border:2px solid #93c5fd;
+  background:#eff6ff;
+  border-radius:15px;
+  padding:14px;
+}
+.current-board .step-title{font-size:21px;font-weight:900;margin-bottom:7px;}
+.current-board .step-text{font-size:18px;font-weight:700;}
+.current-board .equation{
+  margin-top:9px;
+  background:#fff;
+  border:1px solid #bfdbfe;
+  border-radius:11px;
+  padding:10px 12px;
+  font-family:Consolas,"Microsoft JhengHei",monospace;
+  font-size:20px;
+  font-weight:900;
+  color:#1e3a8a;
+}
+.data-grid{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:12px;
+  align-items:start;
+}
+.raw-input{
+  margin:0;
+  background:#0f172a;
+  color:#e5e7eb;
+  border-radius:12px;
+  padding:14px;
+  font:18px/1.55 Consolas,monospace;
+  white-space:pre;
+}
+.table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff;}
+table{border-collapse:collapse;width:100%;font-size:16px;table-layout:fixed;}
+th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:middle;word-break:break-word;}
+th{background:#f8fafc;font-weight:900;}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;}
+.mini{font-size:14px;color:var(--muted);}
+.active-row{background:#fff7cc!important;outline:3px solid var(--yellow-strong);outline-offset:-3px;}
+.done-row{background:#f0fdf4;}
+.future-row{opacity:.36;}
+.group-title{
+  font-size:19px;
+  font-weight:900;
+  background:#e2e8f0;
+  border-radius:12px;
+  padding:9px 12px;
+  margin:12px 0 8px;
+}
+.server-cards{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+.server-card{
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  padding:12px;
+  background:#f8fafc;
+}
+.server-card.active{border-color:var(--yellow-strong);background:#fff7cc;}
+.server-card .name{font-size:19px;font-weight:900;}
+.server-card .location{font-size:18px;margin:5px 0;font-weight:800;}
+.route-list{display:grid;gap:6px;margin-top:8px;}
+.route-chip{
+  border:1px solid #cbd5e1;
+  background:#fff;
+  border-radius:9px;
+  padding:7px 9px;
+  font-weight:700;
+}
+.panels{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+.panel{
+  border:2px solid #cbd5e1;
+  border-radius:15px;
+  padding:13px;
+  background:#fff;
+}
+.panel.active{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.14);}
+.panel h3{margin:0 0 8px;font-size:20px;}
+.flow-table th:nth-child(1){width:30%;}
+.flow-table th:nth-child(2){width:18%;}
+.flow-table th:nth-child(3){width:13%;}
+.flow-table th:nth-child(4){width:24%;}
+.flow-table th:nth-child(5){width:15%;}
+.route-why-box{
+  margin:10px 0;
+  border:2px solid #93c5fd;
+  background:#eff6ff;
+  border-radius:14px;
+  padding:12px;
+}
+.route-why-title{
+  font-size:19px;
+  font-weight:900;
+  color:#1e3a8a;
+  margin-bottom:8px;
+}
+.route-compare-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  gap:10px;
+  align-items:stretch;
+}
+.route-compare-card{
+  min-width:0;
+  border:1px solid #bfdbfe;
+  background:#fff;
+  border-radius:11px;
+  padding:10px;
+}
+.route-compare-card .label{
+  font-size:14px;
+  color:#64748b;
+  font-weight:800;
+  margin-bottom:4px;
+}
+.route-compare-card .route{
+  font-size:18px;
+  font-weight:900;
+  color:#0f172a;
+  overflow-wrap:anywhere;
+}
+.route-compare-card .amount{
+  margin-top:5px;
+  font-size:16px;
+  font-weight:800;
+}
+.route-equals{
+  align-self:center;
+  font-size:24px;
+  font-weight:1000;
+  color:#2563eb;
+  white-space:nowrap;
+}
+.route-check-line{
+  margin-top:9px;
+  padding:9px 11px;
+  border-radius:10px;
+  background:#dcfce7;
+  border:1px solid #86efac;
+  font-size:17px;
+  font-weight:900;
+  color:#166534;
+}
+.route-final-line{
+  margin-top:8px;
+  text-align:center;
+  font-size:21px;
+  font-weight:1000;
+  color:#92400e;
+}
+.reason-tag{
+  display:block;
+  margin-bottom:5px;
+  font-size:14px;
+  font-weight:900;
+  color:#166534;
+}
+.cost-table th:nth-child(1){width:24%;}
+.cost-table th:nth-child(2){width:13%;}
+.cost-table th:nth-child(3){width:18%;}
+.cost-table th:nth-child(4){width:28%;}
+.cost-table th:nth-child(5){width:17%;}
+.formula{
+  display:inline-block;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:7px;
+  padding:3px 6px;
+  font-family:Consolas,monospace;
+  white-space:nowrap;
+  font-weight:800;
+}
+.sum-result{
+  font-size:19px;
+  font-weight:900;
+  border:2px solid #86efac;
+  background:#f0fdf4;
+  border-radius:12px;
+  padding:10px 12px;
+  margin-top:9px;
+}
+.compare-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.compare-card{
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  padding:12px;
+  background:#f8fafc;
+  text-align:center;
+}
+.compare-card .plan{font-size:18px;font-weight:900;}
+.compare-card .cost{font-size:28px;font-weight:900;margin:6px 0;}
+.compare-card.current{border-color:var(--yellow-strong);background:#fff7cc;}
+.compare-card.best{border-color:var(--green-strong);background:var(--green);}
+.final-answer{
+  text-align:center;
+  border:3px solid var(--green-strong);
+  background:#ecfdf5;
+  border-radius:16px;
+  padding:18px;
+  margin-top:12px;
+}
+.final-answer .small{font-size:18px;font-weight:800;}
+.final-answer .answer{font-size:44px;font-weight:1000;color:#166534;}
+.hidden{display:none!important;}
+.modal-backdrop{
+  position:fixed;inset:0;z-index:80;
+  background:rgba(15,23,42,.58);
+  display:none;align-items:center;justify-content:center;
+  padding:24px;
+}
+.modal{
+  width:min(920px,96vw);max-height:80vh;overflow:auto;
+  background:#fff;border-radius:16px;padding:18px;
+}
+.modal h2{margin-top:0;font-size:22px;}
+.modal-close{float:right;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;}
+@media(max-width:900px){
+  :root{--toolbar-h:148px;}
+  main{padding-left:10px;padding-right:10px;}
+  .main-line{grid-template-columns:1fr;}
+  .main-line .arrow{transform:rotate(90deg);text-align:center;}
+  .stage-strip,.status-grid,.compare-grid{grid-template-columns:1fr;}
+  .data-grid{grid-template-columns:1fr;}
+  .server-cards{grid-template-columns:1fr;}
+  .route-compare-grid{grid-template-columns:1fr;}
+  .route-equals{text-align:center;transform:rotate(90deg);}
+  .flow-table,.cost-table{min-width:760px;}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div class="title">f606. 流量｜同一路線加總說明版</div>
+  <button id="prevBtn">上一步</button>
+  <button id="nextBtn" class="primary">下一步</button>
+  <button id="playBtn">播放</button>
+  <button id="resetBtn">重設</button>
+  <select id="speedSelect" title="播放速度">
+    <option value="2200">慢速</option>
+    <option value="1500" selected>正常</option>
+    <option value="900">快速</option>
+  </select>
+  <button id="helpBtn">題目白話說明</button>
+  <span class="pill" id="stepPill">步驟 1 / 1</span>
+  <span class="pill" id="answerPill">目前最小：∞</span>
+  <div class="message" id="messageBox">先看懂資料，再按「下一步」。</div>
+</div>
+
+<main>
+  <section class="card">
+    <h2>先記住整題只有三大段</h2>
+    <div class="lead">這份教材刻意不放程式碼，只照程式真正的思考順序，一步一步手算。</div>
+    <div class="main-line">
+      <div class="box"><strong>① 看方案</strong>先知道每台伺服器放在哪個城市。</div>
+      <div class="arrow">→</div>
+      <div class="box"><strong>② 先算流量</strong>把相同「出發城市 → 目的城市」的流量加總。</div>
+      <div class="arrow">→</div>
+      <div class="box"><strong>③ 再算錢、找最少</strong>逐條路線算費用，最後比較所有方案。</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stage-strip" id="stageStrip">
+      <div class="stage" data-stage="data"><span class="no">A</span><strong>認識資料</strong><div>伺服器、城市、流量、方案。</div></div>
+      <div class="stage" data-stage="flow"><span class="no">B</span><strong>先算流量</strong><div>方案決定出發城市，相同路線才加總。</div></div>
+      <div class="stage" data-stage="money"><span class="no">C</span><strong>再算錢、找最少</strong><div>套費用規則，算總成本，比較最小值。</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>現在狀態</h2>
+    <div class="status-grid">
+      <div class="status-card"><div class="status-label">目前階段</div><div class="status-value" id="statusStage">準備</div></div>
+      <div class="status-card"><div class="status-label">目前方案</div><div class="status-value" id="statusPlan">-</div></div>
+      <div class="status-card"><div class="status-label">目前動作</div><div class="status-value" id="statusAction">看懂輸入</div></div>
+      <div class="status-card"><div class="status-label">方案成本 / 最小值</div><div class="status-value" id="statusCost">- / ∞</div></div>
+    </div>
+  </section>
+
+  <section class="card" id="currentSection">
+    <div class="current-board">
+      <div class="step-title" id="currentTitle">準備：先看懂資料</div>
+      <div class="step-text" id="currentText">第一行先告訴我們有幾台伺服器、幾個城市、幾個方案。</div>
+      <div class="equation" id="currentEquation">2 台伺服器｜3 個城市｜3 個方案</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>原始輸入與白話翻譯</h2>
+    <div class="data-grid">
+      <pre class="raw-input">2 3 3
+30 23 23
+5 25 3
+0 0
+0 1
+0 2</pre>
+      <div>
+        <div class="group-title">第一行：資料規模</div>
+        <div class="table-wrap">
+          <table>
+            <tr><th>數字</th><th>代表</th><th>白話意思</th></tr>
+            <tr id="data-size-row"><td class="num">2</td><td>伺服器數量</td><td>有伺服器 0、伺服器 1。</td></tr>
+            <tr><td class="num">3</td><td>城市數量</td><td>有城市 0、城市 1、城市 2。</td></tr>
+            <tr><td class="num">3</td><td>方案數量</td><td>要把 3 種擺法全部算完。</td></tr>
+          </table>
+        </div>
+        <div class="group-title">接下來兩行：每台伺服器要送多少流量</div>
+        <div class="table-wrap">
+          <table id="trafficTable">
+            <tr><th>誰在送</th><th>送到城市 0</th><th>送到城市 1</th><th>送到城市 2</th></tr>
+            <tr id="traffic-row-0"><td>伺服器 0</td><td class="num">30</td><td class="num">23</td><td class="num">23</td></tr>
+            <tr id="traffic-row-1"><td>伺服器 1</td><td class="num">5</td><td class="num">25</td><td class="num">3</td></tr>
+          </table>
+        </div>
+        <div class="group-title">最後三行：每台伺服器放在哪個城市</div>
+        <div class="table-wrap">
+          <table id="planListTable">
+            <tr><th>方案</th><th>原始數字</th><th>拆開看</th></tr>
+            <tr id="plan-list-0"><td>方案 1</td><td class="num">0 0</td><td>伺服器 0 在城市 0；伺服器 1 在城市 0。</td></tr>
+            <tr id="plan-list-1"><td>方案 2</td><td class="num">0 1</td><td>伺服器 0 在城市 0；伺服器 1 在城市 1。</td></tr>
+            <tr id="plan-list-2"><td>方案 3</td><td class="num">0 2</td><td>伺服器 0 在城市 0；伺服器 1 在城市 2。</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="notice">
+      第 2 段最重要規則
+      <span class="rule">只有「出發城市一樣」而且「目的城市也一樣」，才是同一條路線，才可以加總。</span>
+    </div>
+  </section>
+
+  <section class="card" id="workSection">
+    <h2>目前方案的完整手算</h2>
+    <div class="panels">
+      <div class="panel" id="planPanel">
+        <h3>① 先看方案：伺服器放在哪裡</h3>
+        <div class="server-cards" id="serverCards"></div>
+      </div>
+
+      <div class="panel" id="flowPanel">
+        <h3>② 先算流量：先確認是同一條路線，再把流量加總</h3>
+        <div class="mini">每一筆都先看「出發城市 → 目的城市」。出發城市一樣、目的城市也一樣，才是同一條路線，才可以相加。</div>
+        <div class="route-why-box" id="routeWhyBox">
+          <div class="route-why-title">為什麼這筆流量可以放進這條路線？</div>
+          <div class="mini">進入第 2 段後，這裡會逐筆說明路線與加總原因。</div>
+        </div>
+        <div class="table-wrap" style="margin-top:8px">
+          <table class="flow-table" id="flowTable"></table>
+        </div>
+        <div class="sum-result" id="routeSummary">還沒開始整理流量。</div>
+      </div>
+
+      <div class="panel" id="moneyPanel">
+        <h3>③ 再算錢：每條路線逐一換成費用</h3>
+        <div class="notice" style="font-size:16px;margin:6px 0 8px">
+          同城市：流量 × 1；不同城市且不超過 1000：流量 × 3；不同城市超過 1000：前 1000 × 3，超過部分 × 2。
+        </div>
+        <div class="table-wrap">
+          <table class="cost-table" id="costTable"></table>
+        </div>
+        <div class="sum-result" id="planTotal">這個方案還沒算出總費用。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>所有方案比較</h2>
+    <div class="compare-grid" id="compareGrid"></div>
+    <div class="final-answer hidden" id="finalAnswer">
+      <div class="small">三個方案全部算完，最小的總費用是</div>
+      <div class="answer">217</div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">關閉</button>
+    <h2>題目白話說明</h2>
+    <p><b>題目給你：</b>每台伺服器要送到各城市的流量，以及幾種「伺服器放在哪個城市」的方案。</p>
+    <p><b>每個方案都做同樣三件事：</b></p>
+    <ol>
+      <li>先看方案，決定每台伺服器從哪個城市出發。</li>
+      <li>把每台伺服器的流量整理成「出發城市 → 目的城市」的路線總流量。</li>
+      <li>把每條路線的總流量換成費用，加成方案總成本，再和其他方案比較。</li>
+    </ol>
+    <div class="notice"><span class="rule">不是送到同一個城市就能加。必須出發城市、目的城市都一樣，才可以加總。</span></div>
+    <p><b>最後答案：</b>輸出所有方案成本中的最小值。</p>
+  </div>
+</div>
+
+<script>
+const ex = {
+  n:2,
+  m:3,
+  traffic:[[30,23,23],[5,25,3]],
+  plans:[[0,0],[0,1],[0,2]]
+};
+
+function routeName(from,to){ return `城市 ${from} → 城市 ${to}`; }
+function costOf(amount,same){
+  if(same) return amount;
+  if(amount <= 1000) return amount * 3;
+  return 3000 + (amount - 1000) * 2;
+}
+function costRule(amount,same){
+  if(same) return `${amount} × 1 = ${amount}`;
+  if(amount <= 1000) return `${amount} × 3 = ${amount*3}`;
+  return `1000 × 3 + ${amount-1000} × 2 = ${costOf(amount,false)}`;
+}
+function computePlan(plan,index){
+  const flow = Array.from({length:ex.m},()=>Array(ex.m).fill(0));
+  const flowRows=[];
+  for(let server=0;server<ex.n;server++){
+    const from=plan[server];
+    for(let to=0;to<ex.m;to++){
+      const before=flow[from][to];
+      const add=ex.traffic[server][to];
+      flow[from][to]+=add;
+      flowRows.push({
+        id:`p${index}-flow-${server}-${to}`,
+        server,from,to,before,add,after:flow[from][to]
+      });
+    }
+  }
+  const costRows=[];
+  let total=0;
+  for(let from=0;from<ex.m;from++){
+    for(let to=0;to<ex.m;to++){
+      const amount=flow[from][to];
+      if(amount===0) continue;
+      const same=from===to;
+      const cost=costOf(amount,same);
+      const before=total;
+      total+=cost;
+      costRows.push({
+        id:`p${index}-cost-${from}-${to}`,
+        from,to,amount,same,cost,before,after:total,rule:costRule(amount,same)
+      });
+    }
+  }
+  return {plan,index,flow,flowRows,costRows,total};
+}
+const details=ex.plans.map(computePlan);
+
+let steps=[];
+let stepIndex=0;
+let playing=false;
+let timer=null;
+
+function addStep(step){ steps.push(step); }
+function buildSteps(){
+  steps=[];
+  addStep({stage:'data',kind:'size',title:'A. 認識資料：第一行',text:'第一行 2 3 3，不是在算錢，而是在告訴我們題目規模。',equation:'2 台伺服器｜3 個城市｜3 個方案',action:'認識資料規模',planIndex:null,best:Infinity});
+  addStep({stage:'data',kind:'traffic',trafficRow:0,title:'A. 認識資料：伺服器 0 的流量',text:'30、23、23 代表伺服器 0 分別要送到城市 0、1、2 的流量。',equation:'伺服器 0：到城市0是30｜到城市1是23｜到城市2是23',action:'看伺服器 0 流量',planIndex:null,best:Infinity});
+  addStep({stage:'data',kind:'traffic',trafficRow:1,title:'A. 認識資料：伺服器 1 的流量',text:'5、25、3 代表伺服器 1 分別要送到城市 0、1、2 的流量。',equation:'伺服器 1：到城市0是5｜到城市1是25｜到城市2是3',action:'看伺服器 1 流量',planIndex:null,best:Infinity});
+  addStep({stage:'data',kind:'plans',title:'A. 認識資料：三個方案',text:'最後三行是三種擺法。每個位置代表一台伺服器，位置裡的數字代表它放在哪個城市。',equation:'0 0｜0 1｜0 2',action:'看三個方案',planIndex:null,best:Infinity});
+
+  let best=Infinity;
+  for(let p=0;p<details.length;p++){
+    const d=details[p];
+    addStep({stage:'flow',kind:'planStart',planIndex:p,title:`B. 方案 ${p+1}：先拆解方案 ${d.plan.join(' ')}`,text:'先不要算流量，也不要算錢。先把每台伺服器放在哪個城市看清楚。',equation:`伺服器0 → 城市${d.plan[0]}｜伺服器1 → 城市${d.plan[1]}`,action:'拆解方案',best});
+    for(let server=0;server<ex.n;server++){
+      addStep({stage:'flow',kind:'placement',planIndex:p,server,title:`B. 方案 ${p+1}：看伺服器 ${server}`,text:`方案的第 ${server} 個位置是 ${d.plan[server]}，所以伺服器 ${server} 放在城市 ${d.plan[server]}。`,equation:`伺服器 ${server} 的出發城市 = 城市 ${d.plan[server]}`,action:`伺服器 ${server} 在城市 ${d.plan[server]}`,best});
+    }
+    addStep({stage:'flow',kind:'flowStart',planIndex:p,flowDone:0,title:`B. 方案 ${p+1}：開始整理流量`,text:'現在才把每台伺服器的流量放進正確的「出發城市 → 目的城市」路線。',equation:'相同出發城市 + 相同目的城市 → 才能加總',action:'準備整理流量',best});
+    d.flowRows.forEach((r,i)=>{
+      const sameRouteBefore=r.before>0;
+      const route=routeName(r.from,r.to);
+      const reasonText=sameRouteBefore
+        ? `原本累積的 ${r.before} 屬於「${route}」，現在新增的 ${r.add} 也屬於「${route}」。兩筆的出發城市都是城市 ${r.from}，目的城市也都是城市 ${r.to}，所以是同一條路線，可以加總。`
+        : `伺服器 ${r.server} 放在城市 ${r.from}，要送 ${r.add} 單位到城市 ${r.to}，所以這筆流量屬於「${route}」。這是這條路線第一次出現，原本是 0。`;
+      const reasonEquation=sameRouteBefore
+        ? `同一路線：${route}｜所以 ${r.before} + ${r.add} = ${r.after}`
+        : `第一次放入 ${route}｜所以 0 + ${r.add} = ${r.after}`;
+      addStep({
+        stage:'flow',kind:'flowRow',planIndex:p,flowDone:i+1,activeRowId:r.id,
+        title:`B. 方案 ${p+1}：處理伺服器 ${r.server} 的一筆流量`,
+        text:reasonText,
+        equation:reasonEquation,
+        action:route,best
+      });
+    });
+    const summary=d.costRows.map(r=>`${routeName(r.from,r.to)}=${r.amount}`).join('；');
+    addStep({stage:'flow',kind:'flowSummary',planIndex:p,flowDone:d.flowRows.length,title:`B. 方案 ${p+1}：流量整理完成`,text:'到這裡只完成「先算流量」，還沒有算錢。',equation:summary,action:'完成路線總流量',best});
+
+    addStep({stage:'money',kind:'costStart',planIndex:p,flowDone:d.flowRows.length,costDone:0,title:`C. 方案 ${p+1}：現在才開始算錢`,text:'逐條路線判斷同城市或不同城市，再把流量換成費用。',equation:'同城市 ×1｜不同城市（≤1000）×3',action:'準備算費用',planCost:0,best});
+    d.costRows.forEach((r,i)=>{
+      addStep({
+        stage:'money',kind:'costRow',planIndex:p,flowDone:d.flowRows.length,costDone:i+1,activeCostId:r.id,
+        title:`C. 方案 ${p+1}：計算 ${routeName(r.from,r.to)} 的費用`,
+        text:`這條路線的流量是 ${r.amount}。${r.same?'出發城市和目的城市一樣，所以每單位 1 元。':'出發城市和目的城市不同，所以依不同城市規則計費。'}`,
+        equation:`路線費用：${r.rule}；累積成本：${r.before} + ${r.cost} = ${r.after}`,
+        action:`算 ${routeName(r.from,r.to)} 費用`,planCost:r.after,best
+      });
+    });
+    addStep({stage:'money',kind:'planTotal',planIndex:p,flowDone:d.flowRows.length,costDone:d.costRows.length,title:`C. 方案 ${p+1}：總費用算完`,text:`把這個方案所有路線的費用加起來，得到方案 ${p+1} 的總成本。`,equation:`方案 ${d.plan.join(' ')} 的總費用 = ${d.total}`,action:'完成方案總成本',planCost:d.total,best});
+    const oldBest=best;
+    best=Math.min(best,d.total);
+    addStep({stage:'money',kind:'compare',planIndex:p,flowDone:d.flowRows.length,costDone:d.costRows.length,completedPlans:p+1,title:`C. 方案 ${p+1}：和目前最小值比較`,text:d.total<oldBest?`方案成本 ${d.total} 比目前最小值 ${Number.isFinite(oldBest)?oldBest:'∞'} 小，所以更新最小值。`:`方案成本 ${d.total} 沒有比目前最小值 ${oldBest} 小，所以最小值不變。`,equation:`目前最小值 = ${best}`,action:'比較最小值',planCost:d.total,best});
+  }
+  addStep({stage:'money',kind:'final',planIndex:null,completedPlans:details.length,title:'全部方案都算完',text:'三個方案的成本分別是 257、217、261，最小的是 217。',equation:'min(257, 217, 261) = 217',action:'得到最後答案',planCost:'-',best:217});
+}
+
+function clearHighlights(){
+  document.querySelectorAll('.active-row').forEach(el=>el.classList.remove('active-row'));
+}
+function setStage(stage){
+  document.querySelectorAll('.stage').forEach(el=>el.classList.toggle('active',el.dataset.stage===stage));
+  const names={data:'A 認識資料',flow:'B 先算流量',money:'C 再算錢、找最少'};
+  document.getElementById('statusStage').textContent=names[stage]||'準備';
+}
+function renderServerCards(step,detail){
+  const wrap=document.getElementById('serverCards');
+  if(!detail){wrap.innerHTML='<div class="mini">尚未進入任何方案。</div>';return;}
+  wrap.innerHTML=detail.plan.map((city,server)=>{
+    const active=step.server===server || (step.kind==='flowRow' && detail.flowRows[step.flowDone-1]?.server===server);
+    const routes=ex.traffic[server].map((v,to)=>`<div class="route-chip">城市 ${city} → 城市 ${to}：流量 ${v}</div>`).join('');
+    return `<div class="server-card ${active?'active':''}">
+      <div class="name">伺服器 ${server}</div>
+      <div class="location">放在城市 ${city}</div>
+      <div class="mini">所以它的所有流量都從城市 ${city} 出發：</div>
+      <div class="route-list">${routes}</div>
+    </div>`;
+  }).join('');
+}
+function rowState(index,done,activeId,rowId){
+  if(activeId===rowId) return 'active-row';
+  if(index<done) return 'done-row';
+  return 'future-row';
+}
+function renderRouteWhy(step,detail){
+  const box=document.getElementById('routeWhyBox');
+  if(!box) return;
+  if(!detail){
+    box.innerHTML=`
+      <div class="route-why-title">為什麼這筆流量可以放進這條路線？</div>
+      <div class="mini">進入第 2 段後，這裡會逐筆說明路線與加總原因。</div>`;
+    return;
+  }
+  if(step.kind==='flowStart'){
+    box.innerHTML=`
+      <div class="route-why-title">先做一件事：看清楚完整路線</div>
+      <div class="route-check-line">完整路線 = 出發城市 → 目的城市。兩邊都相同，才是同一條路線，才可以加總。</div>`;
+    return;
+  }
+  if(step.kind!=='flowRow'){
+    if(['flowSummary','costStart','costRow','planTotal','compare','final'].includes(step.kind)){
+      box.innerHTML=`
+        <div class="route-why-title">這個方案的路線流量已整理完成</div>
+        <div class="route-check-line">剛才每次相加，都先確認出發城市相同、目的城市也相同，因此才合併成同一條路線總流量。</div>`;
+    }else{
+      box.innerHTML=`
+        <div class="route-why-title">為什麼這筆流量可以放進這條路線？</div>
+        <div class="mini">進入逐筆整理流量後，這裡會顯示完整原因。</div>`;
+    }
+    return;
+  }
+
+  const row=detail.flowRows[(step.flowDone||1)-1];
+  if(!row) return;
+  const route=routeName(row.from,row.to);
+
+  if(row.before===0){
+    box.innerHTML=`
+      <div class="route-why-title">這是「${route}」第一次出現</div>
+      <div class="route-compare-grid">
+        <div class="route-compare-card">
+          <div class="label">伺服器位置</div>
+          <div class="route">伺服器 ${row.server} 在城市 ${row.from}</div>
+        </div>
+        <div class="route-equals">→</div>
+        <div class="route-compare-card">
+          <div class="label">這次要送到哪裡</div>
+          <div class="route">送到城市 ${row.to}</div>
+          <div class="amount">新增流量 ${row.add}</div>
+        </div>
+      </div>
+      <div class="route-check-line">所以完整路線是「${route}」。這條路線原本是 0，先把 ${row.add} 放進去。</div>
+      <div class="route-final-line">0 + ${row.add} = ${row.after}</div>`;
+    return;
+  }
+
+  box.innerHTML=`
+    <div class="route-why-title">為什麼 ${row.before} 和 ${row.add} 可以相加？</div>
+    <div class="route-compare-grid">
+      <div class="route-compare-card">
+        <div class="label">原本累積的流量</div>
+        <div class="route">${route}</div>
+        <div class="amount">原本流量 ${row.before}</div>
+      </div>
+      <div class="route-equals">＝</div>
+      <div class="route-compare-card">
+        <div class="label">現在新增的流量</div>
+        <div class="route">${route}</div>
+        <div class="amount">新增流量 ${row.add}</div>
+      </div>
+    </div>
+    <div class="route-check-line">出發城市相同：城市 ${row.from}；目的城市也相同：城市 ${row.to}。所以是同一條路線，可以加總。</div>
+    <div class="route-final-line">${row.before} + ${row.add} = ${row.after}</div>`;
+}
+
+function renderFlowTable(step,detail){
+  const table=document.getElementById('flowTable');
+  if(!detail){table.innerHTML='<tr><td>尚未進入任何方案。</td></tr>';return;}
+  let html='<tr><th>這次處理的路線</th><th>這次新增流量</th><th>原本累積</th><th>加總算式</th><th>新的路線總流量</th></tr>';
+  detail.flowRows.forEach((r,i)=>{
+    const cls=rowState(i,step.flowDone||0,step.activeRowId,r.id);
+    const reason=r.before>0
+      ? `<span class="reason-tag">同一路線，所以可以加總</span><span class="formula">${r.before} + ${r.add} = ${r.after}</span>`
+      : `<span class="reason-tag">這條路線第一次出現</span><span class="formula">0 + ${r.add} = ${r.after}</span>`;
+    html+=`<tr id="${r.id}" class="${cls}">
+      <td><b>伺服器 ${r.server}</b><br>${routeName(r.from,r.to)}</td>
+      <td class="num">${r.add}<br><span class="mini">送到城市 ${r.to}</span></td>
+      <td class="num">${r.before}</td>
+      <td>${reason}</td>
+      <td class="num">${r.after}</td>
+    </tr>`;
+  });
+  table.innerHTML=html;
+  const finished=(step.flowDone||0)>=detail.flowRows.length || ['flowSummary','costStart','costRow','planTotal','compare','final'].includes(step.kind);
+  document.getElementById('routeSummary').innerHTML=finished
+    ? `<b>整理後的路線總流量：</b> ${detail.costRows.map(r=>`${routeName(r.from,r.to)} = ${r.amount}`).join('；')}`
+    : `目前已處理 ${step.flowDone||0} / ${detail.flowRows.length} 筆伺服器流量。`;
+}
+function renderCostTable(step,detail){
+  const table=document.getElementById('costTable');
+  if(!detail){table.innerHTML='<tr><td>尚未進入任何方案。</td></tr>';return;}
+  let html='<tr><th>路線</th><th>總流量</th><th>城市關係</th><th>費用算式</th><th>累積總成本</th></tr>';
+  detail.costRows.forEach((r,i)=>{
+    const cls=rowState(i,step.costDone||0,step.activeCostId,r.id);
+    html+=`<tr id="${r.id}" class="${cls}">
+      <td>${routeName(r.from,r.to)}</td>
+      <td class="num">${r.amount}</td>
+      <td>${r.same?'同城市':'不同城市'}</td>
+      <td><span class="formula">${r.rule}</span></td>
+      <td><span class="formula">${r.before} + ${r.cost} = ${r.after}</span></td>
+    </tr>`;
+  });
+  table.innerHTML=html;
+  if(['planTotal','compare'].includes(step.kind)){
+    document.getElementById('planTotal').innerHTML=`<b>方案 ${detail.index+1} 的總費用：</b> ${detail.total}`;
+  }else if(step.kind==='final'){
+    document.getElementById('planTotal').innerHTML='所有方案已完成。';
+  }else{
+    document.getElementById('planTotal').innerHTML=`目前方案累積費用：${step.planCost??0}`;
+  }
+}
+function renderCompare(step){
+  const completed=step.completedPlans||0;
+  const current=step.planIndex;
+  let runningBest=Infinity;
+  document.getElementById('compareGrid').innerHTML=details.map((d,i)=>{
+    const done=i<completed || step.kind==='final';
+    if(done) runningBest=Math.min(runningBest,d.total);
+    const isCurrent=current===i && step.kind!=='final';
+    const isBest=done && d.total===runningBest;
+    return `<div class="compare-card ${isCurrent?'current':''} ${isBest?'best':''}">
+      <div class="plan">方案 ${i+1}：${d.plan.join(' ')}</div>
+      <div class="cost">${done?d.total:'—'}</div>
+      <div>${done?(isBest?'目前最小':'已完成'):(isCurrent?'正在計算':'等待')}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('finalAnswer').classList.toggle('hidden',step.kind!=='final');
+}
+function highlightData(step){
+  clearHighlights();
+  if(step.kind==='size') document.getElementById('data-size-row')?.classList.add('active-row');
+  if(step.kind==='traffic') document.getElementById(`traffic-row-${step.trafficRow}`)?.classList.add('active-row');
+  if(step.kind==='plans') document.querySelectorAll('[id^="plan-list-"]').forEach(el=>el.classList.add('active-row'));
+  if(step.planIndex!==null && step.planIndex!==undefined) document.getElementById(`plan-list-${step.planIndex}`)?.classList.add('active-row');
+}
+function panelActivity(step){
+  document.getElementById('planPanel').classList.toggle('active',['planStart','placement'].includes(step.kind));
+  document.getElementById('flowPanel').classList.toggle('active',['flowStart','flowRow','flowSummary'].includes(step.kind));
+  document.getElementById('moneyPanel').classList.toggle('active',['costStart','costRow','planTotal','compare','final'].includes(step.kind));
+}
+function updateUI(){
+  const step=steps[stepIndex];
+  const detail=step.planIndex===null||step.planIndex===undefined?null:details[step.planIndex];
+  document.getElementById('stepPill').textContent=`步驟 ${stepIndex+1} / ${steps.length}`;
+  document.getElementById('messageBox').textContent=step.title;
+  document.getElementById('currentTitle').textContent=step.title;
+  document.getElementById('currentText').textContent=step.text;
+  document.getElementById('currentEquation').textContent=step.equation;
+  document.getElementById('statusPlan').textContent=detail?`方案 ${detail.index+1}：${detail.plan.join(' ')}`:'-';
+  document.getElementById('statusAction').textContent=step.action||'-';
+  document.getElementById('statusCost').textContent=`${step.planCost??'-'} / ${Number.isFinite(step.best)?step.best:'∞'}`;
+  document.getElementById('answerPill').textContent=`目前最小：${Number.isFinite(step.best)?step.best:'∞'}`;
+  setStage(step.stage);
+  highlightData(step);
+  panelActivity(step);
+  renderServerCards(step,detail);
+  renderRouteWhy(step,detail);
+  renderFlowTable(step,detail);
+  renderCostTable(step,detail);
+  renderCompare(step);
+  requestAnimationFrame(()=>{
+    let target=null;
+    if(step.activeRowId) target=document.getElementById(step.activeRowId);
+    else if(step.activeCostId) target=document.getElementById(step.activeCostId);
+    else if(step.kind==='placement' && step.server!==undefined){
+      target=document.querySelectorAll('.server-card')[step.server] || null;
+    }
+    else if(step.planIndex!==null && step.planIndex!==undefined){
+      target=document.getElementById(`plan-list-${step.planIndex}`);
+    }
+    if(target && step.kind!=='data') target.scrollIntoView({behavior:'smooth',block:'center'});
+    else document.getElementById('currentSection').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+function nextStep(){
+  if(stepIndex<steps.length-1){stepIndex++;updateUI();}
+  else stopPlay();
+}
+function prevStep(){
+  if(stepIndex>0){stepIndex--;updateUI();}
+}
+function startPlay(){
+  if(playing)return;
+  playing=true;
+  document.getElementById('playBtn').textContent='暫停';
+  const delay=Number(document.getElementById('speedSelect').value);
+  timer=setInterval(()=>{
+    if(stepIndex<steps.length-1) nextStep();
+    else stopPlay();
+  },delay);
+}
+function stopPlay(){
+  playing=false;
+  document.getElementById('playBtn').textContent='播放';
+  if(timer){clearInterval(timer);timer=null;}
+}
+function resetAll(){stopPlay();stepIndex=0;updateUI();}
+
+document.getElementById('nextBtn').addEventListener('click',nextStep);
+document.getElementById('prevBtn').addEventListener('click',prevStep);
+document.getElementById('playBtn').addEventListener('click',()=>playing?stopPlay():startPlay());
+document.getElementById('resetBtn').addEventListener('click',resetAll);
+document.getElementById('speedSelect').addEventListener('change',()=>{if(playing){stopPlay();startPlay();}});
+document.getElementById('helpBtn').addEventListener('click',()=>document.getElementById('modalBackdrop').style.display='flex');
+document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('modalBackdrop').style.display='none');
+document.getElementById('modalBackdrop').addEventListener('click',e=>{if(e.target.id==='modalBackdrop')e.currentTarget.style.display='none';});
+window.addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+  if(e.code==='ArrowRight'){e.preventDefault();nextStep();}
+  if(e.code==='ArrowLeft'){e.preventDefault();prevStep();}
+  if(e.code==='Space'){e.preventDefault();playing?stopPlay():startPlay();}
+});
+
+buildSteps();
+updateUI();
+</script>
+</body>
+</html>

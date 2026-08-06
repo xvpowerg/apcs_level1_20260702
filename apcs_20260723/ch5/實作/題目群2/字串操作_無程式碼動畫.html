@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>q182.2 字串操作｜一步一步動畫</title>
+  <style>
+    :root {
+      --toolbar-h: 146px;
+      --bg: #f3f6fa;
+      --card: #ffffff;
+      --line: #d7dee8;
+      --text: #1f2937;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --yellow: #b45309;
+      --yellow-soft: #fef3c7;
+      --purple: #7e22ce;
+      --purple-soft: #f3e8ff;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 100;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      padding: 9px 14px 10px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 7px;
+    }
+
+    .title-row h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    .subtitle {
+      color: #475569;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .controls button {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 8px;
+      padding: 6px 10px;
+      min-height: 36px;
+    }
+
+    .controls button:hover { background: #f8fafc; }
+
+    .controls .primary {
+      color: #ffffff;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    .controls .danger {
+      color: #991b1b;
+      border-color: #fecaca;
+      background: #fff1f2;
+    }
+
+    .sample-button.active {
+      color: #075985;
+      border-color: #38bdf8;
+      background: #e0f2fe;
+      font-weight: 800;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: auto minmax(120px, 0.7fr) auto minmax(160px, 1fr) minmax(280px, 2fr);
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .status-label,
+    .status-value,
+    .step-pill {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 4px 9px;
+      background: #f8fafc;
+    }
+
+    .status-label {
+      color: #475569;
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-value {
+      font-weight: 800;
+      word-break: break-all;
+    }
+
+    .step-pill {
+      justify-content: center;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .message-bar {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #fde68a;
+      border-radius: 9px;
+      padding: 4px 10px;
+      background: #fffbeb;
+      color: #78350f;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .main {
+      display: flex;
+      height: calc(100vh - var(--toolbar-h));
+      margin-top: var(--toolbar-h);
+      overflow: hidden;
+    }
+
+    .panel {
+      height: 100%;
+      min-width: 0;
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .left-panel {
+      flex: 0 0 61%;
+      min-width: 430px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-panel {
+      flex: 1 1 auto;
+      min-width: 390px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .splitter {
+      flex: 0 0 8px;
+      cursor: col-resize;
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+      background: linear-gradient(to right, #e2e8f0, #94a3b8, #e2e8f0);
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: 0 1px 5px rgba(15, 23, 42, 0.05);
+      padding: 12px;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .card h3 {
+      margin: 10px 0 6px;
+      font-size: 18px;
+    }
+
+    .card p { margin: 6px 0; }
+
+    .operation-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .operation-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 38px;
+      padding: 5px 10px;
+      border: 2px solid #cbd5e1;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #475569;
+      font-weight: 800;
+    }
+
+    .operation-chip.done {
+      border-color: #4ade80;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .operation-chip.active {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .operation-chip.pending { opacity: 0.78; }
+
+    .current-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .summary-box {
+      min-height: 72px;
+      border: 1px solid #dbe3ee;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 7px 9px;
+    }
+
+    .summary-box .label {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .summary-box .value {
+      margin-top: 2px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 19px;
+      font-weight: 900;
+      word-break: break-all;
+    }
+
+    .visual-card { padding-bottom: 10px; }
+
+    .svg-frame {
+      width: 100%;
+      height: 430px;
+      max-height: 52vh;
+      overflow: hidden;
+      border: 1px solid #dbe3ee;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+
+    #visualSvg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+      color: #475569;
+      font-size: 15px;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+    .legend i {
+      display: inline-block;
+      width: 17px;
+      height: 17px;
+      border: 2px solid #94a3b8;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+
+    .legend .active i { border-color: #f59e0b; background: var(--yellow-soft); }
+    .legend .done i { border-color: #22c55e; background: var(--green-soft); }
+    .legend .new i { border-color: #a855f7; background: var(--purple-soft); }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 88px minmax(120px, 1fr) 34px minmax(120px, 1fr);
+      gap: 8px;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 7px 9px;
+      background: #ffffff;
+    }
+
+    .timeline-row.current {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .timeline-row.done {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+
+    .timeline-label {
+      color: #475569;
+      font-weight: 800;
+    }
+
+    .mono {
+      font-family: Consolas, "Courier New", monospace;
+      font-weight: 800;
+      word-break: break-all;
+    }
+
+    .arrow-text { text-align: center; font-size: 22px; font-weight: 900; }
+
+    .problem-card {
+      max-height: 46vh;
+      overflow: auto;
+    }
+
+    .problem-lead {
+      border-left: 5px solid var(--blue);
+      padding: 8px 10px;
+      background: #eff6ff;
+      border-radius: 7px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .rule-item {
+      border: 1px solid #dbe3ee;
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: #f8fafc;
+    }
+
+    .rule-item strong { color: #1d4ed8; }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .example-box {
+      border: 1px solid #dbe3ee;
+      border-radius: 9px;
+      padding: 8px;
+      background: #f8fafc;
+    }
+
+    .example-box pre {
+      margin: 4px 0 0;
+      padding: 7px;
+      border-radius: 7px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .explanation-card {
+      border-width: 2px;
+      border-color: #fbbf24;
+      background: #fffdf5;
+    }
+
+    .explain-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .explain-block {
+      border: 1px solid #e5e7eb;
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: #ffffff;
+    }
+
+    .explain-block .label {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .explain-block .text {
+      margin-top: 2px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .explain-block.changed { border-left: 5px solid #a855f7; }
+    .explain-block.why { border-left: 5px solid #2563eb; }
+
+    .history-wrap {
+      max-height: 250px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    tr.current-row td { background: #fffbeb; font-weight: 800; }
+
+    .key-points {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .key-points li { margin: 4px 0; }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .modal-mask.show { display: flex; }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.28);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .modal-header h2 { margin: 0; font-size: 21px; }
+
+    .modal-header button {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 6px 10px;
+    }
+
+    .modal-body { padding: 16px; font-size: 17px; }
+    .modal-body h3 { margin: 14px 0 6px; }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .status-row { grid-template-columns: 1fr; }
+      .main {
+        height: auto;
+        min-height: calc(100vh - var(--toolbar-h));
+        flex-direction: column;
+        overflow: visible;
+      }
+      .panel {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+      }
+      .left-panel { flex-basis: auto !important; }
+      .splitter { display: none; }
+      .current-summary { grid-template-columns: 1fr; }
+      .svg-frame { height: 390px; max-height: none; }
+      .problem-card { max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="title-row">
+      <h1>q182.2 字串操作｜一步一步動畫</h1>
+      <div class="subtitle">完整顯示每次操作前後的字串與改變原因</div>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary">下一步</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn">暫停</button>
+      <button id="resetBtn" class="danger">重設</button>
+      <button id="problemBtn">完整題目</button>
+      <button class="sample-button" data-sample="0">範例 1：完美重排</button>
+      <button class="sample-button" data-sample="1">範例 2：完整流程</button>
+      <div class="step-pill" id="stepCounter">步驟 1 / 1</div>
+    </div>
+
+    <div class="status-row">
+      <div class="status-label">目前操作</div>
+      <div class="status-value" id="toolbarOperation">尚未開始</div>
+      <div class="status-label">目前完整字串</div>
+      <div class="status-value mono" id="toolbarString">-</div>
+      <div class="message-bar" id="toolbarMessage">請按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main class="main" id="main">
+    <section class="panel left-panel" id="leftPanel">
+      <section class="card">
+        <h2>操作順序與目前狀態</h2>
+        <div class="operation-strip" id="operationStrip"></div>
+        <div class="current-summary">
+          <div class="summary-box">
+            <div class="label">本次操作前</div>
+            <div class="value" id="beforeString">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">新字串目前組成</div>
+            <div class="value" id="buildingString">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">本次操作完成後</div>
+            <div class="value" id="afterString">-</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card visual-card">
+        <h2>字串操作動畫</h2>
+        <div class="svg-frame">
+          <svg id="visualSvg" viewBox="0 0 1100 460" preserveAspectRatio="xMidYMid meet" aria-label="字串操作動畫"></svg>
+        </div>
+        <div class="legend">
+          <span><i></i>尚未處理</span>
+          <span class="active"><i></i>目前處理</span>
+          <span class="done"><i></i>已處理</span>
+          <span class="new"><i></i>新字串</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>完整字串演化</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+    </section>
+
+    <div class="splitter" id="splitter" title="拖曳調整左右寬度"></div>
+
+    <section class="panel right-panel">
+      <section class="card problem-card">
+        <h2>題目內容</h2>
+        <div class="problem-lead">
+          給一個偶數長度的字串 S，再依照輸入順序執行 k 次操作。每次操作都會產生新的字串，下一次操作必須接著使用剛剛的新字串。全部做完後，輸出最後結果。
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-item">
+            <strong>操作 0：兩兩交換</strong><br />
+            從左到右每兩個相鄰字母分成一組，每組左右交換。例如：<span class="mono">(ap)(cs) → (pa)(sc)</span>。
+          </div>
+          <div class="rule-item">
+            <strong>操作 1：兩兩排序</strong><br />
+            從左到右每兩個相鄰字母分成一組，每組依英文字母順序排列，小的在前、大的在後。注意：不是把整個字串排序。
+          </div>
+          <div class="rule-item">
+            <strong>操作 2：完美重排</strong><br />
+            先從正中間切成前半段與後半段，再依序拿「前半第 1 個、後半第 1 個、前半第 2 個、後半第 2 個……」。
+          </div>
+        </div>
+
+        <h3>輸入與輸出</h3>
+        <p>第一行輸入字串 S，且 <strong>2 ≤ 字串長度 ≤ 100</strong>，字串長度保證為偶數。</p>
+        <p>第二行輸入操作次數 k；接下來有 k 行，每行是一個操作編號 0、1 或 2。</p>
+        <p>輸出所有操作完成後的字串。</p>
+
+        <div class="example-grid">
+          <div class="example-box">
+            <strong>範例輸入 1</strong>
+            <pre>apcsntnu
+1
+2</pre>
+          </div>
+          <div class="example-box">
+            <strong>範例輸出 1</strong>
+            <pre>anptcnsu</pre>
+          </div>
+          <div class="example-box">
+            <strong>範例輸入 2</strong>
+            <pre>facebook
+4
+2
+0
+2
+1</pre>
+          </div>
+          <div class="example-box">
+            <strong>範例輸出 2</strong>
+            <pre>bocfkoae</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="card explanation-card">
+        <h2>本步驟說明</h2>
+        <div class="explain-grid">
+          <div class="explain-block">
+            <div class="label">現在做什麼</div>
+            <div class="text" id="actionText">尚未開始。</div>
+          </div>
+          <div class="explain-block changed">
+            <div class="label">這次字串修改了什麼</div>
+            <div class="text" id="changedText">尚未修改。</div>
+          </div>
+          <div class="explain-block why">
+            <div class="label">為什麼會變成這樣</div>
+            <div class="text" id="whyText">請依照操作規則觀察字母的位置。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>操作歷程</h2>
+        <div class="history-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>次數</th>
+                <th>操作</th>
+                <th>操作前</th>
+                <th>操作後</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>核心提醒</h2>
+        <ul class="key-points">
+          <li>每次操作都不會增加或刪除字母，只會重新安排位置。</li>
+          <li>下一次操作使用的是上一次操作完成後的新字串。</li>
+          <li>操作 1 只排序每一組兩個字母，不是整個字串一起排序。</li>
+          <li>操作 2 是從正中間切成前後兩半，不是分奇數位置與偶數位置。</li>
+        </ul>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-mask" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">q182.2 字串操作－完整題目</h2>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <p>給一個字串 S，有三種字串操作：</p>
+        <h3>1. 兩兩交換</h3>
+        <p>將字串內相鄰兩個字元交換。例如 <span class="mono">apcsntnu</span> 先分成 <span class="mono">(ap)(cs)(nt)(nu)</span>，交換後成為 <span class="mono">(pa)(sc)(tn)(un)</span>，最後得到 <span class="mono">pasctnun</span>。</p>
+        <h3>2. 兩兩排序</h3>
+        <p>將字串內相鄰兩個字元依字典序排序。例如 <span class="mono">family</span> 分成 <span class="mono">(fa)(mi)(ly)</span>，排序後為 <span class="mono">(af)(im)(ly)</span>，得到 <span class="mono">afimly</span>。</p>
+        <h3>3. 完美重排</h3>
+        <p>假設字串長度為 n，將字串分成前半與後半，再交錯組合。以 <span class="mono">apcsntnu</span> 為例，分成 <span class="mono">apcs</span> 與 <span class="mono">ntnu</span>，依序交錯成 <span class="mono">anptcnsu</span>。</p>
+        <h3>操作要求</h3>
+        <p>給定 k 個操作，請依序操作字串，輸出最後的字串結果。</p>
+        <h3>輸入說明</h3>
+        <p>第一行是一個字串 S，2 ≤ 字串長度 ≤ 100，長度保證為偶數。第二行是一個正整數 k；接下來有 k 行，每行一個操作編號 0、1 或 2。</p>
+        <h3>輸出說明</h3>
+        <p>輸出所有操作完成後的字串內容。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const samples = [
+      {
+        name: '範例 1：完美重排',
+        initial: 'apcsntnu',
+        operations: [2],
+        expected: 'anptcnsu'
+      },
+      {
+        name: '範例 2：完整流程',
+        initial: 'facebook',
+        operations: [2, 0, 2, 1],
+        expected: 'bocfkoae'
+      }
+    ];
+
+    let sampleIndex = 1;
+    let steps = [];
+    let stepIndex = 0;
+    let playTimer = null;
+
+    const dom = {
+      topbar: document.getElementById('topbar'),
+      main: document.getElementById('main'),
+      leftPanel: document.getElementById('leftPanel'),
+      splitter: document.getElementById('splitter'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      problemBtn: document.getElementById('problemBtn'),
+      sampleButtons: [...document.querySelectorAll('.sample-button')],
+      stepCounter: document.getElementById('stepCounter'),
+      toolbarOperation: document.getElementById('toolbarOperation'),
+      toolbarString: document.getElementById('toolbarString'),
+      toolbarMessage: document.getElementById('toolbarMessage'),
+      operationStrip: document.getElementById('operationStrip'),
+      beforeString: document.getElementById('beforeString'),
+      buildingString: document.getElementById('buildingString'),
+      afterString: document.getElementById('afterString'),
+      visualSvg: document.getElementById('visualSvg'),
+      timeline: document.getElementById('timeline'),
+      actionText: document.getElementById('actionText'),
+      changedText: document.getElementById('changedText'),
+      whyText: document.getElementById('whyText'),
+      historyBody: document.getElementById('historyBody'),
+      problemModal: document.getElementById('problemModal'),
+      closeModalBtn: document.getElementById('closeModalBtn')
+    };
+
+    function operationName(op) {
+      if (op === 0) return '操作 0：兩兩交換';
+      if (op === 1) return '操作 1：兩兩排序';
+      if (op === 2) return '操作 2：完美重排';
+      return '準備階段';
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function pairGroups(text) {
+      const result = [];
+      for (let i = 0; i < text.length; i += 2) result.push(text.slice(i, i + 2));
+      return result;
+    }
+
+    function transformOperation(text, op) {
+      if (op === 0) {
+        return pairGroups(text).map(pair => pair[1] + pair[0]).join('');
+      }
+      if (op === 1) {
+        return pairGroups(text).map(pair => pair[0] <= pair[1] ? pair : pair[1] + pair[0]).join('');
+      }
+      const half = text.length / 2;
+      let result = '';
+      for (let i = 0; i < half; i++) result += text[i] + text[half + i];
+      return result;
+    }
+
+    function makeBaseState(sample) {
+      return {
+        mode: 'intro',
+        currentString: sample.initial,
+        before: sample.initial,
+        building: '',
+        after: '',
+        op: null,
+        opIndex: -1,
+        groupIndex: -1,
+        activeSource: [],
+        completedSource: [],
+        targetIndices: [],
+        leftHalf: '',
+        rightHalf: '',
+        pairBefore: '',
+        pairAfter: '',
+        groups: [],
+        history: [],
+        action: '',
+        changed: '',
+        why: '',
+        message: ''
+      };
+    }
+
+    function buildSteps(sample) {
+      const result = [];
+      let state = makeBaseState(sample);
+      let current = sample.initial;
+      const completedHistory = [];
+
+      function push(overrides) {
+        state = { ...state, ...overrides };
+        state.history = clone(completedHistory);
+        result.push(clone(state));
+      }
+
+      push({
+        mode: 'intro',
+        currentString: current,
+        before: current,
+        op: null,
+        opIndex: -1,
+        action: `先讀入原始字串「${current}」。`,
+        changed: '目前還沒有修改字串。',
+        why: '要先記住原始字串，後面的操作會依序修改它。',
+        message: `原始字串是 ${current}。`
+      });
+
+      push({
+        mode: 'overview',
+        currentString: current,
+        before: current,
+        op: null,
+        opIndex: -1,
+        action: `共有 ${sample.operations.length} 次操作，順序是 ${sample.operations.join(' → ')}。`,
+        changed: '尚未開始第一個操作。',
+        why: '操作必須依照輸入順序執行，不能自行交換順序。',
+        message: `準備依序執行：${sample.operations.join(' → ')}。`
+      });
+
+      sample.operations.forEach((op, index) => {
+        const before = current;
+        const after = transformOperation(before, op);
+        const groups = op === 2 ? [] : pairGroups(before);
+
+        push({
+          mode: 'operation-start',
+          currentString: before,
+          before,
+          building: '',
+          after,
+          op,
+          opIndex: index,
+          groupIndex: -1,
+          activeSource: [],
+          completedSource: [],
+          targetIndices: [],
+          leftHalf: '',
+          rightHalf: '',
+          pairBefore: '',
+          pairAfter: '',
+          groups,
+          action: `開始第 ${index + 1} 次操作：${operationName(op)}。`,
+          changed: `本次操作前的完整字串是「${before}」。`,
+          why: op === 0
+            ? '操作 0 會把每一組的兩個相鄰字母左右交換。'
+            : op === 1
+              ? '操作 1 會讓每一組中較小的字母放前面。'
+              : '操作 2 會先切成前後兩半，再交錯拿取。',
+          message: `第 ${index + 1} 次：${operationName(op)}，目前字串 ${before}。`
+        });
+
+        if (op === 2) {
+          const half = before.length / 2;
+          const leftHalf = before.slice(0, half);
+          const rightHalf = before.slice(half);
+
+          push({
+            mode: 'perfect-prepare',
+            currentString: before,
+            before,
+            building: '',
+            after,
+            op,
+            opIndex: index,
+            groupIndex: -1,
+            activeSource: [],
+            completedSource: [],
+            targetIndices: [],
+            leftHalf,
+            rightHalf,
+            groups: [],
+            action: `從正中間切開：「${leftHalf}」和「${rightHalf}」。`,
+            changed: `原字串「${before}」被分成前半段「${leftHalf}」與後半段「${rightHalf}」。`,
+            why: `字串共有 ${before.length} 個字母，一半是 ${half} 個，所以前後各 ${half} 個。`,
+            message: `先切成前半 ${leftHalf} 與後半 ${rightHalf}。`
+          });
+
+          let building = '';
+          const completed = [];
+          for (let i = 0; i < half; i++) {
+            const first = leftHalf[i];
+            const second = rightHalf[i];
+            const previous = building || '空字串';
+            building += first + second;
+            const active = [i, half + i];
+            const targets = [i * 2, i * 2 + 1];
+
+            push({
+              mode: 'perfect-pair',
+              currentString: before,
+              before,
+              building,
+              after,
+              op,
+              opIndex: index,
+              groupIndex: i,
+              activeSource: active,
+              completedSource: completed.slice(),
+              targetIndices: targets,
+              leftHalf,
+              rightHalf,
+              pairBefore: first + second,
+              pairAfter: first + second,
+              action: `第 ${i + 1} 組：先拿前半段的「${first}」，再拿後半段的「${second}」。`,
+              changed: `新字串由「${previous}」加入「${first}${second}」，目前變成「${building}」。`,
+              why: `完美重排規定同一個位置要先拿前半段，再拿後半段，所以第 ${i + 1} 組是「${first}${second}」。`,
+              message: `第 ${i + 1} 組拿 ${first}、${second}，新字串目前是 ${building}。`
+            });
+
+            completed.push(...active);
+          }
+        } else {
+          push({
+            mode: 'pair-prepare',
+            currentString: before,
+            before,
+            building: '',
+            after,
+            op,
+            opIndex: index,
+            groupIndex: -1,
+            activeSource: [],
+            completedSource: [],
+            targetIndices: [],
+            groups,
+            action: `先把完整字串分成：${groups.map(g => `(${g})`).join('')}。`,
+            changed: `字串「${before}」被分成 ${groups.length} 組，每組兩個相鄰字母。`,
+            why: op === 0
+              ? '兩兩交換必須以相鄰兩個字母為一組，才能知道哪兩個要互換。'
+              : '兩兩排序只比較同一組的兩個字母，不會拿不同組互相比較。',
+            message: `先分組：${groups.map(g => `(${g})`).join('')}。`
+          });
+
+          let building = '';
+          const completed = [];
+          groups.forEach((pair, groupIndex) => {
+            const firstIndex = groupIndex * 2;
+            const secondIndex = firstIndex + 1;
+            let changedPair = pair;
+            let action = '';
+            let changed = '';
+            let why = '';
+
+            if (op === 0) {
+              changedPair = pair[1] + pair[0];
+              action = `第 ${groupIndex + 1} 組「${pair}」左右交換，變成「${changedPair}」。`;
+              changed = `這一組由「${pair}」改成「${changedPair}」。`;
+              why = `操作 0 規定每一組的右邊字母先放、左邊字母後放，所以「${pair}」會變成「${changedPair}」。`;
+            } else {
+              const needSwap = pair[0] > pair[1];
+              changedPair = needSwap ? pair[1] + pair[0] : pair;
+              if (needSwap) {
+                action = `第 ${groupIndex + 1} 組比較「${pair[0]}」和「${pair[1]}」，需要交換。`;
+                changed = `因為「${pair[1]}」在字母順序中較小，所以「${pair}」改成「${changedPair}」。`;
+                why = `操作 1 要讓較小的字母放前面；「${pair[0]}」排在「${pair[1]}」後面，因此要交換。`;
+              } else {
+                action = `第 ${groupIndex + 1} 組比較「${pair[0]}」和「${pair[1]}」，不用交換。`;
+                changed = `這一組原本已經是小的在前面，所以仍然是「${changedPair}」。`;
+                why = `操作 1 只在順序不正確時交換；「${pair[0]}」已經排在「${pair[1]}」前面。`;
+              }
+            }
+
+            const previous = building || '空字串';
+            building += changedPair;
+            changed += ` 新字串由「${previous}」接上「${changedPair}」，目前是「${building}」。`;
+
+            push({
+              mode: 'pair-step',
+              currentString: before,
+              before,
+              building,
+              after,
+              op,
+              opIndex: index,
+              groupIndex,
+              activeSource: [firstIndex, secondIndex],
+              completedSource: completed.slice(),
+              targetIndices: [firstIndex, secondIndex],
+              pairBefore: pair,
+              pairAfter: changedPair,
+              groups,
+              action,
+              changed,
+              why,
+              message: `第 ${groupIndex + 1} 組：${pair} → ${changedPair}，新字串目前是 ${building}。`
+            });
+
+            completed.push(firstIndex, secondIndex);
+          });
+        }
+
+        completedHistory.push({
+          number: index + 1,
+          op,
+          before,
+          after
+        });
+
+        push({
+          mode: 'operation-summary',
+          currentString: after,
+          before,
+          building: after,
+          after,
+          op,
+          opIndex: index,
+          groupIndex: -1,
+          activeSource: [],
+          completedSource: Array.from({ length: before.length }, (_, i) => i),
+          targetIndices: [],
+          leftHalf: op === 2 ? before.slice(0, before.length / 2) : '',
+          rightHalf: op === 2 ? before.slice(before.length / 2) : '',
+          groups,
+          action: `第 ${index + 1} 次操作完成。`,
+          changed: `完整字串由「${before}」變成「${after}」。`,
+          why: op === 0
+            ? `每一組都完成左右交換，所以 ${groups.map(g => `(${g})`).join('')} 變成 ${pairGroups(after).map(g => `(${g})`).join('')}。`
+            : op === 1
+              ? `每一組都完成小到大排序，所以最後得到「${after}」。`
+              : `前半段與後半段依相同位置交錯拿取，所以最後得到「${after}」。`,
+          message: `操作完成：${before} → ${after}。`
+        });
+
+        current = after;
+      });
+
+      push({
+        mode: 'final',
+        currentString: current,
+        before: sample.initial,
+        building: current,
+        after: current,
+        op: null,
+        opIndex: sample.operations.length,
+        groupIndex: -1,
+        activeSource: [],
+        completedSource: [],
+        targetIndices: [],
+        action: '所有操作都已完成，準備輸出最後字串。',
+        changed: `原始字串「${sample.initial}」經過所有操作後，最後變成「${current}」。`,
+        why: `因為依序執行了 ${sample.operations.map(operationName).join('、')}，每次都使用上一次的新結果。`,
+        message: `最後答案：${current}。`
+      });
+
+      return result;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function syncToolbarHeight() {
+      document.documentElement.style.setProperty('--toolbar-h', `${dom.topbar.offsetHeight}px`);
+    }
+
+    function renderOperationStrip(sample, state) {
+      dom.operationStrip.innerHTML = sample.operations.map((op, index) => {
+        let className = 'pending';
+        if (index < state.opIndex) className = 'done';
+        if (index === state.opIndex && state.mode !== 'final') className = 'active';
+        if (state.mode === 'final') className = 'done';
+        return `<div class="operation-chip ${className}">第 ${index + 1} 次｜${escapeHtml(operationName(op))}</div>`;
+      }).join('');
+    }
+
+    function renderSummaryBoxes(state) {
+      dom.beforeString.textContent = state.before || '-';
+      dom.buildingString.textContent = state.building || '尚未組合';
+      const canShowFinished = state.mode === 'operation-summary' || state.mode === 'final';
+      dom.afterString.textContent = canShowFinished ? (state.after || '尚未完成') : '尚未完成';
+    }
+
+    function renderTimeline(sample, state) {
+      const completed = state.history || [];
+      const rows = [];
+      rows.push(`
+        <div class="timeline-row ${state.opIndex < 0 ? 'current' : 'done'}">
+          <div class="timeline-label">原始字串</div>
+          <div class="mono">${escapeHtml(sample.initial)}</div>
+          <div class="arrow-text">→</div>
+          <div>等待操作</div>
+        </div>
+      `);
+
+      sample.operations.forEach((op, index) => {
+        const record = completed.find(item => item.number === index + 1);
+        const isCurrent = state.opIndex === index && !record;
+        let before = record?.before || (isCurrent ? state.before : '尚未執行');
+        let after = record?.after || (isCurrent ? (state.building || '執行中') : '尚未執行');
+        let className = record ? 'done' : (isCurrent ? 'current' : '');
+        rows.push(`
+          <div class="timeline-row ${className}">
+            <div class="timeline-label">第 ${index + 1} 次｜${op}</div>
+            <div class="mono">${escapeHtml(before)}</div>
+            <div class="arrow-text">→</div>
+            <div class="mono">${escapeHtml(after)}</div>
+          </div>
+        `);
+      });
+
+      dom.timeline.innerHTML = rows.join('');
+    }
+
+    function renderHistory(sample, state) {
+      const rows = [];
+      const completed = state.history || [];
+      completed.forEach(item => {
+        rows.push(`
+          <tr>
+            <td>${item.number}</td>
+            <td>${escapeHtml(operationName(item.op))}</td>
+            <td class="mono">${escapeHtml(item.before)}</td>
+            <td class="mono">${escapeHtml(item.after)}</td>
+          </tr>
+        `);
+      });
+
+      if (state.opIndex >= 0 && state.opIndex < sample.operations.length && !completed.some(item => item.number === state.opIndex + 1)) {
+        rows.push(`
+          <tr class="current-row">
+            <td>${state.opIndex + 1}</td>
+            <td>${escapeHtml(operationName(state.op))}</td>
+            <td class="mono">${escapeHtml(state.before)}</td>
+            <td class="mono">${escapeHtml(state.building || '執行中')}</td>
+          </tr>
+        `);
+      }
+
+      if (rows.length === 0) rows.push('<tr><td colspan="4">目前還沒有完成任何操作。</td></tr>');
+      dom.historyBody.innerHTML = rows.join('');
+    }
+
+    function svgText(x, y, text, size = 22, color = '#1f2937', weight = 800, anchor = 'middle') {
+      return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" font-weight="${weight}" fill="${color}" font-family="Microsoft JhengHei, Noto Sans TC, Arial">${escapeHtml(text)}</text>`;
+    }
+
+    function svgDefs() {
+      return `
+        <defs>
+          <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"></path>
+          </marker>
+          <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#9333ea"></path>
+          </marker>
+        </defs>
+      `;
+    }
+
+    function charLayout(count, y, left = 90, width = 920) {
+      const step = width / Math.max(count, 1);
+      const boxWidth = Math.min(78, step * 0.74);
+      return Array.from({ length: count }, (_, index) => {
+        const x = left + index * step + (step - boxWidth) / 2;
+        return { x, y, width: boxWidth, height: 66, cx: x + boxWidth / 2, cy: y + 33 };
+      });
+    }
+
+    function svgCharBox(position, char, index, status = 'todo') {
+      const colors = {
+        todo: ['#ffffff', '#94a3b8'],
+        active: ['#fef3c7', '#f59e0b'],
+        done: ['#dcfce7', '#22c55e'],
+        new: ['#f3e8ff', '#a855f7']
+      };
+      const [fill, stroke] = colors[status] || colors.todo;
+      return `
+        <rect x="${position.x}" y="${position.y}" width="${position.width}" height="${position.height}" rx="11" fill="${fill}" stroke="${stroke}" stroke-width="3"></rect>
+        ${svgText(position.cx, position.y + 18, String(index), 13, '#64748b', 700)}
+        ${svgText(position.cx, position.y + 52, char || '＿', 29, '#0f172a', 900)}
+      `;
+    }
+
+    function svgArrow(x1, y1, x2, y2, color = '#2563eb', marker = 'arrowBlue') {
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="4" marker-end="url(#${marker})"></line>`;
+    }
+
+    function renderIntroSvg(state, sample) {
+      let html = svgDefs();
+      html += svgText(550, 65, state.mode === 'final' ? '所有操作完成' : '準備開始字串操作', 31, '#1f2937', 900);
+      html += svgText(550, 112, state.mode === 'final' ? '最後完整字串' : '原始完整字串', 21, '#475569', 800);
+      const text = state.mode === 'final' ? state.currentString : sample.initial;
+      const positions = charLayout(text.length, 180);
+      [...text].forEach((char, index) => {
+        html += svgCharBox(positions[index], char, index, state.mode === 'final' ? 'new' : 'todo');
+      });
+      if (state.mode === 'final') {
+        html += `<rect x="290" y="330" width="520" height="64" rx="14" fill="#f0fdf4" stroke="#22c55e" stroke-width="3"></rect>`;
+        html += svgText(550, 371, `最後答案：${state.currentString}`, 28, '#166534', 900);
+      } else {
+        html += svgText(550, 330, `操作順序：${sample.operations.join(' → ')}`, 25, '#1d4ed8', 900);
+        html += svgText(550, 375, '每次都要使用上一次得到的新字串', 21, '#475569', 800);
+      }
+      dom.visualSvg.innerHTML = html;
+    }
+
+
+    function renderOperationStartSvg(state) {
+      const text = state.before;
+      const positions = charLayout(text.length, 180);
+      let html = svgDefs();
+      html += svgText(550, 62, operationName(state.op), 31, '#1f2937', 900);
+      html += svgText(550, 112, '本次操作前的完整字串', 21, '#475569', 800);
+      [...text].forEach((char, index) => {
+        html += svgCharBox(positions[index], char, index, 'todo');
+      });
+      const hint = state.op === 0
+        ? '下一步：先每兩個字母分成一組，再左右交換'
+        : state.op === 1
+          ? '下一步：先每兩個字母分成一組，再比較字母順序'
+          : '下一步：先從正中間切成前半段與後半段';
+      html += `<rect x="245" y="330" width="610" height="66" rx="14" fill="#eff6ff" stroke="#60a5fa" stroke-width="3"></rect>`;
+      html += svgText(550, 371, hint, 23, '#1d4ed8', 900);
+      dom.visualSvg.innerHTML = html;
+    }
+
+    function renderPairSvg(state) {
+      const text = state.before;
+      const count = text.length;
+      const top = charLayout(count, 95);
+      const bottom = charLayout(count, 315);
+      const completedSet = new Set(state.completedSource || []);
+      const activeSet = new Set(state.activeSource || []);
+      const building = state.building || '';
+      let html = svgDefs();
+
+      html += svgText(550, 38, operationName(state.op), 28, '#1f2937', 900);
+      html += svgText(85, 78, '操作前完整字串', 18, '#475569', 800, 'start');
+      html += svgText(85, 298, '新字串', 18, '#475569', 800, 'start');
+
+      [...text].forEach((char, index) => {
+        let status = 'todo';
+        if (activeSet.has(index)) status = 'active';
+        else if (completedSet.has(index)) status = 'done';
+        html += svgCharBox(top[index], char, index, status);
+      });
+
+      for (let group = 0; group < count / 2; group++) {
+        const first = top[group * 2];
+        const second = top[group * 2 + 1];
+        const isActive = state.groupIndex === group;
+        html += `<rect x="${first.x - 6}" y="${first.y - 8}" width="${second.x + second.width - first.x + 12}" height="${first.height + 16}" rx="14" fill="none" stroke="${isActive ? '#f59e0b' : '#cbd5e1'}" stroke-width="${isActive ? 4 : 2}" stroke-dasharray="${isActive ? '0' : '7 6'}"></rect>`;
+        html += svgText((first.cx + second.cx) / 2, 187, `第 ${group + 1} 組`, 14, '#64748b', 800);
+      }
+
+      for (let index = 0; index < count; index++) {
+        const char = index < building.length ? building[index] : '';
+        let status = index < building.length ? 'new' : 'todo';
+        if (state.targetIndices?.includes(index)) status = 'active';
+        html += svgCharBox(bottom[index], char, index, status);
+      }
+
+      if (state.mode === 'pair-step' && state.activeSource.length === 2) {
+        const groupStart = state.groupIndex * 2;
+        const firstSource = top[groupStart];
+        const secondSource = top[groupStart + 1];
+        const firstTarget = bottom[groupStart];
+        const secondTarget = bottom[groupStart + 1];
+        const swapped = state.pairBefore !== state.pairAfter;
+
+        if (swapped) {
+          html += svgArrow(firstSource.cx, firstSource.y + firstSource.height + 8, secondTarget.cx, secondTarget.y - 8);
+          html += svgArrow(secondSource.cx, secondSource.y + secondSource.height + 8, firstTarget.cx, firstTarget.y - 8);
+        } else {
+          html += svgArrow(firstSource.cx, firstSource.y + firstSource.height + 8, firstTarget.cx, firstTarget.y - 8);
+          html += svgArrow(secondSource.cx, secondSource.y + secondSource.height + 8, secondTarget.cx, secondTarget.y - 8);
+        }
+
+        html += `<rect x="365" y="220" width="370" height="56" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"></rect>`;
+        html += svgText(550, 256, `${state.pairBefore} → ${state.pairAfter}`, 28, '#92400e', 900);
+      } else {
+        const grouping = state.groups?.map(group => `(${group})`).join('') || '';
+        html += `<rect x="300" y="218" width="500" height="58" rx="12" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"></rect>`;
+        html += svgText(550, 254, grouping ? `分組：${grouping}` : `準備進行 ${operationName(state.op)}`, 23, '#1d4ed8', 900);
+      }
+
+      dom.visualSvg.innerHTML = html;
+    }
+
+    function renderPerfectSvg(state) {
+      const before = state.before;
+      const half = before.length / 2;
+      const left = state.leftHalf || before.slice(0, half);
+      const right = state.rightHalf || before.slice(half);
+      const top = charLayout(half, 82, 135, 830);
+      const middle = charLayout(half, 190, 135, 830);
+      const bottom = charLayout(before.length, 335);
+      const activeSet = new Set(state.activeSource || []);
+      const completedSet = new Set(state.completedSource || []);
+      const building = state.building || '';
+      let html = svgDefs();
+
+      html += svgText(550, 36, '操作 2：完美重排', 28, '#1f2937', 900);
+      html += svgText(68, 122, '前半段', 18, '#1d4ed8', 900, 'start');
+      html += svgText(68, 230, '後半段', 18, '#7e22ce', 900, 'start');
+      html += svgText(68, 322, '新字串', 18, '#475569', 900, 'start');
+
+      [...left].forEach((char, index) => {
+        let status = 'todo';
+        if (activeSet.has(index)) status = 'active';
+        else if (completedSet.has(index)) status = 'done';
+        html += svgCharBox(top[index], char, index, status);
+      });
+
+      [...right].forEach((char, index) => {
+        const sourceIndex = half + index;
+        let status = 'todo';
+        if (activeSet.has(sourceIndex)) status = 'active';
+        else if (completedSet.has(sourceIndex)) status = 'done';
+        html += svgCharBox(middle[index], char, sourceIndex, status);
+      });
+
+      for (let index = 0; index < before.length; index++) {
+        const char = index < building.length ? building[index] : '';
+        let status = index < building.length ? 'new' : 'todo';
+        if (state.targetIndices?.includes(index)) status = 'active';
+        html += svgCharBox(bottom[index], char, index, status);
+      }
+
+      if (state.mode === 'perfect-pair' && state.groupIndex >= 0) {
+        const group = state.groupIndex;
+        const firstTarget = bottom[group * 2];
+        const secondTarget = bottom[group * 2 + 1];
+        html += svgArrow(top[group].cx, top[group].y + top[group].height + 5, firstTarget.cx, firstTarget.y - 7, '#2563eb', 'arrowBlue');
+        html += svgArrow(middle[group].cx, middle[group].y + middle[group].height + 5, secondTarget.cx, secondTarget.y - 7, '#9333ea', 'arrowPurple');
+        html += `<rect x="378" y="270" width="344" height="48" rx="11" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"></rect>`;
+        html += svgText(550, 302, `第 ${group + 1} 組：${left[group]}、${right[group]}`, 23, '#92400e', 900);
+      } else {
+        html += `<rect x="320" y="270" width="460" height="48" rx="11" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"></rect>`;
+        html += svgText(550, 302, `從中間切成 ${left} ｜ ${right}`, 22, '#1d4ed8', 900);
+      }
+
+      dom.visualSvg.innerHTML = html;
+    }
+
+    function renderSummarySvg(state) {
+      const before = state.before;
+      const after = state.after;
+      const top = charLayout(before.length, 105);
+      const bottom = charLayout(after.length, 315);
+      let html = svgDefs();
+      html += svgText(550, 45, state.mode === 'operation-summary' ? '本次操作完成' : operationName(state.op), 29, '#1f2937', 900);
+      html += svgText(80, 92, '操作前', 18, '#475569', 900, 'start');
+      html += svgText(80, 302, '操作後', 18, '#475569', 900, 'start');
+      [...before].forEach((char, index) => { html += svgCharBox(top[index], char, index, 'done'); });
+      [...after].forEach((char, index) => { html += svgCharBox(bottom[index], char, index, 'new'); });
+      html += svgArrow(550, 195, 550, 285, '#2563eb', 'arrowBlue');
+      html += `<rect x="300" y="205" width="500" height="60" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="3"></rect>`;
+      html += svgText(550, 243, `${before} → ${after}`, 27, '#166534', 900);
+      dom.visualSvg.innerHTML = html;
+    }
+
+    function renderSvg(state, sample) {
+      if (state.mode === 'intro' || state.mode === 'overview' || state.mode === 'final') {
+        renderIntroSvg(state, sample);
+      } else if (state.mode === 'perfect-prepare' || state.mode === 'perfect-pair') {
+        renderPerfectSvg(state);
+      } else if (state.mode === 'pair-prepare' || state.mode === 'pair-step') {
+        renderPairSvg(state);
+      } else if (state.mode === 'operation-summary') {
+        renderSummarySvg(state);
+      } else if (state.mode === 'operation-start') {
+        renderOperationStartSvg(state);
+      } else {
+        renderIntroSvg(state, sample);
+      }
+    }
+
+    function renderStep() {
+      const sample = samples[sampleIndex];
+      const state = steps[stepIndex];
+      if (!state) return;
+
+      dom.stepCounter.textContent = `步驟 ${stepIndex + 1} / ${steps.length}`;
+      dom.toolbarOperation.textContent = state.op === null ? (state.mode === 'final' ? '全部完成' : '準備階段') : operationName(state.op);
+      dom.toolbarString.textContent = state.currentString || '-';
+      dom.toolbarMessage.textContent = state.message;
+      dom.actionText.textContent = state.action;
+      dom.changedText.textContent = state.changed;
+      dom.whyText.textContent = state.why;
+
+      renderOperationStrip(sample, state);
+      renderSummaryBoxes(state);
+      renderTimeline(sample, state);
+      renderHistory(sample, state);
+      renderSvg(state, sample);
+
+      dom.sampleButtons.forEach((button, index) => button.classList.toggle('active', index === sampleIndex));
+    }
+
+    function pause() {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex += 1;
+        renderStep();
+      } else {
+        pause();
+      }
+    }
+
+    function previousStep() {
+      if (stepIndex > 0) {
+        stepIndex -= 1;
+        renderStep();
+      }
+    }
+
+    function reset() {
+      pause();
+      stepIndex = 0;
+      renderStep();
+    }
+
+    function play() {
+      if (playTimer) return;
+      playTimer = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          pause();
+          return;
+        }
+        nextStep();
+      }, 1400);
+    }
+
+    function switchSample(index) {
+      pause();
+      sampleIndex = index;
+      steps = buildSteps(samples[sampleIndex]);
+      stepIndex = 0;
+      renderStep();
+      syncToolbarHeight();
+    }
+
+    function openModal() {
+      dom.problemModal.classList.add('show');
+      dom.problemModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      dom.problemModal.classList.remove('show');
+      dom.problemModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function initSplitter() {
+      let dragging = false;
+
+      dom.splitter.addEventListener('pointerdown', event => {
+        dragging = true;
+        dom.splitter.setPointerCapture(event.pointerId);
+      });
+
+      dom.splitter.addEventListener('pointermove', event => {
+        if (!dragging) return;
+        const rect = dom.main.getBoundingClientRect();
+        const minLeft = 410;
+        const minRight = 380;
+        let newWidth = event.clientX - rect.left;
+        newWidth = Math.max(minLeft, Math.min(newWidth, rect.width - minRight));
+        dom.leftPanel.style.flexBasis = `${newWidth}px`;
+      });
+
+      dom.splitter.addEventListener('pointerup', () => { dragging = false; });
+      dom.splitter.addEventListener('pointercancel', () => { dragging = false; });
+    }
+
+    function initEvents() {
+      dom.prevBtn.addEventListener('click', previousStep);
+      dom.nextBtn.addEventListener('click', nextStep);
+      dom.playBtn.addEventListener('click', play);
+      dom.pauseBtn.addEventListener('click', pause);
+      dom.resetBtn.addEventListener('click', reset);
+      dom.problemBtn.addEventListener('click', openModal);
+      dom.closeModalBtn.addEventListener('click', closeModal);
+
+      dom.sampleButtons.forEach(button => {
+        button.addEventListener('click', () => switchSample(Number(button.dataset.sample)));
+      });
+
+      dom.problemModal.addEventListener('click', event => {
+        if (event.target === dom.problemModal) closeModal();
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          nextStep();
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          previousStep();
+        } else if (event.code === 'Space') {
+          event.preventDefault();
+          if (playTimer) pause(); else play();
+        } else if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      window.addEventListener('resize', syncToolbarHeight);
+    }
+
+    function init() {
+      steps = buildSteps(samples[sampleIndex]);
+      initEvents();
+      initSplitter();
+      syncToolbarHeight();
+      renderStep();
+      setTimeout(syncToolbarHeight, 60);
+    }
+
+    init();
+  </script>
+</body>
+</html>

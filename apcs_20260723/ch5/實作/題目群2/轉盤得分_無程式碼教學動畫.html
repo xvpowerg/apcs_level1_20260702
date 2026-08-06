@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>轉盤得分｜白話教學動畫</title>
+  <style>
+    :root{
+      --toolbar-h: 164px;
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --text:#172033;
+      --muted:#5b6475;
+      --border:#d8e0eb;
+      --blue:#2563eb;
+      --blue-soft:#dbeafe;
+      --yellow:#fef3c7;
+      --orange:#fed7aa;
+      --green:#dcfce7;
+      --red:#fee2e2;
+      --shadow:0 2px 10px rgba(15,23,42,.07);
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:var(--bg);
+      color:var(--text);
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+      font-size:16px;
+      line-height:1.55;
+    }
+
+    button,select{font:inherit}
+
+    .toolbar{
+      position:fixed;
+      inset:0 0 auto 0;
+      z-index:1000;
+      min-height:var(--toolbar-h);
+      padding:10px 14px;
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:9px;
+    }
+
+    .toolbar-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .title-wrap{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      line-height:1.2;
+    }
+
+    .subtitle{
+      color:var(--muted);
+      font-size:16px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px;
+    }
+
+    .btn{
+      border:1px solid #bcc7d8;
+      background:#fff;
+      color:#172033;
+      padding:7px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      min-width:72px;
+    }
+
+    .btn:hover{background:#eef4ff}
+    .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn.warn{background:#fff7ed;border-color:#fdba74}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+
+    select{
+      border:1px solid #bcc7d8;
+      border-radius:8px;
+      background:#fff;
+      padding:7px 10px;
+    }
+
+    .toolbar-info{
+      display:grid;
+      grid-template-columns:165px 220px minmax(320px,1fr);
+      gap:10px;
+    }
+
+    .info-box{
+      border:1px solid #e1e7f0;
+      border-radius:9px;
+      background:#f8fafc;
+      padding:8px 10px;
+      min-height:58px;
+    }
+
+    .info-label{
+      display:block;
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:2px;
+    }
+
+    .info-value{
+      font-size:18px;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .main{
+      margin-top:var(--toolbar-h);
+      height:calc(100vh - var(--toolbar-h));
+      width:100%;
+      display:flex;
+      min-height:0;
+    }
+
+    .left-pane,
+    .right-pane{
+      min-height:0;
+      overflow:auto;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .left-pane{
+      width:58%;
+      min-width:380px;
+    }
+
+    .right-pane{
+      flex:1;
+      min-width:360px;
+    }
+
+    .divider{
+      flex:0 0 9px;
+      width:9px;
+      background:#d5dde8;
+      border-left:1px solid #c6cfdd;
+      border-right:1px solid #c6cfdd;
+      cursor:col-resize;
+    }
+
+    .divider:hover{background:#b9c6d8}
+
+    .card{
+      position:relative;
+      flex-shrink:0;
+      width:100%;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      box-shadow:0 1px 4px rgba(15,23,42,.04);
+      padding:12px;
+    }
+
+    .card h2{
+      margin:0 0 10px;
+      font-size:20px;
+      line-height:1.3;
+    }
+
+    .card h3{
+      margin:0 0 8px;
+      font-size:18px;
+      line-height:1.35;
+    }
+
+    .problem-text p{margin:6px 0}
+    .problem-text ul{margin:6px 0 6px 22px;padding:0}
+    .problem-text li{margin:4px 0}
+
+    .notice{
+      border-left:5px solid var(--blue);
+      background:#eff6ff;
+      padding:9px 11px;
+      border-radius:7px;
+      font-weight:700;
+      margin-top:10px;
+    }
+
+    .input-grid{
+      display:grid;
+      grid-template-columns:minmax(230px,1fr) minmax(260px,1.2fr);
+      gap:12px;
+    }
+
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:16px;
+      line-height:1.5;
+    }
+
+    .input-box{
+      border:1px solid #e2e8f0;
+      background:#f8fafc;
+      border-radius:8px;
+      padding:10px;
+      max-height:250px;
+      overflow:auto;
+    }
+
+    .meaning-list{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .meaning-item{
+      border:1px solid #dce4ef;
+      border-radius:8px;
+      background:#fff;
+      padding:7px 9px;
+    }
+
+    .meaning-item strong{display:inline-block;min-width:78px}
+
+    .board-card .svg-wrap{
+      height:330px;
+      min-height:270px;
+      max-height:52vh;
+      border:1px solid #d8e0eb;
+      border-radius:9px;
+      background:#fbfdff;
+      overflow:hidden;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+
+    #boardSvg{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    #boardSvg text{
+      font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:10px;
+      color:#334155;
+      font-size:15px;
+    }
+
+    .legend-item{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .swatch{
+      width:18px;
+      height:18px;
+      border:1px solid #64748b;
+      border-radius:4px;
+    }
+
+    .swatch.normal{background:#fff}
+    .swatch.row{background:var(--blue-soft)}
+    .swatch.col{background:var(--yellow)}
+    .swatch.current{background:var(--orange)}
+
+    .round-strip{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .score-chip{
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      background:#fff;
+      padding:6px 10px;
+      font-weight:800;
+    }
+
+    .score-chip.active{
+      background:#eff6ff;
+      border-color:#93c5fd;
+    }
+
+    .step-card{
+      border-top:6px solid var(--blue);
+    }
+
+    .phase-badge{
+      display:inline-block;
+      border-radius:999px;
+      padding:4px 10px;
+      background:#e0e7ff;
+      color:#3730a3;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+
+    .explain-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+
+    .explain-box{
+      border:1px solid #dfe6f0;
+      border-radius:9px;
+      background:#f8fafc;
+      padding:10px 12px;
+      min-height:92px;
+      overflow:auto;
+    }
+
+    .explain-box h3{
+      font-size:17px;
+      color:#334155;
+      margin-bottom:6px;
+    }
+
+    .explain-box .big{
+      font-size:20px;
+      font-weight:900;
+      line-height:1.45;
+      word-break:break-word;
+    }
+
+    .explain-box.action{background:#fff7ed}
+    .explain-box.result{background:#f0fdf4}
+    .explain-box.why{background:#eff6ff}
+
+    .cell-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      align-items:center;
+    }
+
+    .letter-cell{
+      min-width:42px;
+      height:42px;
+      border:2px solid #94a3b8;
+      border-radius:8px;
+      background:#fff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:21px;
+      font-weight:900;
+    }
+
+    .letter-cell.move{
+      background:#fde68a;
+      border-color:#d97706;
+    }
+
+    .letter-cell.hit{
+      background:#fed7aa;
+      border-color:#ea580c;
+    }
+
+    .arrow{
+      font-size:26px;
+      font-weight:900;
+      color:#2563eb;
+      margin:0 4px;
+    }
+
+    .count-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .count-chip{
+      border:1px solid #bbf7d0;
+      background:#f0fdf4;
+      border-radius:999px;
+      padding:5px 10px;
+      font-weight:800;
+    }
+
+    .summary-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:16px;
+    }
+
+    .summary-table th,
+    .summary-table td{
+      border:1px solid #dbe3ee;
+      padding:7px 8px;
+      text-align:center;
+    }
+
+    .summary-table th{background:#eef2f7}
+
+    .tip{
+      color:var(--muted);
+      font-size:15px;
+      margin-top:8px;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      z-index:2000;
+      background:rgba(15,23,42,.56);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .modal-backdrop.show{display:flex}
+
+    .modal{
+      width:min(960px,96vw);
+      max-height:70vh;
+      overflow:auto;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+      padding:18px;
+      position:relative;
+    }
+
+    .modal-actions{
+      position:sticky;
+      top:0;
+      background:#fff;
+      display:flex;
+      justify-content:flex-end;
+      padding-bottom:8px;
+      z-index:1;
+    }
+
+    .modal h2{font-size:22px;margin:0 0 10px}
+    .modal h3{font-size:18px;margin:16px 0 8px}
+
+    @media (max-width:980px){
+      :root{--toolbar-h:224px}
+      .toolbar-info{grid-template-columns:1fr}
+      .main{flex-direction:column}
+      .left-pane,.right-pane{
+        width:100%!important;
+        min-width:0;
+        height:50%;
+      }
+      .divider{
+        width:100%;
+        height:9px;
+        flex:0 0 9px;
+        cursor:row-resize;
+      }
+      .input-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-top">
+      <div class="title-wrap">
+        <h1>轉盤得分</h1>
+        <span class="subtitle">白話教學｜只看題目邏輯，不顯示程式碼</span>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="problemBtn">完整題目</button>
+        <label>
+          範例：
+          <select id="exampleSelect">
+            <option value="sample1">範例 #1</option>
+            <option value="sample2">範例 #2</option>
+          </select>
+        </label>
+        <button class="btn" id="prevBtn">上一步</button>
+        <button class="btn primary" id="nextBtn">下一步</button>
+        <button class="btn" id="playBtn">播放</button>
+        <button class="btn" id="pauseBtn">暫停</button>
+        <button class="btn warn" id="resetBtn">重設</button>
+      </div>
+    </div>
+
+    <div class="toolbar-info">
+      <div class="info-box">
+        <span class="info-label">目前步驟</span>
+        <span class="info-value" id="stepText">步驟 1 / 1</span>
+      </div>
+      <div class="info-box">
+        <span class="info-label">目前分數或狀態</span>
+        <span class="info-value" id="resultText">準備開始</span>
+      </div>
+      <div class="info-box">
+        <span class="info-label">本步驟簡短說明</span>
+        <span class="info-value" id="messageText">請按下一步開始。</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main" id="mainArea">
+    <section class="left-pane" id="leftPane">
+      <section class="card problem-text">
+        <h2>題目內容</h2>
+        <p>有 <strong>m 個輪盤</strong>，每個輪盤都有 <strong>n 格</strong>，每格放一個小寫英文字母。</p>
+        <p>遊戲共有 <strong>k 個回合</strong>。每回合會給每個輪盤一個旋轉數字：</p>
+        <ul>
+          <li>正數：向右轉。</li>
+          <li>負數：向左轉。</li>
+          <li>0：不轉。</li>
+        </ul>
+        <p>每回合必須先把所有輪盤轉完，再從左到右看每一欄。每一欄由上往下統計字母，出現最多次的次數，就是這一欄的分數。</p>
+        <div class="notice">
+          「apcsie」不是要翻譯的英文單字，它代表 6 個格子：a、p、c、s、i、e。
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>範例輸入與意思</h2>
+        <div id="inputPanel"></div>
+      </section>
+
+      <section class="card board-card">
+        <h2>輪盤目前狀態</h2>
+        <div class="svg-wrap">
+          <svg id="boardSvg" viewBox="0 0 800 340" preserveAspectRatio="xMidYMid meet" aria-label="輪盤動畫"></svg>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch normal"></span>一般格</span>
+          <span class="legend-item"><span class="swatch row"></span>目前處理的輪盤</span>
+          <span class="legend-item"><span class="swatch col"></span>目前查看的欄</span>
+          <span class="legend-item"><span class="swatch current"></span>目前正在移動或統計的格</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>每回合分數</h2>
+        <div id="roundPanel" class="round-strip"></div>
+      </section>
+    </section>
+
+    <div class="divider" id="divider" title="拖曳調整左右寬度"></div>
+
+    <section class="right-pane">
+      <section class="card step-card">
+        <span class="phase-badge" id="phaseBadge">準備</span>
+        <h2 id="stepTitle">準備開始</h2>
+
+        <div class="explain-grid">
+          <div class="explain-box">
+            <h3>原本是什麼</h3>
+            <div id="beforeBox" class="big">尚未開始</div>
+          </div>
+
+          <div class="explain-box action">
+            <h3>做了什麼事</h3>
+            <div id="actionBox" class="big">請按下一步</div>
+          </div>
+
+          <div class="explain-box result">
+            <h3>變成什麼結果</h3>
+            <div id="afterBox" class="big">尚未計算</div>
+          </div>
+
+          <div class="explain-box why">
+            <h3>為什麼會變成這樣</h3>
+            <div id="whyBox" class="big">動畫會一步一步說明。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>本步驟資料</h2>
+        <div id="detailPanel"></div>
+      </section>
+
+      <section class="card">
+        <h2>目前欄位統計</h2>
+        <div id="countPanel">
+          <p class="tip">進入計分步驟後，這裡會顯示每個字母出現幾次。</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-actions">
+        <button class="btn" id="closeProblemBtn">關閉</button>
+      </div>
+      <h2>完整題目說明</h2>
+      <p>有 m 個輪盤，每個輪盤有 n 格，每格放一個小寫英文字母。遊戲共有 k 個回合。</p>
+      <p>每一回合會提供 m 個整數，依序代表每一個輪盤要轉幾格。正數向右轉、負數向左轉、0 不轉。</p>
+      <p>每回合先把全部輪盤轉完，再從第 0 欄開始往右看。每一欄由上往下統計字母出現次數，最多的次數就是該欄分數。</p>
+      <p>將所有欄位、所有回合的分數加總後輸出。</p>
+
+      <h3>重要提醒</h3>
+      <ul>
+        <li>輪盤 0、輪盤 1、輪盤 2 是輪盤編號，不是旋轉格數。</li>
+        <li>字串只是輪盤格子的字母資料，不用翻譯。</li>
+        <li>一定要先把本回合所有輪盤轉完，才開始計分。</li>
+        <li>下一回合要接續上一回合的結果，不會回到最初狀態。</li>
+        <li>加入分數的是「最多出現的次數」，不是字母本身。</li>
+      </ul>
+
+      <h3>範例 #1</h3>
+      <div class="input-box"><pre>3 6 2
+apcsie
+taiwan
+icpeda
+1 0 -4
+7 -3 2</pre></div>
+      <p>輸出：17</p>
+
+      <h3>範例 #2</h3>
+      <div class="input-box"><pre>4 3 3
+abc
+bab
+cbc
+abc
+-1 -6 -6 -7
+5 -3 4 0
+-7 4 2 8</pre></div>
+      <p>輸出：21</p>
+    </div>
+  </div>
+
+  <script>
+    const examples = {
+      sample1:{
+        name:"範例 #1",
+        m:3,n:6,k:2,
+        rows:["apcsie","taiwan","icpeda"],
+        ops:[[1,0,-4],[7,-3,2]],
+        output:17,
+        inputText:`3 6 2
+apcsie
+taiwan
+icpeda
+1 0 -4
+7 -3 2`
+      },
+      sample2:{
+        name:"範例 #2",
+        m:4,n:3,k:3,
+        rows:["abc","bab","cbc","abc"],
+        ops:[[-1,-6,-6,-7],[5,-3,4,0],[-7,4,2,8]],
+        output:21,
+        inputText:`4 3 3
+abc
+bab
+cbc
+abc
+-1 -6 -6 -7
+5 -3 4 0
+-7 4 2 8`
+      }
+    };
+
+    let currentKey="sample1";
+    let steps=[];
+    let stepIndex=0;
+    let playTimer=null;
+
+    const stepText=document.getElementById("stepText");
+    const resultText=document.getElementById("resultText");
+    const messageText=document.getElementById("messageText");
+    const phaseBadge=document.getElementById("phaseBadge");
+    const stepTitle=document.getElementById("stepTitle");
+    const beforeBox=document.getElementById("beforeBox");
+    const actionBox=document.getElementById("actionBox");
+    const afterBox=document.getElementById("afterBox");
+    const whyBox=document.getElementById("whyBox");
+    const inputPanel=document.getElementById("inputPanel");
+    const roundPanel=document.getElementById("roundPanel");
+    const detailPanel=document.getElementById("detailPanel");
+    const countPanel=document.getElementById("countPanel");
+    const boardSvg=document.getElementById("boardSvg");
+
+    function cloneRows(rows){return rows.map(r=>r.slice())}
+    function mod(v,n){return ((v%n)+n)%n}
+
+    function rotateRight(row,r){
+      const n=row.length;
+      const x=mod(r,n);
+      if(x===0)return row.slice();
+      return row.slice(n-x).concat(row.slice(0,n-x));
+    }
+
+    function rowText(row){return row.join("")}
+    function listText(arr){return arr.join("、")}
+
+    function cellRowHtml(chars, movedIndexes=[], hitIndex=-1){
+      return `<div class="cell-row">${
+        chars.map((c,i)=>{
+          let cls="letter-cell";
+          if(movedIndexes.includes(i))cls+=" move";
+          if(i===hitIndex)cls+=" hit";
+          return `<span class="${cls}">${c}</span>`;
+        }).join("")
+      }</div>`;
+    }
+
+    function countMap(values){
+      const map={};
+      values.forEach(v=>map[v]=(map[v]||0)+1);
+      return map;
+    }
+
+    function maxCount(map){
+      return Math.max(...Object.values(map));
+    }
+
+    function generateSteps(ex){
+      const state=ex.rows.map(s=>s.split(""));
+      const out=[];
+      let total=0;
+      const roundScores=Array(ex.k).fill(null);
+
+      function push(data){
+        out.push({
+          phase:"準備",
+          title:"準備開始",
+          message:"請按下一步開始。",
+          result:`目前總分：${total}`,
+          before:"尚未開始",
+          action:"尚未開始",
+          after:"尚未開始",
+          why:"動畫會一步一步說明。",
+          rows:cloneRows(state),
+          activeRow:null,
+          activeCol:null,
+          hitRow:null,
+          roundIndex:null,
+          wheelIndex:null,
+          columnIndex:null,
+          rawR:null,
+          effectiveR:null,
+          direction:null,
+          movedIndexes:[],
+          columnValues:null,
+          counts:null,
+          columnScore:null,
+          roundScore:null,
+          total,
+          roundScores:roundScores.slice(),
+          ...data
+        });
+      }
+
+      push({
+        phase:"讀懂輸入",
+        title:"先看第一行",
+        message:`m=${ex.m}、n=${ex.n}、k=${ex.k}`,
+        result:"已讀懂遊戲大小",
+        before:`第一行是 ${ex.m} ${ex.n} ${ex.k}`,
+        action:"把三個數字分別當成輪盤數、每個輪盤的格數、回合數。",
+        after:`共有 ${ex.m} 個輪盤，每個輪盤 ${ex.n} 格，一共 ${ex.k} 回合。`,
+        why:"題目的第一行是在告訴我們整場遊戲的大小。"
+      });
+
+      push({
+        phase:"讀懂輪盤",
+        title:"每一列字母都是一個輪盤",
+        message:"字串不是英文單字，而是一格一格的字母。",
+        result:"已建立初始輪盤",
+        before:ex.rows.map((s,i)=>`輪盤 ${i}：${s}`).join("　"),
+        action:"把每個字串拆成單一字母格子。",
+        after:ex.rows.map((s,i)=>`輪盤 ${i}：${s.split("").join(" ")}`).join("　"),
+        why:"旋轉時，真正移動的是每一個字母格子。"
+      });
+
+      push({
+        phase:"讀懂操作",
+        title:"每一回合都有一組旋轉指令",
+        message:"每個數字依序對應一個輪盤。",
+        result:"準備進入第 1 回合",
+        before:ex.ops.map((op,i)=>`第 ${i+1} 回合：${op.join(" ")}`).join("　"),
+        action:"把每一列操作數字對應到輪盤 0、輪盤 1、輪盤 2……",
+        after:"正數向右、負數向左、0 不轉。",
+        why:"同一回合中，每個輪盤可能有不同的旋轉方向與格數。"
+      });
+
+      for(let r=0;r<ex.k;r++){
+        let roundScore=0;
+
+        push({
+          phase:`第 ${r+1} 回合`,
+          title:`第 ${r+1} 回合開始`,
+          message:"先轉完所有輪盤，再開始計分。",
+          result:`目前總分：${total}`,
+          roundIndex:r,
+          before:`本回合開始時的輪盤：${state.map(rowText).join("、")}`,
+          action:`本回合指令：${ex.ops[r].join("、")}`,
+          after:"接下來依序處理每一個輪盤。",
+          why:"題目規定一個回合中，必須先完成全部旋轉。"
+        });
+
+        for(let w=0;w<ex.m;w++){
+          const before=state[w].slice();
+          const raw=ex.ops[r][w];
+          const eff=mod(raw,ex.n);
+          const after=rotateRight(before,raw);
+          const direction=raw>0?"右":raw<0?"左":"不";
+          let movedIndexes=[];
+          let action="", why="", resultDesc="";
+
+          if(raw===0 || eff===0){
+            action=raw===0
+              ?"旋轉 0 格，所以所有字母都留在原位。"
+              :`輪盤有 ${ex.n} 格，旋轉 ${Math.abs(raw)} 格剛好是完整繞圈，所以回到原位。`;
+            why="完整繞一圈後，每個字母都回到原本的位置。";
+            resultDesc=`${rowText(before)} 沒有改變。`;
+          }else if(raw>0){
+            movedIndexes=Array.from({length:eff},(_,i)=>ex.n-eff+i);
+            action=`向右轉 ${raw} 格；等價於向右轉 ${eff} 格。把最後 ${eff} 格搬到最前面。`;
+            why=`每個字母都往右移動 ${eff} 格，超過最右邊的字母會繞回最前面。`;
+            resultDesc=`${rowText(before)} 變成 ${rowText(after)}。`;
+          }else{
+            const leftMove=(((-raw)%ex.n)+ex.n)%ex.n;
+            movedIndexes=Array.from({length:leftMove},(_,i)=>i);
+            action=`向左轉 ${Math.abs(raw)} 格；把最前面 ${leftMove} 格搬到最後面。`;
+            why=`每個字母都往左移動 ${leftMove} 格，超過最左邊的字母會繞到最後面。`;
+            resultDesc=`${rowText(before)} 變成 ${rowText(after)}。`;
+          }
+
+          push({
+            phase:"準備旋轉",
+            title:`處理輪盤 ${w}`,
+            message:`原本是 ${rowText(before)}，指令是 ${raw}。`,
+            result:`輪盤 ${w} 尚未更新`,
+            roundIndex:r,
+            wheelIndex:w,
+            activeRow:w,
+            rawR:raw,
+            effectiveR:eff,
+            direction,
+            before:cellRowHtml(before),
+            action:`先確認方向：${raw>0?"向右":raw<0?"向左":"不"}轉。`,
+            after:cellRowHtml(before),
+            why:"先看清楚原本順序，再決定哪些字母需要搬動。"
+          });
+
+          push({
+            phase:"移動字母",
+            title:`輪盤 ${w} 開始旋轉`,
+            message:action,
+            result:`正在移動輪盤 ${w}`,
+            roundIndex:r,
+            wheelIndex:w,
+            activeRow:w,
+            rawR:raw,
+            effectiveR:eff,
+            direction,
+            movedIndexes,
+            before:cellRowHtml(before,movedIndexes),
+            action,
+            after:`<div class="cell-row">${cellRowHtml(before,movedIndexes)}<span class="arrow">→</span>${cellRowHtml(after)}</div>`,
+            why
+          });
+
+          state[w]=after;
+
+          push({
+            phase:"旋轉完成",
+            title:`輪盤 ${w} 完成`,
+            message:resultDesc,
+            result:`輪盤 ${w}：${rowText(after)}`,
+            roundIndex:r,
+            wheelIndex:w,
+            activeRow:w,
+            rawR:raw,
+            effectiveR:eff,
+            direction,
+            before:cellRowHtml(before),
+            action,
+            after:cellRowHtml(after),
+            why
+          });
+        }
+
+        push({
+          phase:"全部轉完",
+          title:`第 ${r+1} 回合的輪盤都轉完了`,
+          message:"現在才開始由左到右逐欄計分。",
+          result:`第 ${r+1} 回合目前 0 分`,
+          roundIndex:r,
+          roundScore:0,
+          before:`本回合開始前：請對照上一個狀態。`,
+          action:"輪盤 0 到最後一個輪盤都已經完成旋轉。",
+          after:`目前輪盤：${state.map(rowText).join("、")}`,
+          why:"題目規定所有輪盤先轉完，再比較同一欄的字母。"
+        });
+
+        for(let c=0;c<ex.n;c++){
+          const values=state.map(row=>row[c]);
+          const counts=countMap(values);
+          const colScore=maxCount(counts);
+
+          push({
+            phase:"選擇欄位",
+            title:`查看第 ${c} 欄`,
+            message:`由上往下取出：${listText(values)}`,
+            result:`準備計算第 ${c} 欄`,
+            roundIndex:r,
+            columnIndex:c,
+            activeCol:c,
+            columnValues:values.slice(),
+            counts:{},
+            roundScore,
+            before:`第 ${c} 欄目前是：${listText(values)}`,
+            action:"從輪盤 0 開始，由上往下把同一欄的字母放在一起。",
+            after:cellRowHtml(values),
+            why:"同一欄的字母才會一起比較。"
+          });
+
+          let partial={};
+          for(let i=0;i<values.length;i++){
+            const ch=values[i];
+            partial[ch]=(partial[ch]||0)+1;
+            push({
+              phase:"統計字母",
+              title:`第 ${c} 欄：讀到輪盤 ${i} 的「${ch}」`,
+              message:`${ch} 現在出現 ${partial[ch]} 次。`,
+              result:`正在統計第 ${c} 欄`,
+              roundIndex:r,
+              columnIndex:c,
+              activeCol:c,
+              activeRow:i,
+              hitRow:i,
+              columnValues:values.slice(),
+              counts:{...partial},
+              roundScore,
+              before:`目前欄位字母：${listText(values)}`,
+              action:`讀到字母「${ch}」，把它的次數加 1。`,
+              after:Object.entries(partial).map(([k,v])=>`${k}：${v} 次`).join("　"),
+              why:"每讀到一個字母，就更新一次它的出現次數。"
+            });
+          }
+
+          const totalBefore=total;
+          total+=colScore;
+          roundScore+=colScore;
+          roundScores[r]=roundScore;
+
+          const winners=Object.keys(counts).filter(k=>counts[k]===colScore);
+
+          push({
+            phase:"欄位得分",
+            title:`第 ${c} 欄得到 ${colScore} 分`,
+            message:`最多出現的是 ${winners.join("、")}，出現 ${colScore} 次。`,
+            result:`總分：${total}`,
+            roundIndex:r,
+            columnIndex:c,
+            activeCol:c,
+            columnValues:values.slice(),
+            counts:{...counts},
+            columnScore:colScore,
+            roundScore,
+            total,
+            roundScores:roundScores.slice(),
+            before:`這一欄是：${listText(values)}`,
+            action:`比較每個字母的次數：${Object.entries(counts).map(([k,v])=>`${k}=${v}`).join("、")}`,
+            after:`取最大次數 ${colScore}，所以本欄加 ${colScore} 分。`,
+            why:`加入分數的是「最多出現的次數」。總分從 ${totalBefore} 變成 ${total}。`
+          });
+        }
+
+        push({
+          phase:"回合結束",
+          title:`第 ${r+1} 回合結束`,
+          message:`本回合得到 ${roundScore} 分。`,
+          result:`目前總分：${total}`,
+          roundIndex:r,
+          roundScore,
+          total,
+          roundScores:roundScores.slice(),
+          before:`本回合每一欄都已經計算完成。`,
+          action:`把本回合各欄分數全部相加。`,
+          after:`第 ${r+1} 回合分數：${roundScore}；目前總分：${total}。`,
+          why:r<ex.k-1
+            ?"下一回合會直接使用現在的輪盤結果，不會回到最初字串。"
+            :"所有回合已完成，接著輸出總分。"
+        });
+      }
+
+      push({
+        phase:"完成",
+        title:"所有回合完成",
+        message:`最後答案是 ${total}。`,
+        result:`輸出：${total}`,
+        total,
+        roundScores:roundScores.slice(),
+        before:`每回合分數：${roundScores.join("、")}`,
+        action:"把所有回合分數加總。",
+        after:`${roundScores.join(" + ")} = ${total}`,
+        why:`所以題目的輸出是 ${total}。`
+      });
+
+      return out;
+    }
+
+    function renderInput(step){
+      const ex=examples[currentKey];
+      const wheelMeanings=ex.rows.map((s,i)=>
+        `<div class="meaning-item"><strong>輪盤 ${i}</strong>${s.split("").join("　")}</div>`
+      ).join("");
+
+      const opsRows=ex.ops.map((op,i)=>
+        `<tr class="${step.roundIndex===i?"active-row":""}">
+          <th>第 ${i+1} 回合</th>
+          ${op.map((v,j)=>`<td>${v}</td>`).join("")}
+        </tr>`
+      ).join("");
+
+      inputPanel.innerHTML=`
+        <div class="input-grid">
+          <div>
+            <h3>範例輸入</h3>
+            <div class="input-box"><pre>${ex.inputText}</pre></div>
+            <p class="tip">範例輸出：<strong>${ex.output}</strong></p>
+          </div>
+          <div>
+            <h3>每一行的意思</h3>
+            <div class="meaning-list">
+              <div class="meaning-item"><strong>第一行</strong>m=${ex.m}、n=${ex.n}、k=${ex.k}</div>
+              ${wheelMeanings}
+            </div>
+            <h3 style="margin-top:10px">每回合旋轉指令</h3>
+            <div class="input-box">
+              <table class="summary-table">
+                <thead>
+                  <tr>
+                    <th>回合</th>
+                    ${Array.from({length:ex.m},(_,i)=>`<th>輪盤 ${i}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>${opsRows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderBoard(step){
+      const rows=step.rows;
+      const m=rows.length,n=rows[0].length;
+      const cellW=66,cellH=54,left=104,top=58,right=24,bottom=52;
+      const width=left+n*cellW+right;
+      const height=top+m*cellH+bottom;
+      boardSvg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+
+      let s=`<text x="${left}" y="28" font-size="20" font-weight="800" fill="#0f172a">目前輪盤</text>`;
+      for(let c=0;c<n;c++){
+        const x=left+c*cellW+cellW/2;
+        s+=`<text x="${x}" y="48" text-anchor="middle" font-size="15" font-weight="800" fill="#475569">欄 ${c}</text>`;
+      }
+
+      for(let r=0;r<m;r++){
+        const y=top+r*cellH;
+        s+=`<text x="12" y="${y+34}" font-size="16" font-weight="800" fill="#334155">輪盤 ${r}</text>`;
+        for(let c=0;c<n;c++){
+          const x=left+c*cellW;
+          let fill="#ffffff",stroke="#64748b",sw=1.5;
+          const rowActive=step.activeRow===r;
+          const colActive=step.activeCol===c;
+          const hit=step.hitRow===r && colActive;
+          if(rowActive){fill="#dbeafe";stroke="#2563eb";sw=2.4}
+          if(colActive){fill="#fef3c7";stroke="#d97706";sw=2.4}
+          if(hit || (rowActive && colActive)){fill="#fed7aa";stroke="#ea580c";sw=3}
+          s+=`<rect x="${x+5}" y="${y+6}" width="${cellW-10}" height="${cellH-12}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"></rect>`;
+          s+=`<text x="${x+cellW/2}" y="${y+39}" text-anchor="middle" font-size="22" font-weight="900" fill="#111827">${rows[r][c]}</text>`;
+        }
+      }
+
+      let footer="目前沒有特別選取的輪盤或欄位。";
+      if(step.activeRow!==null && step.activeCol!==null)footer=`正在看：輪盤 ${step.activeRow} 的第 ${step.activeCol} 欄`;
+      else if(step.activeRow!==null)footer=`正在處理：輪盤 ${step.activeRow}`;
+      else if(step.activeCol!==null)footer=`正在查看：第 ${step.activeCol} 欄`;
+
+      s+=`<text x="${left}" y="${height-16}" font-size="15" fill="#475569">${footer}</text>`;
+      boardSvg.innerHTML=s;
+    }
+
+    function renderRound(step){
+      const ex=examples[currentKey];
+      roundPanel.innerHTML=Array.from({length:ex.k},(_,i)=>{
+        const val=step.roundScores?.[i];
+        const text=val===null||val===undefined?"尚未開始":`${val} 分`;
+        return `<span class="score-chip ${step.roundIndex===i?"active":""}">第 ${i+1} 回合：${text}</span>`;
+      }).join("");
+    }
+
+    function renderDetail(step){
+      const parts=[];
+      if(step.roundIndex!==null)parts.push(`<tr><th>目前回合</th><td>第 ${step.roundIndex+1} 回合</td></tr>`);
+      if(step.wheelIndex!==null)parts.push(`<tr><th>目前輪盤</th><td>輪盤 ${step.wheelIndex}</td></tr>`);
+      if(step.columnIndex!==null)parts.push(`<tr><th>目前欄位</th><td>第 ${step.columnIndex} 欄</td></tr>`);
+      if(step.rawR!==null)parts.push(`<tr><th>旋轉指令</th><td>${step.rawR}</td></tr>`);
+      if(step.rawR!==null){
+        let meaning=step.rawR>0?`向右轉 ${step.rawR} 格`:step.rawR<0?`向左轉 ${Math.abs(step.rawR)} 格`:"不轉";
+        parts.push(`<tr><th>指令意思</th><td>${meaning}</td></tr>`);
+      }
+      if(step.columnValues)parts.push(`<tr><th>欄位字母</th><td>${listText(step.columnValues)}</td></tr>`);
+      if(step.columnScore!==null)parts.push(`<tr><th>本欄分數</th><td>${step.columnScore}</td></tr>`);
+      if(step.roundScore!==null)parts.push(`<tr><th>本回合分數</th><td>${step.roundScore}</td></tr>`);
+      parts.push(`<tr><th>目前總分</th><td>${step.total}</td></tr>`);
+
+      detailPanel.innerHTML=`<table class="summary-table"><tbody>${parts.join("")}</tbody></table>`;
+    }
+
+    function renderCounts(step){
+      if(!step.counts || Object.keys(step.counts).length===0){
+        countPanel.innerHTML=`<p class="tip">目前還沒有統計資料。</p>`;
+        return;
+      }
+      const max=Math.max(...Object.values(step.counts));
+      countPanel.innerHTML=`
+        <div class="count-list">
+          ${Object.entries(step.counts).map(([k,v])=>
+            `<span class="count-chip">${k}：${v} 次${v===max?"（目前最多）":""}</span>`
+          ).join("")}
+        </div>
+      `;
+    }
+
+    function renderStep(){
+      const step=steps[stepIndex];
+      stepText.textContent=`步驟 ${stepIndex+1} / ${steps.length}`;
+      resultText.textContent=step.result;
+      messageText.textContent=step.message;
+      phaseBadge.textContent=step.phase;
+      stepTitle.textContent=step.title;
+      beforeBox.innerHTML=step.before;
+      actionBox.innerHTML=step.action;
+      afterBox.innerHTML=step.after;
+      whyBox.innerHTML=step.why;
+      renderInput(step);
+      renderBoard(step);
+      renderRound(step);
+      renderDetail(step);
+      renderCounts(step);
+
+      document.getElementById("prevBtn").disabled=stepIndex===0;
+      document.getElementById("nextBtn").disabled=stepIndex===steps.length-1;
+    }
+
+    function stopPlay(){
+      if(playTimer){
+        clearInterval(playTimer);
+        playTimer=null;
+      }
+    }
+
+    function nextStep(){
+      if(stepIndex<steps.length-1){
+        stepIndex++;
+        renderStep();
+      }else{
+        stopPlay();
+      }
+    }
+
+    function prevStep(){
+      if(stepIndex>0){
+        stepIndex--;
+        renderStep();
+      }
+    }
+
+    function reset(){
+      stopPlay();
+      stepIndex=0;
+      renderStep();
+    }
+
+    function play(){
+      stopPlay();
+      playTimer=setInterval(()=>{
+        if(stepIndex>=steps.length-1){
+          stopPlay();
+          return;
+        }
+        nextStep();
+      },1100);
+    }
+
+    function setExample(key){
+      stopPlay();
+      currentKey=key;
+      steps=generateSteps(examples[key]);
+      stepIndex=0;
+      renderStep();
+    }
+
+    document.getElementById("nextBtn").addEventListener("click",nextStep);
+    document.getElementById("prevBtn").addEventListener("click",prevStep);
+    document.getElementById("playBtn").addEventListener("click",play);
+    document.getElementById("pauseBtn").addEventListener("click",stopPlay);
+    document.getElementById("resetBtn").addEventListener("click",reset);
+    document.getElementById("exampleSelect").addEventListener("change",e=>setExample(e.target.value));
+
+    document.addEventListener("keydown",e=>{
+      const modalOpen=document.getElementById("problemModal").classList.contains("show");
+      if(modalOpen && e.key==="Escape"){
+        document.getElementById("problemModal").classList.remove("show");
+        return;
+      }
+      if(e.key==="ArrowRight")nextStep();
+      else if(e.key==="ArrowLeft")prevStep();
+      else if(e.code==="Space"){
+        e.preventDefault();
+        if(playTimer)stopPlay();else play();
+      }
+    });
+
+    const modal=document.getElementById("problemModal");
+    document.getElementById("problemBtn").addEventListener("click",()=>{
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden","false");
+    });
+    document.getElementById("closeProblemBtn").addEventListener("click",()=>{
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden","true");
+    });
+    modal.addEventListener("click",e=>{
+      if(e.target===modal){
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden","true");
+      }
+    });
+
+    const divider=document.getElementById("divider");
+    const leftPane=document.getElementById("leftPane");
+    const mainArea=document.getElementById("mainArea");
+    let dragging=false;
+
+    divider.addEventListener("pointerdown",e=>{
+      dragging=true;
+      divider.setPointerCapture(e.pointerId);
+      document.body.style.userSelect="none";
+    });
+    divider.addEventListener("pointerup",e=>{
+      dragging=false;
+      divider.releasePointerCapture(e.pointerId);
+      document.body.style.userSelect="";
+    });
+    divider.addEventListener("pointermove",e=>{
+      if(!dragging || window.innerWidth<=980)return;
+      const rect=mainArea.getBoundingClientRect();
+      let pct=(e.clientX-rect.left)/rect.width;
+      pct=Math.max(.34,Math.min(.72,pct));
+      leftPane.style.width=`${pct*100}%`;
+    });
+
+    setExample(currentKey);
+  </script>
+</body>
+</html>

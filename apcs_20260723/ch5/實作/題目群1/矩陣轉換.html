@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>矩陣轉換｜一步一步動畫教學</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 132px;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #d8dee9;
+      --accent: #2563eb;
+      --accent-2: #0f766e;
+      --warn: #f59e0b;
+      --done: #16a34a;
+      --code-bg: #111827;
+      --code-fg: #e5e7eb;
+      --code-line: #1f2937;
+      --code-active: #fbbf24;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--toolbar-h);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 52px 80px;
+      gap: 0;
+    }
+
+    .titleBlock {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      padding: 16px 18px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .titleBlock h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+    }
+
+    .titleBlock .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .controlRow {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #eef2f7;
+      flex-wrap: wrap;
+    }
+
+    button, select {
+      font-family: inherit;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover, select:hover { border-color: #94a3b8; background: #f8fafc; }
+    button:active { transform: translateY(1px); }
+    button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    button.primary:hover { background: #1d4ed8; }
+    button.success { background: var(--accent-2); color: white; border-color: var(--accent-2); }
+    button.ghost { background: #f8fafc; }
+
+    .stepBadge {
+      margin-left: auto;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      white-space: nowrap;
+    }
+
+    .infoRow {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      display: grid;
+      grid-template-columns: 180px 220px 1fr;
+      gap: 10px;
+      padding: 10px 14px 12px;
+      min-width: 0;
+    }
+
+    .infoBox {
+      border: 1px solid var(--border);
+      background: #fbfdff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .infoBox .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+      white-space: nowrap;
+    }
+
+    .infoBox .value {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .infoBox.message .value {
+      white-space: normal;
+      font-weight: 600;
+      max-height: 44px;
+      overflow: auto;
+    }
+
+    .main {
+      position: fixed;
+      top: var(--toolbar-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      height: calc(100vh - var(--toolbar-h));
+      min-height: 0;
+    }
+
+    .leftPane, .rightPane {
+      height: 100%;
+      min-width: 260px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .leftPane {
+      width: 58%;
+      position: relative;
+      border-right: 1px solid var(--border);
+    }
+
+    .rightPane {
+      width: 42%;
+      display: flex;
+      flex-direction: column;
+      background: var(--code-bg);
+    }
+
+    .splitter {
+      width: 8px;
+      background: linear-gradient(90deg, #e5e7eb, #cbd5e1, #e5e7eb);
+      cursor: col-resize;
+      flex: 0 0 8px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .splitter::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 58px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+
+    .visualHeader {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 3;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .pill {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 13px;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    #visualSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: radial-gradient(circle at 20% 0%, #eff6ff 0, #ffffff 35%, #f8fafc 100%);
+    }
+
+    .codeTop {
+      height: 44px;
+      flex: 0 0 44px;
+      color: #cbd5e1;
+      border-bottom: 1px solid #263244;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: #0b1220;
+      font-weight: 700;
+    }
+
+    .codeHint {
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .codeScroll {
+      flex: 1;
+      overflow: auto;
+      padding: 10px 0 28px;
+      background: var(--code-bg);
+    }
+
+    .codeLine {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      min-height: 25px;
+      line-height: 25px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      color: var(--code-fg);
+      white-space: pre;
+    }
+
+    .codeLine .ln {
+      color: #64748b;
+      text-align: right;
+      padding-right: 12px;
+      user-select: none;
+      border-right: 1px solid #263244;
+    }
+
+    .codeLine .txt {
+      padding-left: 14px;
+      padding-right: 12px;
+    }
+
+    .codeLine.active {
+      background: rgba(251, 191, 36, 0.15);
+      outline: 1px solid rgba(251, 191, 36, 0.45);
+    }
+
+    .codeLine.active .ln {
+      color: #fbbf24;
+      font-weight: 800;
+    }
+
+    .codeLine.active .txt {
+      color: #fef3c7;
+      font-weight: 800;
+    }
+
+    .modalBackdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.28);
+      z-index: 50;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(920px, calc(100vw - 36px));
+      max-height: calc(100vh - 190px);
+      background: white;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .modalHeader {
+      cursor: move;
+      user-select: none;
+      background: #0f172a;
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modalHeader h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modalBody {
+      padding: 18px 22px 24px;
+      overflow: auto;
+      max-height: calc(100vh - 250px);
+      line-height: 1.75;
+      font-size: 16px;
+    }
+
+    .modalBody h3 {
+      margin: 18px 0 8px;
+      font-size: 18px;
+      color: #1e3a8a;
+    }
+
+    .modalBody pre {
+      background: #f1f5f9;
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      padding: 12px 14px;
+      overflow: auto;
+      line-height: 1.45;
+    }
+
+    .modalBody table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 8px 0 14px;
+    }
+
+    .modalBody th, .modalBody td {
+      border: 1px solid #dbe4ef;
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+
+    .modalBody th { background: #eff6ff; }
+
+    .kbd {
+      font-family: Consolas, monospace;
+      border: 1px solid #cbd5e1;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 1px 6px;
+      background: #f8fafc;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .smallNote {
+      color: #475569;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-h: 178px; }
+      .toolbar {
+        grid-template-columns: 1fr;
+        grid-template-rows: 58px 56px 64px;
+      }
+      .titleBlock {
+        grid-column: 1;
+        grid-row: 1;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px;
+      }
+      .titleBlock h1 { font-size: 18px; }
+      .controlRow { grid-column: 1; grid-row: 2; padding: 8px 10px; }
+      .infoRow { grid-column: 1; grid-row: 3; grid-template-columns: 1fr 1fr; padding: 8px 10px; }
+      .infoBox.message { grid-column: 1 / 3; }
+      .codeLine { font-size: 12px; grid-template-columns: 44px 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="titleBlock">
+      <h1>矩陣轉換</h1>
+      <div class="subtitle">從給定矩陣 B，倒著操作，反推出原始矩陣 A</div>
+    </div>
+
+    <div class="controlRow">
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary">下一步</button>
+      <button id="playBtn" class="success">播放</button>
+      <button id="resetBtn" class="ghost">重設</button>
+      <select id="exampleSelect" title="切換範例">
+        <option value="ex1">範例一</option>
+        <option value="ex2">範例二</option>
+      </select>
+      <button id="problemBtn" class="ghost">題目說明</button>
+      <span id="stepBadge" class="stepBadge">步驟 1 / 1</span>
+    </div>
+
+    <div class="infoRow">
+      <div class="infoBox">
+        <div class="label">目前函式 / 位置</div>
+        <div id="funcValue" class="value">main</div>
+      </div>
+      <div class="infoBox">
+        <div class="label">目前答案或狀態</div>
+        <div id="resultValue" class="value">準備開始</div>
+      </div>
+      <div class="infoBox message">
+        <div class="label">本步驟簡短說明</div>
+        <div id="messageValue" class="value">請按下一步開始。</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="main" id="mainArea">
+    <section class="leftPane" id="leftPane">
+      <div class="visualHeader">
+        <div class="pill">SVG 自動縮放</div>
+        <div class="pill">矩陣 + 操作 token 同步高亮</div>
+      </div>
+      <svg id="visualSvg" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid meet" role="img" aria-label="矩陣轉換動畫"></svg>
+    </section>
+    <div class="splitter" id="splitter" title="拖曳調整左右寬度"></div>
+    <section class="rightPane" id="rightPane">
+      <div class="codeTop">
+        <span>完整 Python 程式碼</span>
+        <span class="codeHint">目前行會同步高亮</span>
+      </div>
+      <div class="codeScroll" id="codeScroll"></div>
+    </section>
+  </main>
+
+  <div class="modalBackdrop" id="modalBackdrop"></div>
+  <section class="modal" id="problemModal" aria-modal="true" role="dialog">
+    <div class="modalHeader" id="modalHeader">
+      <h2>題目文字版與核心觀念</h2>
+      <button id="closeModalBtn">關閉</button>
+    </div>
+    <div class="modalBody">
+      <h3>題目描述</h3>
+      <p>一個矩陣 \(A\) 可以經過一連串的「旋轉」與「翻轉」操作後，變成新矩陣 \(B\)。現在題目給你矩陣 \(B\) 和原本做過的操作序列，請算出一開始的矩陣 \(A\)。</p>
+      <table>
+        <thead><tr><th>操作</th><th>意思</th><th>反推時怎麼做</th></tr></thead>
+        <tbody>
+          <tr><td>旋轉，操作值 0</td><td>把矩陣順時針轉 90 度。</td><td>因為我們從 \(B\) 反推 \(A\)，所以要做反方向，也就是逆時針轉 90 度。這份程式的 <code>rotate(matrix)</code> 就是在做這件事。</td></tr>
+          <tr><td>翻轉，操作值 1</td><td>第一列和最後一列交換，第二列和倒數第二列交換。</td><td>翻轉再翻轉一次就會回到原狀，所以反推時一樣做翻轉。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>輸入格式</h3>
+      <p>第一行有三個正整數 \(R, C, M\)。接下來有 \(R\) 行，每一行有 \(C\) 個整數，這些是矩陣 \(B\) 的內容。最後一行有 \(M\) 個整數，代表當初從 \(A\) 變成 \(B\) 時做過的操作。</p>
+      <p>第 \(k\) 個操作 \(m_k\)：若 \(m_k=0\) 表示旋轉，若 \(m_k=1\) 表示翻轉。矩陣中的第 \(i\) 列第 \(j\) 欄可寫成 \(B_{ij}\)。</p>
+
+      <h3>輸出格式</h3>
+      <p>輸出原始矩陣 \(A\) 的大小 \(R'\) 和 \(C'\)，接著輸出 \(R'\) 行，每行有 \(C'\) 個整數，代表矩陣 \(A\) 的內容。</p>
+
+      <h3>最重要的想法</h3>
+      <p>題目給的操作是「從 \(A\) 做到 \(B\)」。但是我們手上已經是 \(B\)，要找回 \(A\)，所以要把操作順序倒過來做。</p>
+      <pre>原本：A  --操作 0-->  --操作 1-->  --操作 2-->  B
+反推：B  --反做操作 2--> --反做操作 1--> --反做操作 0--> A</pre>
+      <p>所以程式使用：</p>
+      <pre>for k in range(M-1, -1, -1):</pre>
+      <p>意思是從最後一個操作開始，一個一個往前做。</p>
+
+      <h3>範例一</h3>
+      <pre>輸入
+3 2 3
+1 1
+3 1
+1 2
+1 0 0
+
+輸出
+3 2
+1 1
+1 3
+2 1</pre>
+
+      <h3>範例二</h3>
+      <pre>輸入
+3 2 2
+3 3
+2 1
+1 2
+0 1
+
+輸出
+2 3
+2 1 3
+1 2 3</pre>
+
+      <h3>操作提示</h3>
+      <p>鍵盤可以使用 <span class="kbd">ArrowRight</span> 下一步、<span class="kbd">ArrowLeft</span> 上一步、<span class="kbd">Space</span> 播放或暫停。</p>
+      <p class="smallNote">這個視窗可以拖曳標題列移動，方便上課時一邊看題目，一邊按動畫。</p>
+    </div>
+  </section>
+
+  <script>
+    const examples = {
+      ex1: {
+        name: '範例一',
+        R: 3,
+        C: 2,
+        M: 3,
+        matrixB: [[1, 1], [3, 1], [1, 2]],
+        ops: [1, 0, 0],
+        expected: [[1, 1], [1, 3], [2, 1]],
+        inputText: '3 2 3\n1 1\n3 1\n1 2\n1 0 0',
+        outputText: '3 2\n1 1\n1 3\n2 1'
+      },
+      ex2: {
+        name: '範例二',
+        R: 3,
+        C: 2,
+        M: 2,
+        matrixB: [[3, 3], [2, 1], [1, 2]],
+        ops: [0, 1],
+        expected: [[2, 1, 3], [1, 2, 3]],
+        inputText: '3 2 2\n3 3\n2 1\n1 2\n0 1',
+        outputText: '2 3\n2 1 3\n1 2 3'
+      }
+    };
+
+    const pythonCode = `def rotate(matrixB):
+    matrixA = []
+    r = len(matrixB)
+    c = len(matrixB[0])
+    for i in range(c-1, -1, -1):
+        row = []
+        for j in range(r):
+            row.append(matrixB[j][i])
+        matrixA.append(row)
+    return matrixA
+
+def flip(matrixB):
+    matrixA = []
+    r = len(matrixB)
+    for i in range(r-1, -1, -1):
+        matrixA.append(matrixB[i])
+    return matrixA
+
+#讀取資料 R C M：列 欄 操作次數
+inStrs = input().split(' ')
+R = int(inStrs[0])
+C = int(inStrs[1])
+M = int(inStrs[2])
+
+#讀取R次，切割為C筆資料，加入二維List
+matrix = []
+for i in range(R):
+    temp = input().split(' ')
+    rList = []
+    for j in range(C):
+        rList.append(int(temp[j]))
+    matrix.append(rList)
+    
+#讀取操作，切割為 M 筆操作
+ops = input().split(' ')
+
+#操作資料 : 0->旋轉(rotate) / 1->翻轉(flip)
+#反向順序
+for k in range(M-1, -1, -1):
+    op = int(ops[k])
+    if(op==0):
+        matrix = rotate(matrix)
+        #print('rotate', matrix)
+    elif(op==1):
+        matrix = flip(matrix)
+        #print('flip', matrix)
+
+#輸出 R C
+Rr = len(matrix)
+Rc = len(matrix[0])
+print(Rr, Rc)
+
+#輸出二維List：輸出R次，每列有C筆資料
+for i in range(Rr):
+    print(' '.join(str(matrix[i][j]) for j in range(Rc)))`;
+
+    let currentExampleKey = 'ex1';
+    let steps = [];
+    let stepIndex = 0;
+    let playTimer = null;
+    let isPlaying = false;
+
+    const codeScroll = document.getElementById('codeScroll');
+    const stepBadge = document.getElementById('stepBadge');
+    const funcValue = document.getElementById('funcValue');
+    const resultValue = document.getElementById('resultValue');
+    const messageValue = document.getElementById('messageValue');
+    const svg = document.getElementById('visualSvg');
+
+    function cloneMatrix(matrix) {
+      return matrix.map(row => row.slice());
+    }
+
+    function emptyMatrix(rows, cols) {
+      return Array.from({ length: rows }, () => Array.from({ length: cols }, () => null));
+    }
+
+    function matrixToText(matrix) {
+      return matrix.map(row => row.join(' ')).join(' / ');
+    }
+
+    function opName(op) {
+      return op === 0 ? '旋轉' : '翻轉';
+    }
+
+    function opReverseName(op) {
+      return op === 0 ? '逆向旋轉' : '上下翻轉';
+    }
+
+    function dims(matrix) {
+      return matrix.length + ' × ' + matrix[0].length;
+    }
+
+    function buildCode() {
+      codeScroll.innerHTML = '';
+      const lines = pythonCode.split('\n');
+      lines.forEach((line, idx) => {
+        const div = document.createElement('div');
+        div.className = 'codeLine';
+        div.dataset.line = String(idx + 1);
+        const ln = document.createElement('span');
+        ln.className = 'ln';
+        ln.textContent = idx + 1;
+        const txt = document.createElement('span');
+        txt.className = 'txt';
+        txt.textContent = line || ' ';
+        div.appendChild(ln);
+        div.appendChild(txt);
+        codeScroll.appendChild(div);
+      });
+    }
+
+    function buildSteps(ex) {
+      const built = [];
+      let matrix = cloneMatrix(ex.matrixB);
+      let processedOps = [];
+
+      function base(extra = {}) {
+        return Object.assign({
+          current: cloneMatrix(matrix),
+          ops: ex.ops.slice(),
+          processedOps: processedOps.slice(),
+          activeOpIndex: null,
+          mode: 'single'
+        }, extra);
+      }
+
+      function add(activeLine, message, visualState, result, activeNode, funcName) {
+        const activeLines = Array.isArray(activeLine) ? activeLine : [activeLine];
+        built.push({
+          activeLine: activeLines[0],
+          activeLines,
+          message,
+          visualState: JSON.parse(JSON.stringify(visualState)),
+          result,
+          activeNode: activeNode || '',
+          func: funcName || 'main'
+        });
+      }
+
+      add(20, '讀取第一行：R、C、M。這三個數字告訴我們 B 的大小和操作次數。',
+        base({ focus: 'header' }),
+        '讀到 R=' + ex.R + '，C=' + ex.C + '，M=' + ex.M,
+        'input-header', 'main');
+
+      add([21, 22, 23], '把字串轉成整數，分別放進 R、C、M。',
+        base({ focus: 'header' }),
+        '矩陣 B 會有 ' + ex.R + ' 列、' + ex.C + ' 欄',
+        'R-C-M', 'main');
+
+      add(26, '建立空的 matrix，準備把矩陣 B 一列一列讀進來。',
+        base({ mode: 'readMatrix', readRows: 0 }),
+        'matrix = []',
+        'matrix', 'main');
+
+      for (let i = 0; i < ex.matrixB.length; i++) {
+        add([27, 28, 29, 30, 31, 32],
+          '讀取 B 的第 ' + (i + 1) + ' 列：' + ex.matrixB[i].join(' ') + '，放進 matrix。',
+          base({ mode: 'readMatrix', readRows: i + 1, activeReadRow: i }),
+          '已讀 ' + (i + 1) + ' / ' + ex.R + ' 列',
+          'row-' + i, 'main');
+      }
+
+      add(35, '讀取操作序列 ops。注意：這些操作是當初從 A 做到 B 的順序。',
+        base({ mode: 'opsRead' }),
+        'ops = [' + ex.ops.join(', ') + ']',
+        'ops', 'main');
+
+      add(39, '開始反推。因為手上是 B，要回到 A，所以 for 迴圈從最後一個操作往前讀。',
+        base({ mode: 'reverseIntro' }),
+        '反推順序：從右往左',
+        'reverse-loop', 'main');
+
+      for (let order = 0; order < ex.ops.length; order++) {
+        const k = ex.ops.length - 1 - order;
+        const op = ex.ops[k];
+        add(39,
+          '現在 k = ' + k + '，讀到 ops[' + k + ']。這是反推時第 ' + (order + 1) + ' 個要處理的操作。',
+          base({ mode: 'opStart', activeOpIndex: k }),
+          '目前矩陣大小：' + dims(matrix),
+          'op-' + k, 'main');
+
+        add(40,
+          'op = int(ops[' + k + ']) = ' + op + '，代表原本做過「' + opName(op) + '」。',
+          base({ mode: 'opStart', activeOpIndex: k }),
+          '目前 token：ops[' + k + '] = ' + op,
+          'op-' + k, 'main');
+
+        if (op === 0) {
+          add(41,
+            'op 是 0，進入 if。原本是順時針旋轉，反推時要做逆向旋轉。',
+            base({ mode: 'opStart', activeOpIndex: k, branch: 'rotate' }),
+            '準備呼叫 rotate(matrix)',
+            'op-' + k, 'main');
+
+          const before = cloneMatrix(matrix);
+          const r = before.length;
+          const c = before[0].length;
+          let target = emptyMatrix(c, r);
+
+          add(42,
+            '執行 matrix = rotate(matrix)。這裡的 rotate 是把目前矩陣逆向轉回上一個狀態。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: 'rotate(matrix)：逆向旋轉', funcLabel: 'rotate' }),
+            'rotate 開始：' + r + ' × ' + c + ' 會變成 ' + c + ' × ' + r,
+            'rotate-call', 'main');
+
+          add(1,
+            '進入 rotate(matrixB)。matrixB 就是目前這個矩陣。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: '進入 rotate', funcLabel: 'rotate' }),
+            '進入 rotate 函式',
+            'rotate', 'rotate');
+
+          add(2,
+            'matrixA = []：先準備一個空矩陣，等一下慢慢放入新列。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: 'matrixA 目前是空的', funcLabel: 'rotate' }),
+            'matrixA 空矩陣',
+            'matrixA', 'rotate');
+
+          add(3,
+            'r = len(matrixB) = ' + r + '，代表目前矩陣有 ' + r + ' 列。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: '取得列數 r', funcLabel: 'rotate' }),
+            'r = ' + r,
+            'r', 'rotate');
+
+          add(4,
+            'c = len(matrixB[0]) = ' + c + '，代表目前矩陣有 ' + c + ' 欄。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: '取得欄數 c', funcLabel: 'rotate' }),
+            'c = ' + c,
+            'c', 'rotate');
+
+          for (let i = c - 1; i >= 0; i--) {
+            const targetRow = (c - 1) - i;
+            let row = [];
+            add(5,
+              '外層 i = ' + i + '：拿 matrixB 的第 ' + i + ' 欄。這一欄會變成 matrixA 的第 ' + targetRow + ' 列。',
+              base({ mode: 'rotateWork', activeOpIndex: k, source: before, target, activeColumn: i, targetRow, arrowLabel: '取第 ' + i + ' 欄變成新列', funcLabel: 'rotate' }),
+              '處理來源欄 i = ' + i,
+              'col-' + i, 'rotate');
+
+            add(6,
+              'row = []：先準備一列空的 row，等等從上到下把數字加進來。',
+              base({ mode: 'rotateWork', activeOpIndex: k, source: before, target, activeColumn: i, targetRow, arrowLabel: 'row 先清空', funcLabel: 'rotate' }),
+              'row = []',
+              'row', 'rotate');
+
+            for (let j = 0; j < r; j++) {
+              add(7,
+                '內層 j = ' + j + '：準備讀 matrixB[' + j + '][' + i + ']。',
+                base({ mode: 'rotateWork', activeOpIndex: k, source: before, target, activeColumn: i, sourceCell: { row: j, col: i }, targetRow, arrowLabel: '準備複製格子', funcLabel: 'rotate' }),
+                '準備讀來源格 (' + j + ', ' + i + ')',
+                'cell-' + j + '-' + i, 'rotate');
+
+              row.push(before[j][i]);
+              target[targetRow][j] = before[j][i];
+
+              add(8,
+                '把 matrixB[' + j + '][' + i + '] = ' + before[j][i] + ' 加到 row 後面，放到 matrixA[' + targetRow + '][' + j + ']。',
+                base({ mode: 'rotateWork', activeOpIndex: k, source: before, target, activeColumn: i, sourceCell: { row: j, col: i }, targetCell: { row: targetRow, col: j }, targetRow, arrowLabel: '複製：matrixB[' + j + '][' + i + '] → matrixA[' + targetRow + '][' + j + ']', funcLabel: 'rotate' }),
+                'row 目前：[' + row.join(', ') + ']',
+                'copy-' + j + '-' + i, 'rotate');
+            }
+
+            add(9,
+              '這一列完成：[' + row.join(', ') + ']，把 row 放進 matrixA。',
+              base({ mode: 'rotateWork', activeOpIndex: k, source: before, target, targetRow, targetRowDone: targetRow, arrowLabel: '完成第 ' + targetRow + ' 列', funcLabel: 'rotate' }),
+              'matrixA 已完成第 ' + (targetRow + 1) + ' 列',
+              'append-row-' + targetRow, 'rotate');
+          }
+
+          matrix = cloneMatrix(target);
+
+          add(10,
+            'return matrixA：rotate 結束，把新矩陣回傳。',
+            base({ mode: 'single', activeOpIndex: k, current: cloneMatrix(matrix), justReturned: true }),
+            'rotate 回傳：' + dims(matrix),
+            'return-rotate', 'rotate');
+
+          add(42,
+            '回到 main：matrix = rotate(matrix)，目前矩陣已更新。',
+            base({ mode: 'single', activeOpIndex: k }),
+            '目前矩陣：' + dims(matrix) + '，內容：' + matrixToText(matrix),
+            'matrix-updated', 'main');
+
+          processedOps.push(k);
+          add(39,
+            '操作 ops[' + k + '] 完成。這個 token 已經反推完畢，下一步繼續往左。',
+            base({ mode: 'single', justCompleted: k }),
+            '已完成操作：ops[' + k + ']',
+            'op-done-' + k, 'main');
+        } else {
+          add(44,
+            'op 是 1，所以不走旋轉，進入 elif。翻轉的反操作還是翻轉。',
+            base({ mode: 'opStart', activeOpIndex: k, branch: 'flip' }),
+            '準備呼叫 flip(matrix)',
+            'op-' + k, 'main');
+
+          const before = cloneMatrix(matrix);
+          const r = before.length;
+          const c = before[0].length;
+          let target = emptyMatrix(r, c);
+
+          add(45,
+            '執行 matrix = flip(matrix)。會把目前矩陣上下倒過來。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: 'flip(matrix)：上下翻轉', funcLabel: 'flip' }),
+            'flip 開始：大小仍是 ' + r + ' × ' + c,
+            'flip-call', 'main');
+
+          add(12,
+            '進入 flip(matrixB)。matrixB 是目前這個矩陣。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: '進入 flip', funcLabel: 'flip' }),
+            '進入 flip 函式',
+            'flip', 'flip');
+
+          add(13,
+            'matrixA = []：先準備一個空矩陣。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: 'matrixA 目前是空的', funcLabel: 'flip' }),
+            'matrixA 空矩陣',
+            'matrixA', 'flip');
+
+          add(14,
+            'r = len(matrixB) = ' + r + '，代表目前有 ' + r + ' 列。',
+            base({ mode: 'twoMatrix', activeOpIndex: k, source: before, target, arrowLabel: '取得列數 r', funcLabel: 'flip' }),
+            'r = ' + r,
+            'r', 'flip');
+
+          for (let i = r - 1; i >= 0; i--) {
+            const targetRow = (r - 1) - i;
+            add(15,
+              'i = ' + i + '：從最下面往上拿第 ' + i + ' 列。',
+              base({ mode: 'flipWork', activeOpIndex: k, source: before, target, activeRow: i, targetRow, arrowLabel: '拿來源第 ' + i + ' 列', funcLabel: 'flip' }),
+              '處理來源列 i = ' + i,
+              'row-' + i, 'flip');
+
+            target[targetRow] = before[i].slice();
+            add(16,
+              '把 matrixB[' + i + '] = [' + before[i].join(', ') + '] 加到 matrixA 後面，成為新矩陣第 ' + targetRow + ' 列。',
+              base({ mode: 'flipWork', activeOpIndex: k, source: before, target, activeRow: i, targetRow, targetRowDone: targetRow, arrowLabel: 'matrixB[' + i + '] → matrixA[' + targetRow + ']', funcLabel: 'flip' }),
+              'matrixA 已放入第 ' + (targetRow + 1) + ' 列',
+              'append-row-' + targetRow, 'flip');
+          }
+
+          matrix = cloneMatrix(target);
+
+          add(17,
+            'return matrixA：flip 結束，把上下翻轉後的矩陣回傳。',
+            base({ mode: 'single', activeOpIndex: k, current: cloneMatrix(matrix), justReturned: true }),
+            'flip 回傳：' + dims(matrix),
+            'return-flip', 'flip');
+
+          add(45,
+            '回到 main：matrix = flip(matrix)，目前矩陣已更新。',
+            base({ mode: 'single', activeOpIndex: k }),
+            '目前矩陣：' + dims(matrix) + '，內容：' + matrixToText(matrix),
+            'matrix-updated', 'main');
+
+          processedOps.push(k);
+          add(39,
+            '操作 ops[' + k + '] 完成。這個 token 已經反推完畢，下一步繼續往左。',
+            base({ mode: 'single', justCompleted: k }),
+            '已完成操作：ops[' + k + ']',
+            'op-done-' + k, 'main');
+        }
+      }
+
+      add(48,
+        '所有操作都倒著做完了。現在 matrix 就是原始矩陣 A。',
+        base({ mode: 'final' }),
+        '反推完成：得到原始 A',
+        'final-matrix', 'main');
+
+      const Rr = matrix.length;
+      const Rc = matrix[0].length;
+      add(49,
+        'Rr = len(matrix) = ' + Rr + '，這是原始矩陣 A 的列數。',
+        base({ mode: 'final' }),
+        'Rr = ' + Rr,
+        'Rr', 'main');
+
+      add(50,
+        'Rc = len(matrix[0]) = ' + Rc + '，這是原始矩陣 A 的欄數。',
+        base({ mode: 'final' }),
+        'Rc = ' + Rc,
+        'Rc', 'main');
+
+      add(51,
+        '先輸出矩陣大小：' + Rr + ' ' + Rc + '。',
+        base({ mode: 'output', outputRow: -1 }),
+        '輸出第一行：' + Rr + ' ' + Rc,
+        'print-size', 'main');
+
+      for (let i = 0; i < Rr; i++) {
+        add([54, 55],
+          '輸出第 ' + (i + 1) + ' 列：' + matrix[i].join(' ') + '。',
+          base({ mode: 'output', outputRow: i }),
+          '輸出列 ' + (i + 1) + '：' + matrix[i].join(' '),
+          'print-row-' + i, 'main');
+      }
+
+      add(55,
+        '輸出完成。這就是題目要的原始矩陣 A。',
+        base({ mode: 'outputDone', outputRow: Rr }),
+        '完成輸出：\n' + Rr + ' ' + Rc + '\n' + matrix.map(row => row.join(' ')).join('\n'),
+        'done', 'main');
+
+      return built;
+    }
+
+    function setActiveCodeLines(lines) {
+      document.querySelectorAll('.codeLine').forEach(line => line.classList.remove('active'));
+      lines.forEach(no => {
+        const el = document.querySelector('.codeLine[data-line="' + no + '"]');
+        if (el) {
+          el.classList.add('active');
+          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      });
+    }
+
+    function svgEl(tag, attrs = {}) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      return el;
+    }
+
+    function drawText(parent, x, y, text, opts = {}) {
+      const t = svgEl('text', {
+        x, y,
+        'font-size': opts.size || 20,
+        'font-weight': opts.weight || 600,
+        fill: opts.fill || '#172033',
+        'text-anchor': opts.anchor || 'start',
+        'dominant-baseline': opts.baseline || 'auto'
+      });
+      t.textContent = text;
+      parent.appendChild(t);
+      return t;
+    }
+
+    function drawRoundRect(parent, x, y, w, h, fill, stroke = '#d8dee9', rx = 14) {
+      const r = svgEl('rect', { x, y, width: w, height: h, rx, ry: rx, fill, stroke, 'stroke-width': 1.5 });
+      parent.appendChild(r);
+      return r;
+    }
+
+    function drawArrow(parent, x1, y1, x2, y2, label) {
+      const defs = svgEl('defs');
+      const marker = svgEl('marker', { id: 'arrowHead', markerWidth: 12, markerHeight: 12, refX: 10, refY: 6, orient: 'auto', markerUnits: 'strokeWidth' });
+      marker.appendChild(svgEl('path', { d: 'M2,2 L10,6 L2,10 Z', fill: '#334155' }));
+      defs.appendChild(marker);
+      parent.appendChild(defs);
+      parent.appendChild(svgEl('line', { x1, y1, x2, y2, stroke: '#334155', 'stroke-width': 4, 'marker-end': 'url(#arrowHead)', 'stroke-linecap': 'round' }));
+      drawText(parent, (x1 + x2) / 2, y1 - 18, label || '', { size: 22, weight: 800, anchor: 'middle', fill: '#0f172a' });
+    }
+
+    function drawMatrix(parent, matrix, x, y, opts = {}) {
+      const rows = matrix.length;
+      const cols = matrix[0].length;
+      const maxW = opts.maxW || 360;
+      const maxH = opts.maxH || 330;
+      const cell = opts.cell || Math.min(86, Math.floor(maxW / cols), Math.floor(maxH / rows));
+      const w = cols * cell;
+      const h = rows * cell;
+      const g = svgEl('g');
+      parent.appendChild(g);
+
+      drawText(g, x + w / 2, y - 38, opts.label || '', { size: opts.labelSize || 26, weight: 900, anchor: 'middle', fill: opts.labelFill || '#0f172a' });
+      if (opts.subLabel) drawText(g, x + w / 2, y - 12, opts.subLabel, { size: 16, weight: 700, anchor: 'middle', fill: '#64748b' });
+
+      for (let c = 0; c < cols; c++) {
+        drawText(g, x + c * cell + cell / 2, y - 6, String(c), { size: 15, weight: 700, anchor: 'middle', fill: '#94a3b8' });
+      }
+      for (let r = 0; r < rows; r++) {
+        drawText(g, x - 12, y + r * cell + cell / 2 + 2, String(r), { size: 15, weight: 700, anchor: 'end', baseline: 'middle', fill: '#94a3b8' });
+      }
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          let fill = '#ffffff';
+          let stroke = '#0f172a';
+          let sw = 1.6;
+          const val = matrix[r][c];
+          if (val !== null && opts.isTarget) fill = '#ecfdf5';
+          if (opts.activeColumn === c) fill = '#e0f2fe';
+          if (opts.activeRow === r) fill = '#e0f2fe';
+          if (opts.targetRow === r && opts.isTarget) fill = '#fef9c3';
+          if (opts.targetRowDone === r && opts.isTarget) fill = '#dcfce7';
+          if (opts.sourceCell && opts.sourceCell.row === r && opts.sourceCell.col === c) {
+            fill = '#fde68a'; stroke = '#b45309'; sw = 4;
+          }
+          if (opts.targetCell && opts.targetCell.row === r && opts.targetCell.col === c) {
+            fill = '#bbf7d0'; stroke = '#15803d'; sw = 4;
+          }
+          if (opts.outputRow === r) {
+            fill = '#dbeafe'; stroke = '#2563eb'; sw = 4;
+          }
+          const rect = svgEl('rect', {
+            x: x + c * cell,
+            y: y + r * cell,
+            width: cell,
+            height: cell,
+            fill,
+            stroke,
+            'stroke-width': sw
+          });
+          g.appendChild(rect);
+          drawText(g, x + c * cell + cell / 2, y + r * cell + cell / 2 + 3,
+            val === null ? '' : String(val),
+            { size: Math.max(24, Math.floor(cell * 0.42)), weight: 900, anchor: 'middle', baseline: 'middle', fill: '#111827' });
+        }
+      }
+      drawText(g, x + w / 2, y + h + 28, rows + ' × ' + cols, { size: 16, weight: 800, anchor: 'middle', fill: '#475569' });
+      return { x, y, w, h, cell };
+    }
+
+    function drawOpsBar(parent, state, ex) {
+      drawRoundRect(parent, 38, 34, 1124, 146, '#ffffff', '#d8dee9', 18);
+      drawText(parent, 62, 70, ex.name + ' 輸入資料', { size: 22, weight: 900, fill: '#0f172a' });
+      drawText(parent, 62, 104, 'R=' + ex.R + '，C=' + ex.C + '，M=' + ex.M + '；已知矩陣 B 在下方。', { size: 17, weight: 700, fill: '#475569' });
+      drawText(parent, 62, 138, '0 = 旋轉，1 = 翻轉；反推時從右往左讀 token。', { size: 17, weight: 700, fill: '#475569' });
+
+      const startX = 560;
+      const y = 58;
+      drawText(parent, startX, 54, 'ops 原始順序', { size: 16, weight: 800, fill: '#334155' });
+      const cardW = 72;
+      const gap = 12;
+      const processed = new Set(state.processedOps || []);
+      for (let k = 0; k < ex.ops.length; k++) {
+        const x = startX + k * (cardW + gap);
+        let fill = '#f8fafc';
+        let stroke = '#cbd5e1';
+        if (processed.has(k)) { fill = '#dcfce7'; stroke = '#16a34a'; }
+        if (state.activeOpIndex === k) { fill = '#fef3c7'; stroke = '#f59e0b'; }
+        drawRoundRect(parent, x, y, cardW, 70, fill, stroke, 12);
+        drawText(parent, x + cardW / 2, y + 26, 'm' + k, { size: 17, weight: 900, anchor: 'middle', fill: '#334155' });
+        drawText(parent, x + cardW / 2, y + 55, String(ex.ops[k]), { size: 24, weight: 900, anchor: 'middle', fill: '#0f172a' });
+      }
+      if (ex.ops.length > 1) {
+        const x1 = startX + (ex.ops.length - 1) * (cardW + gap) + cardW / 2;
+        const x2 = startX + cardW / 2;
+        parent.appendChild(svgEl('line', { x1, y1: 154, x2, y2: 154, stroke: '#ef4444', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+        parent.appendChild(svgEl('path', { d: 'M' + (x2 - 1) + ',154 L' + (x2 + 14) + ',146 L' + (x2 + 14) + ',162 Z', fill: '#ef4444' }));
+        drawText(parent, (x1 + x2) / 2, 172, '反推方向', { size: 15, weight: 900, anchor: 'middle', fill: '#ef4444' });
+      }
+    }
+
+    function drawFooterStatus(parent, step, state) {
+      drawRoundRect(parent, 40, 684, 1120, 50, '#0f172a', '#0f172a', 16);
+      const node = step.activeNode ? '目前節點：' + step.activeNode : '目前節點：matrix';
+      drawText(parent, 64, 715, node, { size: 18, weight: 800, fill: '#e5e7eb' });
+      const activeOp = state.activeOpIndex !== null && state.activeOpIndex !== undefined
+        ? '目前 token：ops[' + state.activeOpIndex + '] = ' + state.ops[state.activeOpIndex] + '（' + opReverseName(state.ops[state.activeOpIndex]) + '）'
+        : '目前 token：無';
+      drawText(parent, 430, 715, activeOp, { size: 18, weight: 800, fill: '#e5e7eb' });
+      drawText(parent, 930, 715, '函式：' + (step.func || 'main'), { size: 18, weight: 800, fill: '#e5e7eb' });
+    }
+
+    function drawVisualization(step) {
+      const ex = examples[currentExampleKey];
+      const state = step.visualState;
+      svg.innerHTML = '';
+      svg.setAttribute('viewBox', '0 0 1200 760');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+      svg.appendChild(svgEl('rect', { x: 0, y: 0, width: 1200, height: 760, fill: 'url(#bgGrad)' }));
+      const defs = svgEl('defs');
+      const grad = svgEl('linearGradient', { id: 'bgGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+      grad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#eff6ff' }));
+      grad.appendChild(svgEl('stop', { offset: '48%', 'stop-color': '#ffffff' }));
+      grad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#f8fafc' }));
+      defs.appendChild(grad);
+      svg.insertBefore(defs, svg.firstChild);
+
+      drawOpsBar(svg, state, ex);
+
+      if (state.source && state.target) {
+        const src = state.source;
+        const tgt = state.target;
+        const srcBox = drawMatrix(svg, src, 135, 285, {
+          label: '來源 matrixB',
+          subLabel: '目前拿來反推的矩陣',
+          sourceCell: state.sourceCell,
+          activeColumn: state.activeColumn,
+          activeRow: state.activeRow,
+          maxW: 380,
+          maxH: 330
+        });
+        const tgtBox = drawMatrix(svg, tgt, 710, 285, {
+          label: '新矩陣 matrixA',
+          subLabel: '正在建立的上一個狀態',
+          isTarget: true,
+          targetCell: state.targetCell,
+          targetRow: state.targetRow,
+          targetRowDone: state.targetRowDone,
+          maxW: 390,
+          maxH: 330
+        });
+        drawArrow(svg, srcBox.x + srcBox.w + 60, 420, tgtBox.x - 60, 420, state.arrowLabel || '轉換');
+
+        if (state.sourceCell && state.targetCell) {
+          const formula = 'matrixA[' + state.targetCell.row + '][' + state.targetCell.col + '] = matrixB[' + state.sourceCell.row + '][' + state.sourceCell.col + ']';
+          drawRoundRect(svg, 330, 218, 540, 48, '#fef9c3', '#f59e0b', 14);
+          drawText(svg, 600, 249, formula, { size: 21, weight: 900, anchor: 'middle', fill: '#92400e' });
+        } else if (state.activeColumn !== undefined) {
+          drawRoundRect(svg, 365, 218, 470, 48, '#e0f2fe', '#38bdf8', 14);
+          drawText(svg, 600, 249, '取第 ' + state.activeColumn + ' 欄，變成新的一列', { size: 21, weight: 900, anchor: 'middle', fill: '#075985' });
+        } else if (state.activeRow !== undefined) {
+          drawRoundRect(svg, 380, 218, 440, 48, '#e0f2fe', '#38bdf8', 14);
+          drawText(svg, 600, 249, '取第 ' + state.activeRow + ' 列，放到新矩陣下方', { size: 21, weight: 900, anchor: 'middle', fill: '#075985' });
+        }
+      } else {
+        const current = state.current || examples[currentExampleKey].matrixB;
+        const rows = current.length;
+        const cols = current[0].length;
+        const cell = Math.min(92, Math.floor(430 / cols), Math.floor(330 / rows));
+        const w = cols * cell;
+        const h = rows * cell;
+        const x = (1200 - w) / 2;
+        const y = 285;
+        let label = '目前 matrix';
+        let subLabel = rows + ' × ' + cols;
+        if (state.mode === 'final' || state.mode === 'output' || state.mode === 'outputDone') {
+          label = '原始矩陣 A';
+          subLabel = '反推完成後的答案';
+        } else if (state.mode === 'readMatrix') {
+          label = '讀入中的矩陣 B';
+          subLabel = '已讀 ' + (state.readRows || 0) + ' 列';
+        } else if (state.mode === 'reverseIntro') {
+          label = '已知矩陣 B';
+          subLabel = '接下來倒著處理 ops';
+        }
+        drawMatrix(svg, current, x, y, {
+          label,
+          subLabel,
+          outputRow: state.outputRow,
+          maxW: 500,
+          maxH: 330,
+          cell
+        });
+
+        if (state.mode === 'readMatrix') {
+          drawRoundRect(svg, 395, 218, 410, 48, '#eff6ff', '#60a5fa', 14);
+          drawText(svg, 600, 249, '讀資料：matrix.append(rList)', { size: 21, weight: 900, anchor: 'middle', fill: '#1d4ed8' });
+        } else if (state.mode === 'output' || state.mode === 'outputDone') {
+          drawRoundRect(svg, 382, 218, 436, 48, '#ecfdf5', '#22c55e', 14);
+          drawText(svg, 600, 249, '輸出答案：原始矩陣 A', { size: 21, weight: 900, anchor: 'middle', fill: '#166534' });
+        } else if (state.justCompleted !== undefined) {
+          drawRoundRect(svg, 398, 218, 404, 48, '#dcfce7', '#22c55e', 14);
+          drawText(svg, 600, 249, 'ops[' + state.justCompleted + '] 已反推完成', { size: 21, weight: 900, anchor: 'middle', fill: '#166534' });
+        }
+      }
+
+      drawFooterStatus(svg, step, state);
+    }
+
+    function updateStep() {
+      const step = steps[stepIndex];
+      stepBadge.textContent = '步驟 ' + (stepIndex + 1) + ' / ' + steps.length;
+      funcValue.textContent = step.func || 'main';
+      resultValue.textContent = step.result || '';
+      messageValue.textContent = step.message || '';
+      setActiveCodeLines(step.activeLines || [step.activeLine]);
+      drawVisualization(step);
+      document.getElementById('prevBtn').disabled = stepIndex === 0;
+      document.getElementById('nextBtn').disabled = stepIndex === steps.length - 1;
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex++;
+        updateStep();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (stepIndex > 0) {
+        stepIndex--;
+        updateStep();
+      }
+    }
+
+    function reset() {
+      pause();
+      stepIndex = 0;
+      updateStep();
+    }
+
+    function play() {
+      if (isPlaying) return;
+      isPlaying = true;
+      document.getElementById('playBtn').textContent = '暫停';
+      playTimer = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          pause();
+        } else {
+          nextStep();
+        }
+      }, 1050);
+    }
+
+    function pause() {
+      isPlaying = false;
+      document.getElementById('playBtn').textContent = '播放';
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+    }
+
+    function togglePlay() {
+      if (isPlaying) pause();
+      else play();
+    }
+
+    function loadExample(key) {
+      currentExampleKey = key;
+      pause();
+      steps = buildSteps(examples[key]);
+      stepIndex = 0;
+      updateStep();
+    }
+
+    function setupSplitter() {
+      const splitter = document.getElementById('splitter');
+      const left = document.getElementById('leftPane');
+      const right = document.getElementById('rightPane');
+      const main = document.getElementById('mainArea');
+      let dragging = false;
+
+      splitter.addEventListener('mousedown', () => {
+        dragging = true;
+        document.body.style.cursor = 'col-resize';
+      });
+      window.addEventListener('mouseup', () => {
+        dragging = false;
+        document.body.style.cursor = '';
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const rect = main.getBoundingClientRect();
+        let pct = ((e.clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(32, Math.min(72, pct));
+        left.style.width = pct + '%';
+        right.style.width = (100 - pct) + '%';
+      });
+    }
+
+    function setupModal() {
+      const modal = document.getElementById('problemModal');
+      const backdrop = document.getElementById('modalBackdrop');
+      const openBtn = document.getElementById('problemBtn');
+      const closeBtn = document.getElementById('closeModalBtn');
+      const header = document.getElementById('modalHeader');
+      let dragging = false;
+      let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+      function openModal() {
+        backdrop.style.display = 'block';
+        modal.style.display = 'block';
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise([modal]).catch(() => {});
+        }
+      }
+      function closeModal() {
+        backdrop.style.display = 'none';
+        modal.style.display = 'none';
+      }
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', closeModal);
+
+      header.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        dragging = true;
+        const rect = modal.getBoundingClientRect();
+        modal.style.transform = 'none';
+        modal.style.left = rect.left + 'px';
+        modal.style.top = rect.top + 'px';
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+        document.body.style.cursor = 'move';
+      });
+      window.addEventListener('mouseup', () => {
+        dragging = false;
+        document.body.style.cursor = '';
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const newLeft = Math.max(8, Math.min(window.innerWidth - modal.offsetWidth - 8, startLeft + (e.clientX - startX)));
+        const newTop = Math.max(8, Math.min(window.innerHeight - 80, startTop + (e.clientY - startY)));
+        modal.style.left = newLeft + 'px';
+        modal.style.top = newTop + 'px';
+      });
+    }
+
+    function setupEvents() {
+      document.getElementById('nextBtn').addEventListener('click', nextStep);
+      document.getElementById('prevBtn').addEventListener('click', prevStep);
+      document.getElementById('resetBtn').addEventListener('click', reset);
+      document.getElementById('playBtn').addEventListener('click', togglePlay);
+      document.getElementById('exampleSelect').addEventListener('change', (e) => loadExample(e.target.value));
+
+      document.addEventListener('keydown', (e) => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+    }
+
+    buildCode();
+    setupEvents();
+    setupSplitter();
+    setupModal();
+    loadExample(currentExampleKey);
+  </script>
+</body>
+</html>

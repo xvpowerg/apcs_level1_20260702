@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APCS 最大和｜白話教學動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 118px;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --line: #d7dee8;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --orange: #f59e0b;
+      --orange-soft: #fef3c7;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --red: #dc2626;
+      --red-soft: #fee2e2;
+      --code-bg: #111827;
+      --code-line: #1f2937;
+      --code-active: #3b2f10;
+      --code-text: #e5e7eb;
+      --code-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button, select {
+      font-family: inherit;
+      font-size: 15px;
+    }
+
+    .toolbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: var(--toolbar-h);
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 8px 26px rgba(15, 23, 42, 0.08);
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 14px;
+      padding: 12px 16px;
+    }
+
+    .titleBox {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .titleBox h1 {
+      font-size: 22px;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+
+    .titleBox .sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .toolContent {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 10px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(15, 23, 42, 0.12); }
+    .btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+    .btn.warn { background: var(--orange-soft); border-color: #f7c948; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .sampleSelect {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 7px 10px;
+      background: white;
+      color: #0f172a;
+    }
+
+    .stepBadge, .resultBadge {
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .resultBadge {
+      background: #ecfeff;
+      border-color: #bae6fd;
+      color: #075985;
+      max-width: 350px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .messageBar {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .messageCard {
+      min-width: 0;
+      border: 1px solid #dbe3ee;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 8px 10px;
+      overflow: hidden;
+    }
+
+    .messageCard .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+
+    .messageCard .text {
+      font-size: 15px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .main {
+      position: fixed;
+      top: var(--toolbar-h);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      min-height: 0;
+    }
+
+    .leftPane, .rightPane {
+      min-width: 260px;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .leftPane {
+      flex: 0 0 58%;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border-right: 1px solid var(--line);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .visualHeader {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+      min-width: 0;
+    }
+
+    .visualHeader .leftTitle {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .visualHeader .hint {
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .svgWrap {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    svg#visualSvg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px #e5eaf2;
+    }
+
+    .divider {
+      flex: 0 0 8px;
+      cursor: col-resize;
+      background: linear-gradient(90deg, #dce5f2, #f8fafc, #dce5f2);
+      position: relative;
+    }
+
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 46px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+
+    .rightPane {
+      flex: 1 1 auto;
+      background: var(--code-bg);
+      color: var(--code-text);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .codeHeader {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: #0b1220;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .codeHeader b { color: #ffffff; }
+    .codeHeader span { color: var(--code-muted); font-size: 13px; }
+
+    .codeArea {
+      overflow: auto;
+      padding: 12px 0 26px 0;
+      font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.62;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 12px;
+      padding: 0 18px 0 0;
+      min-width: max-content;
+      border-left: 5px solid transparent;
+      white-space: pre;
+    }
+
+    .lineNo {
+      color: #94a3b8;
+      text-align: right;
+      user-select: none;
+    }
+
+    .codeText {
+      color: #e5e7eb;
+    }
+
+    .code-line.active {
+      background: var(--code-active);
+      border-left-color: #fbbf24;
+      box-shadow: inset 0 0 0 1px rgba(251,191,36,0.16);
+    }
+
+    .code-line.active .lineNo { color: #fde68a; font-weight: 800; }
+    .code-line.active .codeText { color: #fff7ed; font-weight: 800; }
+
+    .modalBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modalBackdrop.show { display: flex; }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 86vh;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .modalHead {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modalHead h2 { margin: 0; font-size: 22px; }
+    .modalBody {
+      padding: 18px 22px 24px;
+      overflow: auto;
+      line-height: 1.75;
+      font-size: 16px;
+    }
+
+    .modalBody h3 { margin: 22px 0 6px; }
+    .modalBody pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 14px;
+      overflow: auto;
+      line-height: 1.5;
+    }
+
+    .twoExamples {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .exampleBox {
+      border: 1px solid #dbe3ee;
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .kbd {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      border: 1px solid #cbd5e1;
+      border-bottom-width: 3px;
+      border-radius: 6px;
+      padding: 1px 6px;
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 880px) {
+      :root { --toolbar-h: 162px; }
+      .toolbar { grid-template-columns: 1fr; height: var(--toolbar-h); }
+      .messageBar { grid-template-columns: 1fr; }
+      .titleBox h1 { font-size: 20px; }
+      .twoExamples { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <section class="titleBox">
+      <h1>APCS 第 2 題 最大和</h1>
+      <div class="sub">白話教學｜一步一步看懂 LNums、S、RNums 怎麼變</div>
+    </section>
+
+    <section class="toolContent">
+      <div class="controls">
+        <button class="btn" id="prevBtn">上一步</button>
+        <button class="btn primary" id="nextBtn">下一步</button>
+        <button class="btn" id="playBtn">播放</button>
+        <button class="btn" id="pauseBtn">暫停</button>
+        <button class="btn warn" id="resetBtn">重設</button>
+        <select class="sampleSelect" id="sampleSelect" aria-label="切換範例">
+          <option value="0">範例一：有可整除數字</option>
+          <option value="1">範例二：輸出 -1</option>
+        </select>
+        <button class="btn" id="problemBtn">題目文字</button>
+        <span class="stepBadge" id="stepBadge">步驟 1 / 1</span>
+        <span class="resultBadge" id="resultBadge">目前狀態：尚未開始</span>
+      </div>
+
+      <div class="messageBar">
+        <div class="messageCard">
+          <span class="label">本步驟簡短說明</span>
+          <div class="text" id="messageText">準備開始。</div>
+        </div>
+        <div class="messageCard">
+          <span class="label">目前讀到 / 正在處理</span>
+          <div class="text" id="detailText">尚未讀取輸入。</div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main class="main" id="mainArea">
+    <section class="leftPane" id="leftPane">
+      <div class="visualHeader">
+        <div class="leftTitle">左側資料結構視覺化</div>
+        <div class="hint">本題不是遞迴，左側改用 SVG 顯示：輸入矩陣 → LNums → S → RNums → 輸出</div>
+      </div>
+      <div class="svgWrap">
+        <svg id="visualSvg" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid meet" role="img" aria-label="最大和資料結構動畫"></svg>
+      </div>
+    </section>
+
+    <div class="divider" id="divider" title="拖曳調整左右寬度"></div>
+
+    <section class="rightPane">
+      <div class="codeHeader">
+        <b>右側 Python 程式碼</b>
+        <span>目前執行行會同步高亮</span>
+      </div>
+      <div class="codeArea" id="codeArea"></div>
+    </section>
+  </main>
+
+  <div class="modalBackdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modalHead">
+        <h2 id="problemTitle">題目文字版：最大和</h2>
+        <button class="btn" id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="modalBody">
+        <h3>問題描述</h3>
+        <p>給定 \(N\) 群數字，每一群剛好有 \(M\) 個正整數。每一群都要選一個數字。假設第 \(i\) 群選出的數字是 \(t_i\)，總和為：</p>
+        <p>\[S=t_1+t_2+\cdots+t_N\]</p>
+        <p>請讓 \(S\) 盡量大，並判斷被選出的每個數字，哪些可以整除 \(S\)。</p>
+        <p>因為每一群都只能選一個，而且每一群互不影響，所以要讓總和最大，最直接的方法就是：每一群都選那一群的最大值。</p>
+
+        <h3>輸入格式</h3>
+        <p>第一行有兩個正整數 \(N\) 和 \(M\)。接下來有 \(N\) 行，每一行有 \(M\) 個正整數，代表一群數字。</p>
+
+        <h3>輸出格式</h3>
+        <p>第一行輸出最大總和 \(S\)。第二行依照群的順序，輸出可以整除 \(S\) 的被選擇數字。如果沒有任何一個可以整除 \(S\)，就輸出 -1。</p>
+
+        <h3>兩組範例</h3>
+        <div class="twoExamples">
+          <div class="exampleBox">
+            <b>範例一輸入</b>
+            <pre>3 2
+1 5
+6 4
+1 1</pre>
+            <b>範例一輸出</b>
+            <pre>12
+6 1</pre>
+            <p>每群最大值是 5、6、1，所以 \(S=12\)。其中 6 和 1 可以整除 12。</p>
+          </div>
+          <div class="exampleBox">
+            <b>範例二輸入</b>
+            <pre>4 3
+6 3 2
+2 7 9
+4 7 1
+9 5 3</pre>
+            <b>範例二輸出</b>
+            <pre>31
+-1</pre>
+            <p>每群最大值是 6、9、7、9，所以 \(S=31\)。沒有任何最大值可以整除 31。</p>
+          </div>
+        </div>
+
+        <h3>鍵盤操作</h3>
+        <p><span class="kbd">ArrowRight</span> 下一步，<span class="kbd">ArrowLeft</span> 上一步，<span class="kbd">Space</span> 播放或暫停。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'N, M = map(int, input().split())    #讀取資料 N M ：群 個',
+      '',
+      'LNums = []                          #將每筆資料中最大值，加入集合LNums',
+      'for i in range(N):                  #讀取N次，切割為M筆資料',
+      '    row = map(int, input().split())',
+      '    LNums.append(max(row))',
+      '#print(LNums)',
+      '',
+      'S = sum(LNums)                      #LNums集合加總和為S',
+      '',
+      'RNums = []                          #LNums集合中可將S整除的數字加入RNums集合',
+      'for l in LNums:',
+      '    if(S%l==0):',
+      '        RNums.append(l)',
+      '',
+      'print(S)                            #輸出 S',
+      '',
+      'if(len(RNums)!=0):                  #顯示最大值中可將S整除的數字',
+      '    print(*RNums)',
+      'else:                               #無資料顯示-1',
+      '    print(-1)'
+    ];
+
+    const samples = [
+      {
+        name: '範例一',
+        N: 3,
+        M: 2,
+        rows: [[1, 5], [6, 4], [1, 1]],
+        output: ['12', '6 1']
+      },
+      {
+        name: '範例二',
+        N: 4,
+        M: 3,
+        rows: [[6, 3, 2], [2, 7, 9], [4, 7, 1], [9, 5, 3]],
+        output: ['31', '-1']
+      }
+    ];
+
+    let currentSampleIndex = 0;
+    let steps = [];
+    let currentStep = 0;
+    let playing = false;
+    let timer = null;
+
+    const svg = document.getElementById('visualSvg');
+    const codeArea = document.getElementById('codeArea');
+    const stepBadge = document.getElementById('stepBadge');
+    const resultBadge = document.getElementById('resultBadge');
+    const messageText = document.getElementById('messageText');
+    const detailText = document.getElementById('detailText');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const sampleSelect = document.getElementById('sampleSelect');
+    const problemBtn = document.getElementById('problemBtn');
+    const problemModal = document.getElementById('problemModal');
+    const closeProblemBtn = document.getElementById('closeProblemBtn');
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderCode() {
+      codeArea.innerHTML = codeLines.map(function(line, idx) {
+        const no = String(idx + 1).padStart(2, '0');
+        return '<div class="code-line" data-line="' + (idx + 1) + '">' +
+          '<span class="lineNo">' + no + '</span>' +
+          '<span class="codeText">' + escapeHtml(line || ' ') + '</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    function maxOf(arr) {
+      return Math.max.apply(null, arr);
+    }
+
+    function sumOf(arr) {
+      return arr.reduce(function(a, b) { return a + b; }, 0);
+    }
+
+    function buildSteps(sample) {
+      const lnums = sample.rows.map(maxOf);
+      const S = sumOf(lnums);
+      const rnums = [];
+      const built = [];
+
+      function push(activeLine, message, detail, result, visualState, activeNode) {
+        built.push({
+          activeLine: activeLine,
+          message: message,
+          detail: detail,
+          result: result,
+          activeNode: activeNode || '',
+          visualState: Object.assign({
+            phase: 'start',
+            lnums: [],
+            rnums: [],
+            showS: false,
+            S: null,
+            outputLines: [],
+            currentRow: -1,
+            currentLIndex: -1,
+            checkText: '',
+            arrowRowToList: -1,
+            arrowListToR: -1
+          }, visualState || {})
+        });
+      }
+
+      push(1,
+        '先看輸入第一行，準備讀取 N 和 M。',
+        '目前讀到：尚未開始。',
+        '尚未開始',
+        { phase: 'start' },
+        'input'
+      );
+
+      push(1,
+        '讀到 N=' + sample.N + '、M=' + sample.M + '。意思是有 ' + sample.N + ' 群，每群 ' + sample.M + ' 個數字。',
+        '目前讀到 token：' + sample.N + ' ' + sample.M,
+        'N=' + sample.N + '，M=' + sample.M,
+        { phase: 'readNM' },
+        'NM'
+      );
+
+      push(3,
+        '建立空的 LNums。它等一下要放每一群的最大值。',
+        '目前變數：LNums = []',
+        'LNums 是空的',
+        { phase: 'initLNums', lnums: [] },
+        'LNums'
+      );
+
+      let nowL = [];
+      for (let i = 0; i < sample.N; i++) {
+        const row = sample.rows[i];
+        const mx = lnums[i];
+        push(4,
+          'for 迴圈進入第 ' + (i + 1) + ' 群。',
+          '目前 i=' + i + '，準備處理第 ' + (i + 1) + ' 群。',
+          'LNums=[' + nowL.join(', ') + ']',
+          { phase: 'loopRow', currentRow: i, lnums: nowL.slice() },
+          'row-' + i
+        );
+        push(5,
+          '讀入第 ' + (i + 1) + ' 群資料：' + row.join(' ') + '。',
+          '目前讀到 token：' + row.join(' '),
+          '正在讀第 ' + (i + 1) + ' 群',
+          { phase: 'readRow', currentRow: i, lnums: nowL.slice() },
+          'row-' + i
+        );
+        nowL.push(mx);
+        const sameCount = row.filter(function(v) { return v === mx; }).length;
+        let tieNote = sameCount > 1 ? '，這一群有多個最大值，但程式只加入一個 ' + mx : '';
+        push(6,
+          '第 ' + (i + 1) + ' 群最大值是 ' + mx + tieNote + '，加入 LNums。',
+          '執行 max(row)，row=' + row.join(' ') + '，得到 ' + mx + '。',
+          'LNums=[' + nowL.join(', ') + ']',
+          { phase: 'appendMax', currentRow: i, lnums: nowL.slice(), arrowRowToList: i },
+          'LNums-' + i
+        );
+      }
+
+      push(9,
+        '把 LNums 全部加起來，得到最大總和 S=' + S + '。',
+        '計算：sum([' + lnums.join(', ') + ']) = ' + S,
+        'S=' + S,
+        { phase: 'sumS', lnums: lnums.slice(), showS: true, S: S },
+        'S'
+      );
+
+      push(11,
+        '建立空的 RNums。它要放「可以整除 S」的最大值。',
+        '目前變數：RNums = []',
+        'RNums 是空的',
+        { phase: 'initRNums', lnums: lnums.slice(), showS: true, S: S, rnums: [] },
+        'RNums'
+      );
+
+      let nowR = [];
+      for (let i = 0; i < lnums.length; i++) {
+        const l = lnums[i];
+        const rem = S % l;
+        push(12,
+          'for 迴圈拿出 LNums 裡的第 ' + (i + 1) + ' 個值：l=' + l + '。',
+          '目前 l=' + l + '，接著要檢查 S % l。',
+          'RNums=[' + nowR.join(', ') + ']',
+          { phase: 'loopL', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), currentLIndex: i },
+          'LNums-' + i
+        );
+        if (rem === 0) {
+          push(13,
+            '檢查 ' + S + ' % ' + l + ' = 0，所以 ' + l + ' 可以整除 S。',
+            '判斷式成立：S % l == 0。',
+            '可以加入 RNums',
+            { phase: 'checkL', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), currentLIndex: i, checkText: S + ' % ' + l + ' = 0，可以加入' },
+            'check-' + i
+          );
+          nowR.push(l);
+          push(14,
+            '把 ' + l + ' 加入 RNums。',
+            '執行 RNums.append(' + l + ')。',
+            'RNums=[' + nowR.join(', ') + ']',
+            { phase: 'appendR', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), currentLIndex: i, checkText: S + ' % ' + l + ' = 0，已加入', arrowListToR: i },
+            'RNums-' + (nowR.length - 1)
+          );
+        } else {
+          push(13,
+            '檢查 ' + S + ' % ' + l + ' = ' + rem + '，不是 0，所以 ' + l + ' 不能整除 S。',
+            '判斷式不成立，不會執行 RNums.append。',
+            'RNums=[' + nowR.join(', ') + ']',
+            { phase: 'checkL', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), currentLIndex: i, checkText: S + ' % ' + l + ' = ' + rem + '，不加入' },
+            'check-' + i
+          );
+        }
+      }
+
+      push(16,
+        '第一行輸出最大總和 S。',
+        '輸出第一行：' + S,
+        '輸出：' + S,
+        { phase: 'printS', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S)] },
+        'output'
+      );
+
+      if (nowR.length !== 0) {
+        push(18,
+          'RNums 不是空的，所以第二行要印出 RNums。',
+          'len(RNums)=' + nowR.length + '，進入 if。',
+          '準備輸出 RNums',
+          { phase: 'ifR', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S)] },
+          'RNums'
+        );
+        push(19,
+          '第二行輸出：' + nowR.join(' ') + '。',
+          'print(*RNums) 會把 List 內容用空白分開印出。',
+          '完成輸出',
+          { phase: 'printR', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S), nowR.join(' ')] },
+          'output'
+        );
+      } else {
+        push(18,
+          'RNums 是空的，代表沒有任何最大值可以整除 S。',
+          'len(RNums)=0，所以不進入 if，改走 else。',
+          '準備輸出 -1',
+          { phase: 'ifR', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S)] },
+          'RNums'
+        );
+        push(21,
+          '第二行輸出 -1。',
+          '因為 RNums 沒有資料。',
+          '完成輸出',
+          { phase: 'printMinusOne', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S), '-1'] },
+          'output'
+        );
+      }
+
+      push(nowR.length !== 0 ? 19 : 21,
+        '程式結束。答案已經完整輸出。',
+        '最後輸出為：' + [String(S), nowR.length !== 0 ? nowR.join(' ') : '-1'].join(' / '),
+        '完成',
+        { phase: 'done', lnums: lnums.slice(), showS: true, S: S, rnums: nowR.slice(), outputLines: [String(S), nowR.length !== 0 ? nowR.join(' ') : '-1'] },
+        'done'
+      );
+
+      return built;
+    }
+
+    function svgEl(name, attrs, text) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+      for (const key in attrs) {
+        el.setAttribute(key, attrs[key]);
+      }
+      if (text !== undefined && text !== null) {
+        el.textContent = text;
+      }
+      return el;
+    }
+
+    function addText(parent, x, y, text, options) {
+      const opts = options || {};
+      const el = svgEl('text', {
+        x: x,
+        y: y,
+        'font-size': opts.size || 24,
+        'font-weight': opts.weight || 600,
+        fill: opts.fill || '#1f2937',
+        'text-anchor': opts.anchor || 'start',
+        'dominant-baseline': opts.baseline || 'middle'
+      }, text);
+      parent.appendChild(el);
+      return el;
+    }
+
+    function addRect(parent, x, y, w, h, options) {
+      const opts = options || {};
+      const el = svgEl('rect', {
+        x: x,
+        y: y,
+        width: w,
+        height: h,
+        rx: opts.rx || 14,
+        ry: opts.ry || 14,
+        fill: opts.fill || '#ffffff',
+        stroke: opts.stroke || '#cbd5e1',
+        'stroke-width': opts.sw || 2,
+        'stroke-dasharray': opts.dash || ''
+      });
+      if (opts.opacity !== undefined) el.setAttribute('opacity', opts.opacity);
+      parent.appendChild(el);
+      return el;
+    }
+
+    function addArrow(parent, x1, y1, x2, y2, color) {
+      const line = svgEl('line', {
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        stroke: color || '#f59e0b',
+        'stroke-width': 5,
+        'stroke-linecap': 'round',
+        'marker-end': 'url(#arrowHead)'
+      });
+      parent.appendChild(line);
+      return line;
+    }
+
+    function cellStyle(sample, state, rowIndex, colIndex) {
+      const row = sample.rows[rowIndex];
+      const mx = maxOf(row);
+      const alreadyChosen = state.lnums && rowIndex < state.lnums.length;
+      const isCurrentRow = state.currentRow === rowIndex;
+      const isMax = row[colIndex] === mx;
+      let style = {
+        fill: '#ffffff',
+        stroke: '#cbd5e1',
+        sw: 2,
+        textFill: '#0f172a',
+        weight: 700
+      };
+      if (alreadyChosen && isMax) {
+        style.fill = '#dcfce7';
+        style.stroke = '#16a34a';
+        style.sw = 4;
+      } else if (alreadyChosen) {
+        style.fill = '#f8fafc';
+        style.stroke = '#cbd5e1';
+      }
+      if (isCurrentRow && (state.phase === 'readRow' || state.phase === 'loopRow')) {
+        style.fill = '#fef3c7';
+        style.stroke = '#f59e0b';
+        style.sw = 4;
+      }
+      if (isCurrentRow && state.phase === 'appendMax' && isMax) {
+        style.fill = '#bbf7d0';
+        style.stroke = '#15803d';
+        style.sw = 5;
+      }
+      return style;
+    }
+
+    function drawVisual(step) {
+      const sample = samples[currentSampleIndex];
+      const state = step.visualState;
+      svg.innerHTML = '';
+
+      const defs = svgEl('defs', {});
+      const marker = svgEl('marker', {
+        id: 'arrowHead',
+        markerWidth: 10,
+        markerHeight: 10,
+        refX: 8,
+        refY: 3,
+        orient: 'auto',
+        markerUnits: 'strokeWidth'
+      });
+      marker.appendChild(svgEl('path', { d: 'M0,0 L0,6 L9,3 z', fill: '#f59e0b' }));
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      addRect(svg, 18, 18, 1164, 724, { fill: '#ffffff', stroke: '#e2e8f0', sw: 2, rx: 22 });
+
+      addText(svg, 42, 46, '資料流程：輸入矩陣 → 每群最大值 LNums → 最大總和 S → 可整除清單 RNums', { size: 25, weight: 900, fill: '#0f172a' });
+      addText(svg, 42, 82, '範例：' + sample.name + '，N=' + sample.N + '，M=' + sample.M, { size: 19, weight: 700, fill: '#475569' });
+
+      const leftX = 44;
+      const topY = 122;
+      const rowGap = sample.N <= 3 ? 90 : 76;
+      const cellW = sample.M <= 2 ? 74 : 62;
+      const cellH = 46;
+      const cellGap = 12;
+
+      addText(svg, leftX, 114, '輸入資料：每一列是一群', { size: 22, weight: 900, fill: '#1e293b' });
+
+      for (let i = 0; i < sample.N; i++) {
+        const y = topY + i * rowGap;
+        const isCurrentRow = state.currentRow === i;
+        const rowDone = state.lnums && i < state.lnums.length;
+        let groupFill = rowDone ? '#f0fdf4' : '#f8fafc';
+        let groupStroke = isCurrentRow ? '#f59e0b' : '#dbe3ee';
+        let groupSw = isCurrentRow ? 4 : 2;
+        addRect(svg, leftX, y - 24, 450, 70, { fill: groupFill, stroke: groupStroke, sw: groupSw, rx: 18 });
+        addText(svg, leftX + 18, y + 10, '第 ' + (i + 1) + ' 群', { size: 19, weight: 900, fill: '#334155' });
+        const row = sample.rows[i];
+        for (let j = 0; j < sample.M; j++) {
+          const x = leftX + 132 + j * (cellW + cellGap);
+          const st = cellStyle(sample, state, i, j);
+          addRect(svg, x, y - 13, cellW, cellH, { fill: st.fill, stroke: st.stroke, sw: st.sw, rx: 12 });
+          addText(svg, x + cellW / 2, y + 10, String(row[j]), { size: 23, weight: st.weight, fill: st.textFill, anchor: 'middle' });
+        }
+        const mx = maxOf(row);
+        const maxLabelX = leftX + 132 + sample.M * (cellW + cellGap) + 12;
+        if (rowDone) {
+          addText(svg, maxLabelX, y + 10, 'max=' + mx, { size: 18, weight: 900, fill: '#15803d' });
+        } else if (isCurrentRow) {
+          addText(svg, maxLabelX, y + 10, '處理中', { size: 18, weight: 900, fill: '#b45309' });
+        } else {
+          addText(svg, maxLabelX, y + 10, '未處理', { size: 18, weight: 700, fill: '#94a3b8' });
+        }
+      }
+
+      const listX = 575;
+      const listY = 126;
+      addRect(svg, listX - 24, listY - 42, 576, 145, { fill: '#f8fafc', stroke: '#dbe3ee', sw: 2, rx: 20 });
+      addText(svg, listX, listY - 12, 'LNums：每一群挑出的最大值', { size: 23, weight: 900, fill: '#1e293b' });
+      addText(svg, listX, listY + 18, '順序不能亂，因為輸出也要照群的順序。', { size: 17, weight: 600, fill: '#64748b' });
+
+      const boxW = 72;
+      const boxH = 46;
+      const startY = listY + 48;
+      for (let i = 0; i < sample.N; i++) {
+        const x = listX + i * (boxW + 14);
+        const has = state.lnums && i < state.lnums.length;
+        const active = state.currentLIndex === i || state.arrowRowToList === i;
+        addRect(svg, x, startY, boxW, boxH, {
+          fill: has ? (active ? '#fef3c7' : '#dcfce7') : '#ffffff',
+          stroke: has ? (active ? '#f59e0b' : '#16a34a') : '#cbd5e1',
+          sw: active ? 5 : 3,
+          rx: 13,
+          dash: has ? '' : '7 5'
+        });
+        addText(svg, x + boxW / 2, startY + boxH / 2, has ? String(state.lnums[i]) : '?', { size: 23, weight: 900, fill: has ? '#0f172a' : '#94a3b8', anchor: 'middle' });
+        addText(svg, x + boxW / 2, startY + boxH + 20, '第' + (i + 1) + '群', { size: 14, weight: 700, fill: '#64748b', anchor: 'middle' });
+      }
+
+      if (state.arrowRowToList >= 0) {
+        const i = state.arrowRowToList;
+        const y = topY + i * rowGap + 10;
+        const x2 = listX + i * (boxW + 14) + boxW / 2;
+        addArrow(svg, 505, y, x2 - 8, startY + boxH / 2, '#f59e0b');
+      }
+
+      const sX = 575;
+      const sY = 310;
+      addRect(svg, sX - 24, sY - 50, 576, 110, { fill: state.showS ? '#ecfeff' : '#f8fafc', stroke: state.showS ? '#0891b2' : '#dbe3ee', sw: state.showS ? 4 : 2, rx: 20 });
+      addText(svg, sX, sY - 20, 'S：最大總和', { size: 23, weight: 900, fill: '#164e63' });
+      const lText = state.lnums && state.lnums.length ? state.lnums.join(' + ') : '尚未有 LNums';
+      const sText = state.showS ? lText + ' = ' + state.S : lText;
+      addText(svg, sX, sY + 18, sText, { size: 25, weight: 900, fill: state.showS ? '#0e7490' : '#64748b' });
+
+      const rX = 575;
+      const rY = 455;
+      addRect(svg, rX - 24, rY - 58, 576, 136, { fill: '#f8fafc', stroke: '#dbe3ee', sw: 2, rx: 20 });
+      addText(svg, rX, rY - 30, 'RNums：能整除 S 的最大值', { size: 23, weight: 900, fill: '#1e293b' });
+
+      const rnums = state.rnums || [];
+      if (rnums.length === 0) {
+        addRect(svg, rX, rY + 8, 160, 44, { fill: '#ffffff', stroke: '#cbd5e1', sw: 2, rx: 13, dash: '7 5' });
+        addText(svg, rX + 80, rY + 30, '目前空', { size: 19, weight: 800, fill: '#94a3b8', anchor: 'middle' });
+      } else {
+        for (let i = 0; i < rnums.length; i++) {
+          const x = rX + i * 86;
+          const active = state.phase === 'appendR' && i === rnums.length - 1;
+          addRect(svg, x, rY + 8, 72, 46, { fill: active ? '#ede9fe' : '#dcfce7', stroke: active ? '#7c3aed' : '#16a34a', sw: active ? 5 : 3, rx: 13 });
+          addText(svg, x + 36, rY + 31, String(rnums[i]), { size: 23, weight: 900, fill: '#0f172a', anchor: 'middle' });
+        }
+      }
+
+      if (state.arrowListToR >= 0) {
+        const i = state.arrowListToR;
+        const fromX = listX + i * (boxW + 14) + boxW / 2;
+        addArrow(svg, fromX, startY + boxH + 30, rX + Math.max(0, rnums.length - 1) * 86 + 36, rY + 4, '#7c3aed');
+      }
+
+      const checkX = 42;
+      const checkY = 542;
+      addRect(svg, checkX, checkY - 44, 500, 90, { fill: state.checkText ? '#fff7ed' : '#f8fafc', stroke: state.checkText ? '#f59e0b' : '#dbe3ee', sw: state.checkText ? 4 : 2, rx: 18 });
+      addText(svg, checkX + 18, checkY - 16, '整除檢查', { size: 22, weight: 900, fill: '#92400e' });
+      addText(svg, checkX + 18, checkY + 20, state.checkText || '等 S 算出來後，逐一檢查 LNums 裡的值。', { size: 21, weight: 800, fill: state.checkText ? '#9a3412' : '#64748b' });
+
+      const outX = 575;
+      const outY = 630;
+      addRect(svg, outX - 24, outY - 52, 576, 110, { fill: '#f8fafc', stroke: '#dbe3ee', sw: 2, rx: 20 });
+      addText(svg, outX, outY - 22, '目前輸出', { size: 23, weight: 900, fill: '#1e293b' });
+      const outputLines = state.outputLines || [];
+      if (outputLines.length === 0) {
+        addText(svg, outX, outY + 18, '尚未 print', { size: 24, weight: 900, fill: '#94a3b8' });
+      } else {
+        addText(svg, outX, outY + 12, outputLines.join('  /  '), { size: 28, weight: 900, fill: '#0f172a' });
+      }
+
+      drawLegend(svg);
+    }
+
+    function drawLegend(parent) {
+      const x = 42;
+      const y = 678;
+      addText(parent, x, y - 24, '狀態顏色', { size: 17, weight: 900, fill: '#334155' });
+      const items = [
+        ['未處理', '#ffffff', '#cbd5e1'],
+        ['目前處理中', '#fef3c7', '#f59e0b'],
+        ['已選最大值', '#dcfce7', '#16a34a'],
+        ['加入 RNums', '#ede9fe', '#7c3aed']
+      ];
+      for (let i = 0; i < items.length; i++) {
+        const ix = x + i * 116;
+        addRect(parent, ix, y, 26, 22, { fill: items[i][1], stroke: items[i][2], sw: 3, rx: 6 });
+        addText(parent, ix + 34, y + 12, items[i][0], { size: 14, weight: 700, fill: '#475569' });
+      }
+    }
+
+    function updateCode(activeLine) {
+      const lines = codeArea.querySelectorAll('.code-line');
+      lines.forEach(function(el) {
+        const lineNo = Number(el.getAttribute('data-line'));
+        el.classList.toggle('active', lineNo === activeLine);
+        if (lineNo === activeLine) {
+          const top = el.offsetTop - codeArea.clientHeight * 0.38;
+          codeArea.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        }
+      });
+    }
+
+    function renderStep() {
+      const step = steps[currentStep];
+      if (!step) return;
+      stepBadge.textContent = '步驟 ' + (currentStep + 1) + ' / ' + steps.length;
+      resultBadge.textContent = '目前狀態：' + step.result;
+      messageText.textContent = step.message;
+      detailText.textContent = step.detail;
+      updateCode(step.activeLine);
+      drawVisual(step);
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.disabled = currentStep === steps.length - 1;
+      if (currentStep === steps.length - 1) pause();
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        renderStep();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep -= 1;
+        renderStep();
+      }
+    }
+
+    function resetStep() {
+      pause();
+      currentStep = 0;
+      renderStep();
+    }
+
+    function play() {
+      if (playing) return;
+      playing = true;
+      playBtn.disabled = true;
+      pauseBtn.disabled = false;
+      timer = setInterval(function() {
+        if (currentStep >= steps.length - 1) {
+          pause();
+        } else {
+          nextStep();
+        }
+      }, 1200);
+    }
+
+    function pause() {
+      playing = false;
+      playBtn.disabled = false;
+      pauseBtn.disabled = true;
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function loadSample(index) {
+      pause();
+      currentSampleIndex = index;
+      sampleSelect.value = String(index);
+      steps = buildSteps(samples[currentSampleIndex]);
+      currentStep = 0;
+      renderStep();
+    }
+
+    prevBtn.addEventListener('click', prevStep);
+    nextBtn.addEventListener('click', nextStep);
+    playBtn.addEventListener('click', play);
+    pauseBtn.addEventListener('click', pause);
+    resetBtn.addEventListener('click', resetStep);
+    sampleSelect.addEventListener('change', function(e) {
+      loadSample(Number(e.target.value));
+    });
+
+    problemBtn.addEventListener('click', function() {
+      problemModal.classList.add('show');
+      problemModal.setAttribute('aria-hidden', 'false');
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([problemModal]);
+      }
+    });
+
+    closeProblemBtn.addEventListener('click', function() {
+      problemModal.classList.remove('show');
+      problemModal.setAttribute('aria-hidden', 'true');
+    });
+
+    problemModal.addEventListener('click', function(e) {
+      if (e.target === problemModal) {
+        problemModal.classList.remove('show');
+        problemModal.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      const isModalOpen = problemModal.classList.contains('show');
+      if (isModalOpen && e.key === 'Escape') {
+        problemModal.classList.remove('show');
+        problemModal.setAttribute('aria-hidden', 'true');
+        return;
+      }
+      if (isModalOpen) return;
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextStep();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevStep();
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        playing ? pause() : play();
+      }
+    });
+
+    const divider = document.getElementById('divider');
+    const leftPane = document.getElementById('leftPane');
+    const mainArea = document.getElementById('mainArea');
+    let dragging = false;
+
+    divider.addEventListener('pointerdown', function(e) {
+      dragging = true;
+      divider.setPointerCapture(e.pointerId);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    divider.addEventListener('pointermove', function(e) {
+      if (!dragging) return;
+      const rect = mainArea.getBoundingClientRect();
+      let pct = (e.clientX - rect.left) / rect.width * 100;
+      pct = Math.max(28, Math.min(76, pct));
+      leftPane.style.flexBasis = pct + '%';
+    });
+
+    divider.addEventListener('pointerup', function(e) {
+      dragging = false;
+      try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    divider.addEventListener('pointercancel', function(e) {
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    renderCode();
+    loadSample(0);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>h082.2 贏家預測｜詳細計算教學動畫</title>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(','\\)']],
+    displayMath: [['\\[','\\]']]
+  },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --toolbar-h: 112px;
+  --toolbar-real-h: 112px;
+  --bg:#f6f7fb;
+  --panel:#ffffff;
+  --ink:#0f172a;
+  --muted:#64748b;
+  --line:#d8dee9;
+  --soft:#f8fafc;
+  --accent:#2563eb;
+  --accent-soft:#dbeafe;
+  --green:#16a34a;
+  --green-soft:#dcfce7;
+  --orange:#f97316;
+  --orange-soft:#ffedd5;
+  --red:#dc2626;
+  --red-soft:#fee2e2;
+  --purple:#7c3aed;
+  --purple-soft:#ede9fe;
+  --shadow:0 8px 22px rgba(15,23,42,.10);
+  --radius:14px;
+}
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; }
+body{
+  font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  overflow:hidden;
+}
+button,select{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--ink);
+  border-radius:10px;
+  padding:8px 11px;
+  font-size:14px;
+  cursor:pointer;
+  transition:.15s ease;
+  white-space:nowrap;
+}
+button:hover,select:hover{ border-color:var(--accent); background:#f8fbff; }
+button.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+button.danger{ color:var(--red); border-color:#fecaca; background:#fff8f8; }
+.toolbar{
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:50;
+  min-height:var(--toolbar-h);
+  height:auto;
+  background:rgba(255,255,255,.96);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 4px 18px rgba(15,23,42,.08);
+  display:grid;
+  grid-template-columns:minmax(230px,300px) minmax(0,1fr);
+  gap:10px;
+  padding:10px 14px;
+  backdrop-filter:blur(10px);
+}
+.titleBlock{ display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; }
+.titleBlock h1{ font-size:20px; line-height:1.15; margin:0; letter-spacing:.02em; }
+.titleBlock .sub{ color:var(--muted); font-size:13px; line-height:1.35; }
+.controlBlock{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-width:0; }
+.statusBox{
+  display:grid;
+  grid-template-columns:minmax(115px,140px) minmax(260px,420px) minmax(300px,1fr);
+  gap:8px;
+  align-items:stretch;
+  min-width:560px;
+  flex:1 1 820px;
+}
+.pill{
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--soft);
+  padding:8px 10px;
+  min-width:0;
+}
+.pill .label{ display:block; color:var(--muted); font-size:12px; margin-bottom:2px; }
+.pill .value{ display:block; font-weight:800; font-size:14px; line-height:1.35; min-width:0; }
+#resultInfo.value,#message.value{
+  white-space:normal;
+  word-break:break-word;
+  max-height:66px;
+  overflow:auto;
+  padding-right:4px;
+}
+#resultInfo.value::-webkit-scrollbar,#message.value::-webkit-scrollbar,.visualWrap::-webkit-scrollbar,.codeWrap::-webkit-scrollbar,.scrollBox::-webkit-scrollbar,.calcDetailScroll::-webkit-scrollbar,.modal::-webkit-scrollbar{ width:8px; height:8px; }
+#resultInfo.value::-webkit-scrollbar-thumb,#message.value::-webkit-scrollbar-thumb,.visualWrap::-webkit-scrollbar-thumb,.codeWrap::-webkit-scrollbar-thumb,.scrollBox::-webkit-scrollbar-thumb,.calcDetailScroll::-webkit-scrollbar-thumb,.modal::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:999px; }
+#resultInfo.value::-webkit-scrollbar-track,#message.value::-webkit-scrollbar-track,.visualWrap::-webkit-scrollbar-track,.codeWrap::-webkit-scrollbar-track,.scrollBox::-webkit-scrollbar-track,.calcDetailScroll::-webkit-scrollbar-track,.modal::-webkit-scrollbar-track{ background:#f8fafc; border-radius:999px; }
+.main{
+  position:absolute;
+  top:var(--toolbar-real-h,var(--toolbar-h));
+  left:0; right:0; bottom:0;
+  display:flex;
+  min-height:0;
+}
+.leftPane,.rightPane{
+  height:calc(100vh - var(--toolbar-real-h,var(--toolbar-h)));
+  min-width:280px;
+  overflow:hidden;
+  background:var(--panel);
+}
+.leftPane{ flex:0 0 58%; border-right:1px solid var(--line); display:flex; flex-direction:column; }
+.rightPane{ flex:1 1 auto; display:flex; flex-direction:column; }
+.divider{
+  flex:0 0 8px;
+  width:8px;
+  cursor:col-resize;
+  background:linear-gradient(to right,#e2e8f0,#f8fafc,#e2e8f0);
+  position:relative;
+}
+.divider::before{
+  content:"";
+  position:absolute;
+  top:50%; left:50%;
+  width:3px; height:58px;
+  transform:translate(-50%,-50%);
+  border-radius:99px;
+  background:#94a3b8;
+}
+.visualHeader,.codeHeader{
+  min-height:44px;
+  flex:0 0 44px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 14px;
+  border-bottom:1px solid var(--line);
+  background:#fbfdff;
+  font-size:14px;
+  color:var(--muted);
+  min-width:0;
+}
+.visualHeader strong,.codeHeader strong{ color:var(--ink); }
+.visualHeader span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.visualWrap{
+  flex:1 1 auto;
+  min-height:0;
+  padding:12px;
+  background:linear-gradient(180deg,#ffffff,#f8fafc);
+  overflow:auto;
+}
+.visualStack{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+.sectionCard{
+  flex:0 0 auto;
+  width:100%;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:var(--radius);
+  box-shadow:0 2px 8px rgba(15,23,42,.04);
+  padding:12px;
+  overflow:visible;
+}
+.sectionTitle{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.sectionTitle h2{
+  margin:0;
+  font-size:18px;
+  line-height:1.2;
+}
+.sectionTitle .hint{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+  text-align:right;
+}
+.ruleGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:10px;
+}
+.ruleMini{
+  border:1px solid #bfdbfe;
+  border-radius:12px;
+  background:#eff6ff;
+  padding:10px;
+  line-height:1.55;
+  min-width:0;
+}
+.ruleMini strong{ color:#1d4ed8; display:block; margin-bottom:2px; }
+.inputPre{
+  margin:0;
+  background:#0f172a;
+  color:#e5e7eb;
+  border-radius:12px;
+  padding:10px;
+  overflow:auto;
+  font-family:"Cascadia Code","Consolas",monospace;
+  line-height:1.5;
+  min-height:72px;
+}
+.queueRow,.cardsRow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:stretch;
+  gap:8px;
+}
+.indexBlock{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  min-width:88px;
+}
+.indexLabel{ font-size:12px; color:var(--muted); font-weight:800; }
+.pairChips{ display:flex; flex-wrap:wrap; gap:8px; }
+.pairChip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:6px 10px;
+  background:#f8fafc;
+  font-weight:800;
+  color:#334155;
+}
+.pairChip.bye{ color:#6d28d9; background:#f5f3ff; border-color:#ddd6fe; }
+.playerCard{
+  border:2px solid #cbd5e1;
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+  min-width:130px;
+  line-height:1.45;
+  box-shadow:0 1px 3px rgba(15,23,42,.05);
+  position:relative;
+}
+.playerCard.small{ min-width:92px; padding:8px; font-size:12px; }
+.playerCard .name{ font-weight:900; font-size:16px; margin-bottom:4px; }
+.playerCard.small .name{ font-size:14px; }
+.playerCard .tag{
+  display:inline-block;
+  border-radius:999px;
+  padding:2px 7px;
+  font-size:12px;
+  font-weight:900;
+  margin-left:4px;
+  background:#e2e8f0;
+  color:#334155;
+}
+.playerCard.active{ border-color:#2563eb; background:#eff6ff; }
+.playerCard.winner{ border-color:#16a34a; background:#f0fdf4; }
+.playerCard.loser{ border-color:#f97316; background:#fff7ed; }
+.playerCard.eliminated{ border-color:#dc2626; background:#fef2f2; opacity:.86; }
+.playerCard.bye{ border-color:#7c3aed; background:#faf5ff; }
+.stat{ display:block; font-size:13px; color:#334155; }
+.stat strong{ color:#0f172a; }
+.battleGrid{
+  display:grid;
+  grid-template-columns:minmax(160px,1fr) minmax(220px,1.2fr) minmax(160px,1fr);
+  gap:12px;
+  align-items:stretch;
+}
+.calcBox{
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  border-radius:12px;
+  padding:12px;
+  line-height:1.6;
+  min-width:0;
+}
+.calcBox .big{ font-size:18px; font-weight:900; color:#1d4ed8; }
+.emptyBattle{
+  border:1px dashed #cbd5e1;
+  border-radius:12px;
+  background:#f8fafc;
+  padding:24px;
+  color:#64748b;
+  text-align:center;
+  font-weight:800;
+}
+.wlBox{
+  margin-top:10px;
+  border:1px solid #ddd6fe;
+  background:#f5f3ff;
+  border-radius:12px;
+  padding:10px;
+  line-height:1.55;
+  color:#4c1d95;
+  font-weight:800;
+}
+.updateBox{
+  margin-top:10px;
+  border:1px solid #fed7aa;
+  background:#fff7ed;
+  border-radius:12px;
+  padding:10px;
+  line-height:1.55;
+  color:#9a3412;
+  font-weight:800;
+}
+
+.calcDetailPanel{
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  border-radius:12px;
+  padding:10px;
+  line-height:1.6;
+}
+.calcDetailTitle{
+  font-weight:900;
+  color:#1d4ed8;
+  margin-bottom:8px;
+  font-size:16px;
+}
+.calcDetailScroll{
+  max-height:260px;
+  overflow:auto;
+  padding-right:4px;
+}
+.calcLine{
+  font-family:"Cascadia Code","Consolas","Microsoft JhengHei",monospace;
+  font-size:14px;
+  line-height:1.65;
+  padding:5px 8px;
+  border-bottom:1px dashed #bfdbfe;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.calcLine:last-child{ border-bottom:none; }
+.calcLine.heading{
+  font-family:inherit;
+  font-weight:900;
+  color:#1e40af;
+  background:#dbeafe;
+  border-radius:8px;
+  margin:6px 0;
+  border-bottom:none;
+}
+.calcLine.final{
+  font-weight:900;
+  color:#166534;
+  background:#dcfce7;
+  border-radius:8px;
+  border-bottom:none;
+  margin-top:4px;
+}
+.calcLine.warn{
+  font-family:inherit;
+  color:#9a3412;
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  border-radius:8px;
+  margin:6px 0;
+}
+.splitGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.scrollBox{
+  max-height:178px;
+  overflow:auto;
+  padding-right:4px;
+}
+.emptyText{ color:#94a3b8; font-weight:800; padding:12px; text-align:center; }
+.playersGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+}
+.codeWrap{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  background:#0f172a;
+  color:#e5e7eb;
+  font-family:"Cascadia Code","Consolas","Monaco",monospace;
+  font-size:14px;
+  line-height:1.55;
+  padding:12px 0;
+}
+.codeLine{
+  display:grid;
+  grid-template-columns:48px 1fr;
+  gap:12px;
+  padding:0 14px 0 0;
+  min-height:24px;
+  border-left:4px solid transparent;
+}
+.codeLine .ln{ text-align:right; color:#94a3b8; user-select:none; padding-right:4px; }
+.codeLine .txt{ white-space:pre; tab-size:4; }
+.codeLine.active{ background:rgba(37,99,235,.30); border-left-color:#60a5fa; }
+.codeLine.active .ln{ color:#bfdbfe; font-weight:900; }
+.codeLine.debugLine .txt{ color:#fbbf24; }
+.codeNote{
+  flex:0 0 auto;
+  padding:9px 14px;
+  border-top:1px solid #1e293b;
+  background:#111827;
+  color:#d1d5db;
+  font-size:13px;
+  line-height:1.45;
+}
+kbd{ border:1px solid #cbd5e1; background:#f8fafc; box-shadow:0 1px 0 #cbd5e1; border-radius:6px; padding:1px 6px; font-family:inherit; font-size:.9em; }
+.modalMask{
+  position:fixed;
+  z-index:100;
+  inset:0;
+  background:rgba(15,23,42,.50);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+}
+.modalMask.show{ display:flex; }
+.modal{
+  width:min(980px,96vw);
+  max-height:min(82vh,900px);
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  border:1px solid rgba(255,255,255,.6);
+}
+.modalHead{
+  position:sticky;
+  top:0;
+  z-index:1;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:16px 18px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+.modalHead h2{ margin:0; font-size:20px; }
+.modalBody{ padding:18px; line-height:1.75; font-size:15px; }
+.modalBody h3{ margin:22px 0 8px; font-size:18px; }
+.modalBody .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.modalBody .card{ border:1px solid var(--line); border-radius:14px; padding:12px; background:#f8fafc; }
+.modalBody pre{ margin:8px 0 0; background:#0f172a; color:#fff; padding:12px; border-radius:12px; overflow:auto; line-height:1.5; }
+.ruleBox{ border:1px solid #bfdbfe; background:#eff6ff; border-radius:14px; padding:12px 14px; margin:10px 0 14px; }
+.ruleBox strong{ color:#1d4ed8; }
+.ruleBox ul{ margin:8px 0 0 20px; padding:0; }
+.ruleBox li{ margin:4px 0; }
+.legend{ display:flex; flex-wrap:wrap; gap:8px; }
+.legend span{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:5px 8px; background:#fff; }
+.dot{ width:12px; height:12px; border-radius:50%; display:inline-block; }
+@media(max-width:1120px){
+  .statusBox{ grid-template-columns:120px minmax(220px,1fr) minmax(260px,1fr); min-width:340px; flex-basis:100%; }
+}
+@media(max-width:920px){
+  :root{ --toolbar-h:170px; }
+  .toolbar{ grid-template-columns:1fr; }
+  .leftPane{ flex-basis:52%; }
+  .battleGrid{ grid-template-columns:1fr; }
+  .splitGrid{ grid-template-columns:1fr; }
+}
+@media(max-width:720px){
+  body{ overflow:auto; }
+  .main{ position:static; margin-top:var(--toolbar-real-h,var(--toolbar-h)); flex-direction:column; height:auto; }
+  .leftPane,.rightPane{ min-height:560px; height:calc(100vh - var(--toolbar-real-h,var(--toolbar-h))); width:100% !important; flex:0 0 auto; }
+  .divider{ display:none; }
+  .modalBody .grid2{ grid-template-columns:1fr; }
+  .statusBox{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div class="titleBlock">
+    <h1>h082.2 贏家預測｜一步一步動畫</h1>
+    <div class="sub">左邊正常上下排列，不擋字；能力更新會顯示公式、代入數字、整數除法與新值。</div>
+  </div>
+  <div class="controlBlock">
+    <button id="prevBtn">上一步</button>
+    <button id="nextBtn" class="primary">下一步</button>
+    <button id="playBtn">播放</button>
+    <button id="pauseBtn">暫停</button>
+    <button id="resetBtn" class="danger">重設</button>
+    <button id="problemTopBtn">顯示題目</button>
+    <select id="exampleSelect" aria-label="切換範例"></select>
+    <div class="statusBox">
+      <div class="pill"><span class="label">目前步驟</span><span class="value" id="stepInfo">步驟 1 / 1</span></div>
+      <div class="pill"><span class="label">目前答案或狀態</span><span class="value" id="resultInfo">尚未開始</span></div>
+      <div class="pill"><span class="label">本步驟說明</span><span class="value" id="message">請按下一步開始</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <section class="leftPane" id="leftPane">
+    <div class="visualHeader">
+      <strong>資料結構視覺化</strong>
+      <span>一列一列排列：規則 → idx → 目前對戰 → wins / loses → 所有玩家</span>
+    </div>
+    <div class="visualWrap" id="visualWrap" aria-label="贏家預測資料結構視覺化"></div>
+  </section>
+
+  <div class="divider" id="divider" title="拖曳調整左右寬度"></div>
+
+  <section class="rightPane">
+    <div class="codeHeader">
+      <strong>完整 Python 程式碼</strong>
+      <span>
+        <button id="problemBtn">題目文字</button>
+        <button id="legendBtn">顏色說明</button>
+      </span>
+    </div>
+    <div class="codeWrap" id="codeWrap" aria-label="Python 程式碼"></div>
+    <div class="codeNote">
+      提醒：第 7 行與第 33 行是除錯輸出。w 是 winner 贏家，l 是 loser 輸家，不是在交換玩家。正式送出到裁判系統時，通常要移除除錯輸出。快捷鍵：<kbd>→</kbd> 下一步、<kbd>←</kbd> 上一步、<kbd>Space</kbd> 播放 / 暫停。
+    </div>
+  </section>
+</main>
+
+<div class="modalMask" id="problemModal">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>題目文字版：贏家預測</h2>
+      <button class="closeModal">關閉</button>
+    </div>
+    <div class="modalBody">
+      <div class="ruleBox"><strong>一句話先懂：</strong>很多玩家排隊比賽，每場用「戰力 × 應變力」決定勝負，平手算前面的人贏，輸太多次就淘汰，最後剩下的人就是答案。</div>
+      <div class="ruleBox">
+        <strong>最重要的勝負規則：</strong>
+        <ul>
+          <li>戰鬥值 = 戰力 \(S\) × 應變力 \(T\)。</li>
+          <li>戰鬥值比較大的人贏。</li>
+          <li>有平手；平手時算 \(p1\) 贏。</li>
+          <li>\(p1\) 不是一定指玩家 1，而是「這一場排在前面的玩家」。</li>
+        </ul>
+      </div>
+      <div class="ruleBox">
+        <strong>w 和 l 是什麼？</strong>
+        <ul>
+          <li>\(w\) 是 winner，代表「這場的贏家編號」。</li>
+          <li>\(l\) 是 loser，代表「這場的輸家編號」。</li>
+          <li><code>w, l = p2, p1</code> 不是交換玩家，而是貼標籤：p2 贏，所以 w=p2；p1 輸，所以 l=p1。</li>
+          <li>後面 <code>lCnt[l]+=1</code>、<code>wins.append(w)</code>、<code>loses.append(l)</code> 都靠這兩個標籤處理。</li>
+        </ul>
+      </div>
+      <p>有 \(n\) 個人要比賽，每個人都有戰力 \(S_i\) 與應變力 \(T_i\)。一開始會給一個比賽順序 \(idx\)。每一輪按照目前順序，兩個兩個配對比賽。如果某一輪人數是奇數，最後落單的人直接進入下一輪。</p>
+
+      <h3>比賽勝負</h3>
+      <p>假設第一位玩家的戰力與應變力是 \(a,b\)，第二位玩家是 \(c,d\)。比較：</p>
+      \[
+        a \times b \quad \text{和} \quad c \times d
+      \]
+      <p>如果 \(a \times b \ge c \times d\)，第一位玩家勝利；否則第二位玩家勝利。平手時，前面的玩家勝利。</p>
+
+      <h3>能力更新</h3>
+      <div class="grid2">
+        <div class="card">
+          <strong>第一位玩家勝利</strong>
+          \[
+            S_1 \leftarrow a+\left\lfloor \frac{c d}{2b} \right\rfloor
+          \]
+          \[
+            T_1 \leftarrow b+\left\lfloor \frac{c d}{2a} \right\rfloor
+          \]
+          <p>第二位玩家失敗：</p>
+          \[
+            S_2 \leftarrow c+\left\lfloor \frac{c}{2} \right\rfloor,\quad
+            T_2 \leftarrow d+\left\lfloor \frac{d}{2} \right\rfloor
+          \]
+        </div>
+        <div class="card">
+          <strong>第二位玩家勝利</strong>
+          \[
+            S_2 \leftarrow c+\left\lfloor \frac{a b}{2d} \right\rfloor
+          \]
+          \[
+            T_2 \leftarrow d+\left\lfloor \frac{a b}{2c} \right\rfloor
+          \]
+          <p>第一位玩家失敗：</p>
+          \[
+            S_1 \leftarrow a+\left\lfloor \frac{a}{2} \right\rfloor,\quad
+            T_1 \leftarrow b+\left\lfloor \frac{b}{2} \right\rfloor
+          \]
+        </div>
+      </div>
+
+      <h3>能力更新要怎麼看</h3>
+      <div class="ruleBox">
+        <strong>請注意：</strong>
+        <ul>
+          <li><code>//</code> 是整數除法，只取整數部分，不四捨五入。例如 <code>20 // 6 = 3</code>。</li>
+          <li><code>a,b,c,d</code> 是比賽前先取出的舊值，四個更新公式都用舊值計算。</li>
+          <li>畫面會顯示「原公式 → 代入數字 → 整數除法結果 → 新的 S/T」。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong>例：如果第二位玩家勝利</strong>
+        <pre>假設 a=4, b=5, c=2, d=3
+S[p2] = c + (a × b) // (2 × d)
+S[p2] = 2 + (4 × 5) // (2 × 3)
+S[p2] = 2 + 20 // 6
+S[p2] = 2 + 3
+S[p2] = 5</pre>
+        <p>括號很重要，<code>(2 × d)</code> 是分母，不是先除以 2 再乘以 d。</p>
+      </div>
+
+      <h3>淘汰規則</h3>
+      <p>每個人都有失敗次數。輸一場就加 1。若失敗次數達到 \(m\)，就淘汰。</p>
+      <p>每一輪結束後，下一輪順序是：</p>
+      \[
+        \text{下一輪順序} = \text{勝利組} + \text{尚未淘汰的失敗組}
+      \]
+
+      <h3>範例輸入與輸出</h3>
+      <div class="grid2">
+        <div class="card"><strong>範例 #1</strong><pre>4 1
+4 2 5 3
+2 5 1 5
+1 2 3 4</pre><p>輸出：<strong>4</strong></p></div>
+        <div class="card"><strong>範例 #2</strong><pre>4 5
+4 1 5 3
+6 5 1 6
+4 1 3 2</pre><p>輸出：<strong>1</strong></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modalMask" id="legendModal">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>狀態顏色說明</h2>
+      <button class="closeModal">關閉</button>
+    </div>
+    <div class="modalBody">
+      <div class="legend">
+        <span><i class="dot" style="background:#bfdbfe"></i>目前處理中</span>
+        <span><i class="dot" style="background:#bbf7d0"></i>本輪勝利者</span>
+        <span><i class="dot" style="background:#fed7aa"></i>本輪失敗但未淘汰</span>
+        <span><i class="dot" style="background:#fecaca"></i>淘汰或剛失敗</span>
+        <span><i class="dot" style="background:#ddd6fe"></i>落單直接晉級</span>
+      </div>
+      <p>左邊每一張玩家卡片都會顯示：玩家編號、戰力 S、應變力 T、比較值 S × T、失敗次數。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const CODE_LINES = [
+"n, m = map(int, input().split())",
+"S = [-1]+[int(s) for s in input().split()]  #索引可以直接取得戰力",
+"T = [-1]+[int(t) for t in input().split()]  #索引可以直接取得應變力",
+"idx = [int(i) for i in input().split()]     #當前玩家編號",
+"lCnt = [-1]+[0]*n                           #索引取得失敗次數",
+"while len(idx)>1:                           #只剩一個玩家時結束",
+"    print(1, idx, S, T, lCnt)",
+"    wins, loses = [], []                    #本輪勝利組與失敗組",
+"    for i in range(0,len(idx),2):",
+"        p1 = idx[i]                         #玩家一編號",
+"        if i==len(idx)-1:                   #玩家一落單",
+"            wins.append(p1)                 #直接晉級下一輪,數值不變",
+"            break",
+"        p2 = idx[i+1]                       #玩家二編號",
+"        a,b,c,d = S[p1],T[p1],S[p2],T[p2]   #玩家戰力應變力數值",
+"        if a*b>=c*d:                        #玩家一勝",
+"            S[p1]=a+c*d//(2*b)",
+"            T[p1]=b+c*d//(2*a)",
+"            S[p2]=c+c//2",
+"            T[p2]=d+d//2",
+"            w, l = p1, p2                 # w=贏家winner，l=輸家loser",
+"        else:                               #玩家二勝",
+"            S[p2]=c+a*b//(2*d)",
+"            T[p2]=d+a*b//(2*c)",
+"            S[p1]=a+a//2",
+"            T[p1]=b+b//2",
+"            w, l = p2, p1                 # p2贏、p1輸；不是交換玩家",
+"        lCnt[l]+=1                          # l是輸家，所以失敗次數+1",
+"        wins.append(w)                      # w是贏家，所以加入勝利組",
+"        if lCnt[l]<m:                       #失敗者仍未淘汰",
+"            loses.append(l)                 # l是輸家但沒淘汰，加入失敗組",
+"    idx = wins+loses                        #下一輪順序:勝利組+未淘汰失敗組",
+"    print(2,idx, S, T, lCnt, end='\\n\\n')",
+"print(idx[0])"
+];
+const EXAMPLES = [
+  {id:"ex1", title:"範例 #1：輸 1 次就淘汰", inputLines:["4 1","4 2 5 3","2 5 1 5","1 2 3 4"], n:4, m:1, S:[4,2,5,3], T:[2,5,1,5], idx:[1,2,3,4], output:4, note:"輸 1 次就淘汰，所以流程很短。"},
+  {id:"ex2", title:"範例 #2：輸 5 次才淘汰", inputLines:["4 5","4 1 5 3","6 5 1 6","4 1 3 2"], n:4, m:5, S:[4,1,5,3], T:[6,5,1,6], idx:[4,1,3,2], output:1, note:"輸家可以留下很多輪，所以能力會一直變化。"}
+];
+let steps = [];
+let stepIndex = 0;
+let timer = null;
+let currentExample = EXAMPLES[0];
+const visualWrap = document.getElementById('visualWrap');
+const codeWrap = document.getElementById('codeWrap');
+const stepInfo = document.getElementById('stepInfo');
+const resultInfo = document.getElementById('resultInfo');
+const messageEl = document.getElementById('message');
+const exampleSelect = document.getElementById('exampleSelect');
+
+function esc(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+function makeVisual(ctx){
+  return {
+    exampleTitle:ctx.exampleTitle, n:ctx.n, m:ctx.m, output:ctx.output,
+    S:ctx.S.slice(1), T:ctx.T.slice(1), idx:ctx.idx.slice(), lCnt:ctx.lCnt.slice(1),
+    wins:ctx.wins ? ctx.wins.slice() : [], loses:ctx.loses ? ctx.loses.slice() : [],
+    round:ctx.round, phase:ctx.phase || '', activePair:ctx.activePair ? ctx.activePair.slice() : null,
+    activePlayers:ctx.activePlayers ? ctx.activePlayers.slice() : [], winner:ctx.winner || null,
+    loser:ctx.loser || null, eliminated:ctx.eliminated || null, bye:ctx.bye || null,
+    calc:ctx.calc || '', compareText:ctx.compareText || '', detail:ctx.detail || '', debug:ctx.debug || '',
+    calcTitle:ctx.calcTitle || '',
+    calcDetails:Array.isArray(ctx.calcDetails) ? ctx.calcDetails.slice() : [],
+    pairIndex:ctx.pairIndex ?? null
+  };
+}
+function pushStep(list, ctx, activeLine, message, result){
+  list.push({ activeLine, message, result, visualState:makeVisual(ctx) });
+}
+function formatPairs(arr){
+  const parts = [];
+  for(let i=0;i<arr.length;i+=2){
+    if(i === arr.length-1) parts.push(`玩家 ${arr[i]} 落單，直接晉級`);
+    else parts.push(`玩家 ${arr[i]} vs 玩家 ${arr[i+1]}`);
+  }
+  return parts.join('；');
+}
+
+function divFloor(n,d){ return Math.floor(n/d); }
+function varMappingLines(p1,p2,a,b,c,d){
+  return [
+    '【a、b、c、d 對照表】',
+    `p1 = 玩家 ${p1}，p2 = 玩家 ${p2}`,
+    `a = S[p1] = S[${p1}] = ${a}`,
+    `b = T[p1] = T[${p1}] = ${b}`,
+    `c = S[p2] = S[${p2}] = ${c}`,
+    `d = T[p2] = T[${p2}] = ${d}`,
+    '注意：a、b、c、d 是比賽前先取出的舊值，更新四個公式都用這些舊值。'
+  ];
+}
+function compareLines(p1,p2,a,b,c,d){
+  const v1 = a*b, v2 = c*d;
+  const who = v1 >= v2 ? `p1 玩家 ${p1} 贏` : `p2 玩家 ${p2} 贏`;
+  const tie = v1 === v2 ? '因為平手且程式用 >=，所以 p1 贏。' : '';
+  return [
+    '【勝負判斷】',
+    `玩家 ${p1} 戰鬥值 = a × b = ${a} × ${b} = ${v1}`,
+    `玩家 ${p2} 戰鬥值 = c × d = ${c} × ${d} = ${v2}`,
+    tie || (v1 > v2 ? `${v1} > ${v2}` : `${v1} < ${v2}`),
+    `結果：${who}`
+  ];
+}
+function detailP1WinS(p1,p2,a,b,c,d){
+  const numerator = c*d, denominator = 2*b, add = divFloor(numerator,denominator), val = a + add;
+  return [
+    `【更新贏家 玩家 ${p1} 的戰力 S】`,
+    `S[p1] = a + (c × d) // (2 × b)`,
+    `S[${p1}] = ${a} + (${c} × ${d}) // (2 × ${b})`,
+    `S[${p1}] = ${a} + ${numerator} // ${denominator}`,
+    `因為 ${numerator} // ${denominator} = ${add}`,
+    `S[${p1}] = ${a} + ${add}`,
+    `S[${p1}] = ${val}`
+  ];
+}
+function detailP1WinT(p1,p2,a,b,c,d){
+  const numerator = c*d, denominator = 2*a, add = divFloor(numerator,denominator), val = b + add;
+  return [
+    `【更新贏家 玩家 ${p1} 的應變力 T】`,
+    `T[p1] = b + (c × d) // (2 × a)`,
+    `T[${p1}] = ${b} + (${c} × ${d}) // (2 × ${a})`,
+    `T[${p1}] = ${b} + ${numerator} // ${denominator}`,
+    `因為 ${numerator} // ${denominator} = ${add}`,
+    `T[${p1}] = ${b} + ${add}`,
+    `T[${p1}] = ${val}`
+  ];
+}
+function detailP1LoseS(p1,p2,a,b,c,d){
+  const add = divFloor(c,2), val = c + add;
+  return [
+    `【更新輸家 玩家 ${p2} 的戰力 S】`,
+    `S[p2] = c + c // 2`,
+    `S[${p2}] = ${c} + ${c} // 2`,
+    `因為 ${c} // 2 = ${add}`,
+    `S[${p2}] = ${c} + ${add}`,
+    `S[${p2}] = ${val}`
+  ];
+}
+function detailP1LoseT(p1,p2,a,b,c,d){
+  const add = divFloor(d,2), val = d + add;
+  return [
+    `【更新輸家 玩家 ${p2} 的應變力 T】`,
+    `T[p2] = d + d // 2`,
+    `T[${p2}] = ${d} + ${d} // 2`,
+    `因為 ${d} // 2 = ${add}`,
+    `T[${p2}] = ${d} + ${add}`,
+    `T[${p2}] = ${val}`
+  ];
+}
+function detailP2WinS(p1,p2,a,b,c,d){
+  const numerator = a*b, denominator = 2*d, add = divFloor(numerator,denominator), val = c + add;
+  return [
+    `【更新贏家 玩家 ${p2} 的戰力 S】`,
+    `S[p2] = c + (a × b) // (2 × d)`,
+    `S[${p2}] = ${c} + (${a} × ${b}) // (2 × ${d})`,
+    `S[${p2}] = ${c} + ${numerator} // ${denominator}`,
+    `因為 ${numerator} // ${denominator} = ${add}`,
+    `S[${p2}] = ${c} + ${add}`,
+    `S[${p2}] = ${val}`
+  ];
+}
+function detailP2WinT(p1,p2,a,b,c,d){
+  const numerator = a*b, denominator = 2*c, add = divFloor(numerator,denominator), val = d + add;
+  return [
+    `【更新贏家 玩家 ${p2} 的應變力 T】`,
+    `T[p2] = d + (a × b) // (2 × c)`,
+    `T[${p2}] = ${d} + (${a} × ${b}) // (2 × ${c})`,
+    `T[${p2}] = ${d} + ${numerator} // ${denominator}`,
+    `因為 ${numerator} // ${denominator} = ${add}`,
+    `T[${p2}] = ${d} + ${add}`,
+    `T[${p2}] = ${val}`
+  ];
+}
+function detailP2LoseS(p1,p2,a,b,c,d){
+  const add = divFloor(a,2), val = a + add;
+  return [
+    `【更新輸家 玩家 ${p1} 的戰力 S】`,
+    `S[p1] = a + a // 2`,
+    `S[${p1}] = ${a} + ${a} // 2`,
+    `因為 ${a} // 2 = ${add}`,
+    `S[${p1}] = ${a} + ${add}`,
+    `S[${p1}] = ${val}`
+  ];
+}
+function detailP2LoseT(p1,p2,a,b,c,d){
+  const add = divFloor(b,2), val = b + add;
+  return [
+    `【更新輸家 玩家 ${p1} 的應變力 T】`,
+    `T[p1] = b + b // 2`,
+    `T[${p1}] = ${b} + ${b} // 2`,
+    `因為 ${b} // 2 = ${add}`,
+    `T[${p1}] = ${b} + ${add}`,
+    `T[${p1}] = ${val}`
+  ];
+}
+function combineDetails(...groups){
+  const out=[];
+  for(const g of groups){ if(Array.isArray(g)) out.push(...g); }
+  return out;
+}
+
+
+function generateSteps(ex){
+  const list = [];
+  const n = ex.n, m = ex.m;
+  let S = [null, ...ex.S];
+  let T = [null, ...ex.T];
+  let idx = ex.idx.slice();
+  let lCnt = [null, ...Array(n).fill(0)];
+  let wins = [], loses = [];
+  let round = 0;
+  const base = {n,m,output:ex.output,exampleTitle:ex.title,S,T,idx,lCnt,wins,loses,round};
+  pushStep(list,{...base,phase:'input',detail:'讀入 n 與 m'},1,`讀入 n=${n}，m=${m}。m 代表輸幾次會淘汰。`,`準備讀資料`);
+  pushStep(list,{...base,phase:'input',detail:'讀入戰力 S'},2,`建立 S。前面補一個 -1，讓 S[1] 就是玩家 1 的戰力。`,`S = [${S.slice(1).join(', ')}]`);
+  pushStep(list,{...base,phase:'input',detail:'讀入應變力 T'},3,`建立 T。T[玩家編號] 可以直接拿到該玩家應變力。`,`T = [${T.slice(1).join(', ')}]`);
+  pushStep(list,{...base,phase:'input',detail:'讀入比賽順序'},4,`讀入目前比賽順序 idx。不是 1 比 2、2 比 3，而是每兩個一組：${formatPairs(idx)}。`,`idx = [${idx.join(', ')}]；配對：${formatPairs(idx)}`);
+  pushStep(list,{...base,phase:'input',detail:'建立失敗次數'},5,`建立 lCnt。每個玩家一開始都輸 0 次。`,`失敗次數都為 0`);
+  while(idx.length > 1){
+    round += 1; wins = []; loses = [];
+    Object.assign(base,{S,T,idx,lCnt,wins,loses,round,calcDetails:[],calcTitle:''});
+    pushStep(list,{...base,phase:'while'},6,`目前還有 ${idx.length} 位玩家，超過 1 位，所以進入第 ${round} 輪。`,`第 ${round} 輪開始`);
+    const debugStart = `print(1, idx, S, T, lCnt)：idx=[${idx.join(', ')}]`;
+    pushStep(list,{...base,phase:'debug',debug:debugStart},7,`這行是除錯輸出，幫你看本輪開始前的 idx、S、T、lCnt。`,`除錯輸出`);
+    pushStep(list,{...base,phase:'roundStart'},8,`準備兩個空盒子：wins 放勝利者，loses 放輸了但還沒淘汰的人。`,`wins=[], loses=[]`);
+    for(let i=0;i<idx.length;i+=2){
+      const p1 = idx[i];
+      Object.assign(base,{S,T,idx,lCnt,wins,loses,round,activePlayers:[p1],activePair:[p1],pairIndex:i,calcDetails:[],calcTitle:''});
+      pushStep(list,{...base,phase:'for'},9,`for 迴圈每次跳 2 格，現在看 idx[${i}]。`,`準備配對`);
+      pushStep(list,{...base,phase:'pickP1'},10,`p1 = idx[${i}]，所以玩家 ${p1} 是這組第一個人。`,`p1 = ${p1}`);
+      if(i === idx.length-1){
+        pushStep(list,{...base,phase:'byeCheck',bye:p1},11,`玩家 ${p1} 是最後一個，沒有對手，所以落單。`,`玩家 ${p1} 落單`);
+        wins.push(p1); Object.assign(base,{wins});
+        pushStep(list,{...base,phase:'bye',bye:p1,activePlayers:[p1]},12,`落單的人不用比，直接放進 wins，下一輪還可以繼續比。`,`玩家 ${p1} 直接晉級`);
+        pushStep(list,{...base,phase:'break',bye:p1,activePlayers:[p1]},13,`這一輪已經沒有下一個配對了，所以 break 離開 for 迴圈。`,`離開本輪配對`);
+        break;
+      }
+      const p2 = idx[i+1];
+      Object.assign(base,{activePlayers:[p1,p2],activePair:[p1,p2]});
+      pushStep(list,{...base,phase:'pickP2'},14,`p2 = idx[${i+1}]，所以玩家 ${p2} 是這組第二個人。`,`p1=${p1}, p2=${p2}`);
+      const a = S[p1], b = T[p1], c = S[p2], d = T[p2];
+      const v1 = a*b, v2 = c*d;
+      const calc = `玩家 ${p1}: ${a}×${b}=${v1}；玩家 ${p2}: ${c}×${d}=${v2}`;
+      const compareText = v1 === v2 ? `平手：${v1} = ${v2}。因為程式用 >=，所以 p1，也就是玩家 ${p1} 贏。` : (v1 > v2 ? `${v1} > ${v2}，所以 p1，也就是玩家 ${p1} 贏。` : `${v1} < ${v2}，所以 p2，也就是玩家 ${p2} 贏。`);
+      const loadDetails = combineDetails(varMappingLines(p1,p2,a,b,c,d), compareLines(p1,p2,a,b,c,d));
+      Object.assign(base,{calc,compareText,calcTitle:'取出 a、b、c、d 並比較戰鬥值',calcDetails:loadDetails});
+      pushStep(list,{...base,phase:'loadValues'},15,`取出能力值：p1 用 a,b；p2 用 c,d。這四個值都是更新前的舊值。`,calc);
+      pushStep(list,{...base,phase:'compare',winner:(v1>=v2?p1:p2),loser:(v1>=v2?p2:p1),calcTitle:'勝負判斷完整計算',calcDetails:loadDetails},16,compareText,`比較 ${v1} 與 ${v2}`);
+      let w,l;
+      if(v1 >= v2){
+        w = p1; l = p2;
+        const detailS1 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP1WinS(p1,p2,a,b,c,d), ['提醒：// 是整數除法，只取整數部分，不四捨五入。']);
+        S[p1] = a + divFloor(c*d,2*b); Object.assign(base,{S,winner:w,loser:l,activePlayers:[p1,p2],calc,compareText,calcTitle:`更新玩家 ${p1} 的戰力 S`,calcDetails:detailS1});
+        pushStep(list,{...base,phase:'updateWinner'},17,`更新贏家玩家 ${p1} 的戰力。畫面會列出公式、代入數字、整數除法與新值。`,`玩家 ${p1} 戰力：${a} → ${S[p1]}`);
+        const detailT1 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP1WinT(p1,p2,a,b,c,d), ['提醒：四個公式都用比賽前的 a、b、c、d。']);
+        T[p1] = b + divFloor(c*d,2*a); Object.assign(base,{T,calcTitle:`更新玩家 ${p1} 的應變力 T`,calcDetails:detailT1});
+        pushStep(list,{...base,phase:'updateWinner'},18,`更新贏家玩家 ${p1} 的應變力。`, `玩家 ${p1} 應變力：${b} → ${T[p1]}`);
+        const detailS2 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP1LoseS(p1,p2,a,b,c,d));
+        S[p2] = c + divFloor(c,2); Object.assign(base,{S,calcTitle:`更新輸家玩家 ${p2} 的戰力 S`,calcDetails:detailS2});
+        pushStep(list,{...base,phase:'updateLoser'},19,`輸家玩家 ${p2} 的戰力也會增加一半。`, `玩家 ${p2} 戰力：${c} → ${S[p2]}`);
+        const detailT2 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP1LoseT(p1,p2,a,b,c,d));
+        T[p2] = d + divFloor(d,2); Object.assign(base,{T,calcTitle:`更新輸家玩家 ${p2} 的應變力 T`,calcDetails:detailT2});
+        pushStep(list,{...base,phase:'updateLoser'},20,`輸家玩家 ${p2} 的應變力也會增加一半。`, `玩家 ${p2} 應變力：${d} → ${T[p2]}`);
+        pushStep(list,{...base,phase:'setWinnerLoser',calcTitle:'設定 w 和 l',calcDetails:[`【w / l 標籤】`,`w, l = p1, p2`,`p1 是玩家 ${p1}，p2 是玩家 ${p2}`,`所以 w = ${w} 是贏家`,`所以 l = ${l} 是輸家`,`這不是交換玩家，而是給後面程式統一使用。`]},21,`w, l = p1, p2 不是交換玩家。意思是：p1 玩家 ${p1} 贏，所以 w=${w}；p2 玩家 ${p2} 輸，所以 l=${l}。`,`w=${w} 是贏家，l=${l} 是輸家`);
+      }else{
+        const elseDetails = combineDetails(varMappingLines(p1,p2,a,b,c,d), compareLines(p1,p2,a,b,c,d));
+        pushStep(list,{...base,phase:'else',calc,winner:p2,loser:p1,calcTitle:'進入 else：第二位玩家勝利',calcDetails:elseDetails},22,`進入 else，代表第二位玩家 ${p2} 勝利。`,`玩家 ${p2} 勝`);
+        w = p2; l = p1;
+        const detailS2 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP2WinS(p1,p2,a,b,c,d), ['提醒：括號很重要，(2 × d) 是整個分母。']);
+        S[p2] = c + divFloor(a*b,2*d); Object.assign(base,{S,winner:w,loser:l,calc,compareText,calcTitle:`更新玩家 ${p2} 的戰力 S`,calcDetails:detailS2});
+        pushStep(list,{...base,phase:'updateWinner'},23,`更新贏家玩家 ${p2} 的戰力。畫面會列出公式、代入數字、整數除法與新值。`,`玩家 ${p2} 戰力：${c} → ${S[p2]}`);
+        const detailT2 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP2WinT(p1,p2,a,b,c,d), ['提醒：四個公式都用比賽前的 a、b、c、d。']);
+        T[p2] = d + divFloor(a*b,2*c); Object.assign(base,{T,calcTitle:`更新玩家 ${p2} 的應變力 T`,calcDetails:detailT2});
+        pushStep(list,{...base,phase:'updateWinner'},24,`更新贏家玩家 ${p2} 的應變力。`, `玩家 ${p2} 應變力：${d} → ${T[p2]}`);
+        const detailS1 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP2LoseS(p1,p2,a,b,c,d));
+        S[p1] = a + divFloor(a,2); Object.assign(base,{S,calcTitle:`更新輸家玩家 ${p1} 的戰力 S`,calcDetails:detailS1});
+        pushStep(list,{...base,phase:'updateLoser'},25,`輸家玩家 ${p1} 的戰力也會增加一半。`, `玩家 ${p1} 戰力：${a} → ${S[p1]}`);
+        const detailT1 = combineDetails(varMappingLines(p1,p2,a,b,c,d), detailP2LoseT(p1,p2,a,b,c,d));
+        T[p1] = b + divFloor(b,2); Object.assign(base,{T,calcTitle:`更新輸家玩家 ${p1} 的應變力 T`,calcDetails:detailT1});
+        pushStep(list,{...base,phase:'updateLoser'},26,`輸家玩家 ${p1} 的應變力也會增加一半。`, `玩家 ${p1} 應變力：${b} → ${T[p1]}`);
+        pushStep(list,{...base,phase:'setWinnerLoser',calcTitle:'設定 w 和 l',calcDetails:[`【w / l 標籤】`,`w, l = p2, p1`,`p2 是玩家 ${p2}，p1 是玩家 ${p1}`,`所以 w = ${w} 是贏家`,`所以 l = ${l} 是輸家`,`這不是交換玩家，而是給後面程式統一使用。`]},27,`w, l = p2, p1 不是交換玩家。意思是：p2 玩家 ${p2} 贏，所以 w=${w}；p1 玩家 ${p1} 輸，所以 l=${l}。`,`w=${w} 是贏家，l=${l} 是輸家`);
+      }
+      lCnt[l] += 1; Object.assign(base,{S,T,lCnt,winner:w,loser:l,activePlayers:[w,l],activePair:[p1,p2],calcTitle:'輸家失敗次數 +1',calcDetails:[`【失敗次數】`,`l = ${l}，所以輸家是玩家 ${l}`,`lCnt[l] += 1`, `lCnt[${l}] 變成 ${lCnt[l]}`,`只有輸家失敗次數會 +1。`]});
+      pushStep(list,{...base,phase:'lossCount'},28,`因為 l 代表輸家，所以 lCnt[l] += 1 是把玩家 ${l} 的失敗次數加 1，現在是 ${lCnt[l]} 次。`,`玩家 ${l} 輸 ${lCnt[l]} 次`);
+      wins.push(w); Object.assign(base,{wins,calcTitle:'贏家加入 wins',calcDetails:[`【加入勝利組】`,`w = ${w}，所以贏家是玩家 ${w}`,`wins.append(w)`, `wins = [${wins.join(', ')}]`]});
+      pushStep(list,{...base,phase:'appendWin'},29,`因為 w 代表贏家，所以 wins.append(w) 是把玩家 ${w} 加入勝利組。`,`wins = [${wins.join(', ')}]`);
+      const stillAlive = lCnt[l] < m;
+      Object.assign(base,{calcTitle:'檢查輸家是否淘汰',calcDetails:[`【淘汰檢查】`,`輸家是玩家 ${l}`,`玩家 ${l} 目前輸 ${lCnt[l]} 次`, `淘汰門檻 m = ${m}`, stillAlive ? `${lCnt[l]} < ${m}，所以還沒淘汰。` : `${lCnt[l]} >= ${m}，所以淘汰。`]});
+      pushStep(list,{...base,phase:'checkAlive',eliminated:stillAlive?null:l},30,stillAlive ? `玩家 ${l} 只輸 ${lCnt[l]} 次，還小於 m=${m}，所以還沒淘汰。` : `玩家 ${l} 已經輸 ${lCnt[l]} 次，達到 m=${m}，所以淘汰。`, stillAlive ? `玩家 ${l} 可留下` : `玩家 ${l} 淘汰`);
+      if(stillAlive){
+        loses.push(l); Object.assign(base,{loses,calcTitle:'輸家加入 loses',calcDetails:[`【加入失敗組】`,`l = ${l}，所以輸家是玩家 ${l}`,`因為玩家 ${l} 還沒淘汰`, `loses.append(l)`, `loses = [${loses.join(', ')}]`]});
+        pushStep(list,{...base,phase:'appendLose'},31,`因為 l 代表輸家，而且玩家 ${l} 還沒淘汰，所以 loses.append(l) 把他放進失敗組。`,`loses = [${loses.join(', ')}]`);
+      }
+    }
+    idx = wins.concat(loses); Object.assign(base,{idx,wins,loses,activePlayers:[],activePair:null,winner:null,loser:null,calcTitle:'產生下一輪 idx',calcDetails:[`【下一輪順序】`,`下一輪 idx = wins + loses`,`wins = [${wins.join(', ')}]`, `loses = [${loses.join(', ')}]`, `idx = [${idx.join(', ')}]`]});
+    pushStep(list,{...base,phase:'nextRound'},32,`本輪結束。下一輪順序 = wins + loses = [${idx.join(', ')}]。`,`下一輪 idx = [${idx.join(', ')}]`);
+    const debugEnd = `print(2, idx, S, T, lCnt)：idx=[${idx.join(', ')}]`;
+    pushStep(list,{...base,phase:'debug',debug:debugEnd},33,`這行是除錯輸出，幫你檢查本輪結束後的狀態。`,`除錯輸出`);
+  }
+  Object.assign(base,{idx,wins:[],loses:[],round,activePlayers:idx.slice(),activePair:null,calcTitle:'最後答案',calcDetails:[`【最後答案】`,`while 結束時，只剩一個玩家。`,`idx = [${idx.join(', ')}]`, `輸出 idx[0] = ${idx[0]}`]});
+  pushStep(list,{...base,phase:'whileEnd'},6,`目前只剩 ${idx.length} 位玩家，while 條件不成立，停止比賽。`,`比賽結束`);
+  pushStep(list,{...base,phase:'final'},34,`idx[0] 就是最後留下的人，所以輸出玩家 ${idx[0]}。`,`答案 = ${idx[0]}`);
+  return list;
+}
+
+function initExamples(){
+  EXAMPLES.forEach(ex=>{
+    const opt = document.createElement('option');
+    opt.value = ex.id;
+    opt.textContent = ex.title;
+    exampleSelect.appendChild(opt);
+  });
+}
+function renderCode(){
+  codeWrap.innerHTML = CODE_LINES.map((line,i)=>{
+    const lineNo = i+1;
+    const debugClass = (lineNo === 7 || lineNo === 33) ? ' debugLine' : '';
+    return `<div class="codeLine${debugClass}" data-line="${lineNo}"><span class="ln">${lineNo}</span><span class="txt">${esc(line)}</span></div>`;
+  }).join('');
+}
+function updateCodeHighlight(line){
+  document.querySelectorAll('.codeLine').forEach(el=>el.classList.remove('active'));
+  const el = document.querySelector(`.codeLine[data-line="${line}"]`);
+  if(el){
+    el.classList.add('active');
+    el.scrollIntoView({block:'center', behavior:'smooth'});
+  }
+}
+function playerClass(id,v){
+  if(v.eliminated === id) return 'eliminated';
+  if(v.bye === id) return 'bye';
+  if(v.winner === id) return 'winner';
+  if(v.loser === id) return 'loser';
+  if(v.activePlayers && v.activePlayers.includes(id)) return 'active';
+  return '';
+}
+function playerCard(id,v,small=false,tag=''){
+  const s = v.S[id-1], t = v.T[id-1], lose = v.lCnt[id-1];
+  const cls = playerClass(id,v);
+  return `<div class="playerCard ${small?'small':''} ${cls}">
+    <div class="name">玩家 ${id}${tag ? `<span class="tag">${esc(tag)}</span>` : ''}</div>
+    <span class="stat">S=${s}，T=${t}</span>
+    <span class="stat"><strong>S×T=${s*t}</strong></span>
+    <span class="stat">輸=${lose}/${v.m}</span>
+  </div>`;
+}
+function renderPairChips(arr){
+  if(!arr || arr.length === 0) return '<div class="emptyText">目前沒有配對</div>';
+  const parts = [];
+  for(let i=0;i<arr.length;i+=2){
+    if(i === arr.length-1) parts.push(`<span class="pairChip bye">玩家 ${arr[i]} 落單 → 直接晉級</span>`);
+    else parts.push(`<span class="pairChip">玩家 ${arr[i]} vs 玩家 ${arr[i+1]}</span>`);
+  }
+  return `<div class="pairChips">${parts.join('')}</div>`;
+}
+function renderList(ids,v,type){
+  if(!ids || ids.length === 0) return '<div class="emptyText">空</div>';
+  return `<div class="cardsRow">${ids.map(id=>playerCard(id,v,true,type==='win'?'勝':'敗')).join('')}</div>`;
+}
+
+function renderCalcDetails(v){
+  const details = Array.isArray(v.calcDetails) ? v.calcDetails : [];
+  if(!details.length){
+    return `<div class="calcDetailPanel"><div class="calcDetailTitle">能力更新明細</div><div class="emptyText">目前還沒有需要計算的公式。按下一步到取出 a,b,c,d 或能力更新時，這裡會顯示完整代入。</div></div>`;
+  }
+  const lines = details.map(line=>{
+    const s = String(line);
+    let cls = 'calcLine';
+    if(s.startsWith('【')) cls += ' heading';
+    if(s.includes('提醒') || s.includes('注意')) cls += ' warn';
+    if(/^S\[\d+\] = \d+$/.test(s) || /^T\[\d+\] = \d+$/.test(s) || s.startsWith('結果：') || s.includes('所以 w =') || s.includes('所以 l =')) cls += ' final';
+    return `<div class="${cls}">${esc(s)}</div>`;
+  }).join('');
+  return `<div class="calcDetailPanel"><div class="calcDetailTitle">${esc(v.calcTitle || '能力更新明細')}</div><div class="calcDetailScroll">${lines}</div></div>`;
+}
+
+function renderBattle(v){
+  if(v.activePair && v.activePair.length >= 2){
+    const p1 = v.activePair[0], p2 = v.activePair[1];
+    const s1 = v.S[p1-1], t1 = v.T[p1-1], s2 = v.S[p2-1], t2 = v.T[p2-1];
+    const val1 = s1*t1, val2 = s2*t2;
+    const cmp = v.calc || `玩家 ${p1}: ${s1}×${t1}=${val1}；玩家 ${p2}: ${s2}×${t2}=${val2}`;
+    const compare = v.compareText || '正在比較';
+    const wl = (v.phase === 'setWinnerLoser' || v.phase === 'lossCount' || v.phase === 'appendWin' || v.phase === 'checkAlive' || v.phase === 'appendLose') && v.winner && v.loser
+      ? `<div class="wlBox">w = 玩家 ${v.winner} 是贏家；l = 玩家 ${v.loser} 是輸家。這是在貼標籤，不是在交換 p1 和 p2。</div>` : '';
+    const update = (v.phase === 'updateWinner' || v.phase === 'updateLoser')
+      ? `<div class="updateBox">能力更新：比完後，不管贏家或輸家，S 和 T 都會改變；但只有輸家失敗次數會 +1。</div>` : '';
+    return `<div class="battleGrid">
+      ${playerCard(p1,v,false,'p1')}
+      <div class="calcBox">
+        <div class="big">比較戰鬥值 S×T</div>
+        <div>${esc(cmp)}</div>
+        <div><strong>${esc(compare)}</strong></div>
+        ${wl}
+        ${update}
+      </div>
+      ${playerCard(p2,v,false,'p2')}
+    </div>`;
+  }
+  if(v.bye){
+    return `<div class="battleGrid"><div></div><div class="calcBox"><div class="big">玩家 ${v.bye} 落單</div><div>沒有對手，不用比，直接進入 wins。</div></div><div></div></div>`;
+  }
+  return `<div class="emptyBattle">目前沒有正在比賽的配對，請按下一步觀看流程。</div>`;
+}
+function renderVisual(v){
+  const ids = Array.from({length:v.n},(_,i)=>i+1);
+  visualWrap.innerHTML = `<div class="visualStack">
+    <section class="sectionCard">
+      <div class="sectionTitle"><h2>${esc(v.exampleTitle)}</h2><span class="hint">第 ${v.round || 0} 輪｜淘汰門檻 m=${v.m}</span></div>
+      <div class="ruleGrid">
+        <pre class="inputPre">${esc(currentExample.inputLines.join('\n'))}</pre>
+        <div class="ruleMini"><strong>勝負規則</strong>戰鬥值 = S × T。大的贏，平手算 p1 贏。</div>
+        <div class="ruleMini"><strong>p1 的意思</strong>p1 是這場排前面的人，不一定是玩家 1。</div>
+        <div class="ruleMini"><strong>w / l 的意思</strong>w 是贏家，l 是輸家。不是交換玩家。</div>
+      </div>
+      ${v.detail ? `<div class="wlBox">目前重點：${esc(v.detail)}</div>` : ''}
+      ${v.debug ? `<div class="updateBox">除錯輸出：${esc(v.debug)}</div>` : ''}
+    </section>
+
+    <section class="sectionCard">
+      <div class="sectionTitle"><h2>目前比賽順序 idx</h2><span class="hint">每次從左到右，每兩個一組，不是連續接龍比</span></div>
+      <div class="queueRow">
+        ${v.idx.map((id,k)=>`<div class="indexBlock"><div class="indexLabel">idx[${k}]</div>${playerCard(id,v,true,(v.pairIndex===k)?'目前':'')}</div>`).join('')}
+      </div>
+      <div style="height:10px"></div>
+      <div><strong>這一輪配對：</strong></div>
+      ${renderPairChips(v.idx)}
+    </section>
+
+    <section class="sectionCard">
+      <div class="sectionTitle"><h2>目前對戰</h2><span class="hint">完整顯示誰跟誰打、怎麼算、誰贏誰輸</span></div>
+      ${renderBattle(v)}
+    </section>
+
+    <section class="sectionCard">
+      <div class="sectionTitle"><h2>能力更新明細</h2><span class="hint">公式 → 代入數字 → 整數除法 → 新值</span></div>
+      ${renderCalcDetails(v)}
+    </section>
+
+    <section class="sectionCard">
+      <div class="splitGrid">
+        <div>
+          <div class="sectionTitle"><h2>wins：本輪勝利組</h2><span class="hint">贏家會放這裡</span></div>
+          <div class="scrollBox">${renderList(v.wins,v,'win')}</div>
+        </div>
+        <div>
+          <div class="sectionTitle"><h2>loses：輸了但還沒淘汰</h2><span class="hint">輸家若還沒達 m，才放這裡</span></div>
+          <div class="scrollBox">${renderList(v.loses,v,'lose')}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sectionCard">
+      <div class="sectionTitle"><h2>所有玩家目前狀態</h2><span class="hint">S、T、S×T、失敗次數都會跟著步驟更新</span></div>
+      <div class="playersGrid">${ids.map(id=>playerCard(id,v,false,'')).join('')}</div>
+    </section>
+  </div>`;
+}
+function render(){
+  const step = steps[stepIndex];
+  if(!step) return;
+  stepInfo.textContent = `步驟 ${stepIndex+1} / ${steps.length}`;
+  resultInfo.textContent = step.result || '';
+  messageEl.textContent = step.message || '';
+  resultInfo.title = step.result || '';
+  messageEl.title = step.message || '';
+  updateCodeHighlight(step.activeLine);
+  renderVisual(step.visualState);
+}
+function gotoStep(i){ stepIndex = Math.max(0, Math.min(steps.length-1, i)); render(); }
+function nextStep(){ if(stepIndex < steps.length-1) gotoStep(stepIndex+1); else pause(); }
+function prevStep(){ gotoStep(stepIndex-1); }
+function play(){ if(timer) return; timer = setInterval(nextStep,900); }
+function pause(){ if(timer){ clearInterval(timer); timer = null; } }
+function reset(){ pause(); gotoStep(0); }
+function loadExample(id){ pause(); currentExample = EXAMPLES.find(e=>e.id===id) || EXAMPLES[0]; steps = generateSteps(currentExample); stepIndex = 0; render(); }
+document.getElementById('nextBtn').addEventListener('click',nextStep);
+document.getElementById('prevBtn').addEventListener('click',prevStep);
+document.getElementById('playBtn').addEventListener('click',play);
+document.getElementById('pauseBtn').addEventListener('click',pause);
+document.getElementById('resetBtn').addEventListener('click',reset);
+exampleSelect.addEventListener('change',e=>loadExample(e.target.value));
+document.addEventListener('keydown',e=>{
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if(e.key === 'ArrowRight'){ e.preventDefault(); nextStep(); }
+  if(e.key === 'ArrowLeft'){ e.preventDefault(); prevStep(); }
+  if(e.code === 'Space'){ e.preventDefault(); if(timer) pause(); else play(); }
+});
+function showModal(id){
+  document.getElementById(id).classList.add('show');
+  if(window.MathJax && window.MathJax.typesetPromise){ window.MathJax.typesetPromise(); }
+}
+function hideModals(){ document.querySelectorAll('.modalMask').forEach(m=>m.classList.remove('show')); }
+document.getElementById('problemBtn').addEventListener('click',()=>showModal('problemModal'));
+document.getElementById('problemTopBtn').addEventListener('click',()=>showModal('problemModal'));
+document.getElementById('legendBtn').addEventListener('click',()=>showModal('legendModal'));
+document.querySelectorAll('.closeModal').forEach(btn=>btn.addEventListener('click',hideModals));
+document.querySelectorAll('.modalMask').forEach(mask=>mask.addEventListener('click',e=>{ if(e.target === mask) hideModals(); }));
+function syncToolbarHeight(){
+  const toolbar = document.querySelector('.toolbar');
+  if(!toolbar) return;
+  const h = Math.ceil(toolbar.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--toolbar-real-h', h + 'px');
+}
+window.addEventListener('load',syncToolbarHeight);
+window.addEventListener('resize',syncToolbarHeight);
+function setupDivider(){
+  const divider = document.getElementById('divider');
+  const leftPane = document.getElementById('leftPane');
+  let dragging = false;
+  divider.addEventListener('mousedown',e=>{ dragging = true; document.body.style.userSelect = 'none'; document.body.style.cursor = 'col-resize'; e.preventDefault(); });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging) return;
+    const main = document.querySelector('.main');
+    const rect = main.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    const clamped = Math.max(32, Math.min(76, pct));
+    leftPane.style.flexBasis = clamped + '%';
+  });
+  window.addEventListener('mouseup',()=>{ dragging = false; document.body.style.userSelect = ''; document.body.style.cursor = ''; });
+}
+initExamples();
+renderCode();
+syncToolbarHeight();
+setupDivider();
+loadExample(currentExample.id);
+</script>
+</body>
+</html>

@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>e313 最少相異字母｜一步一步動畫</title>
+  <style>
+    :root {
+      --toolbar-h: 136px;
+      --border: #d9dee7;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --orange: #b45309;
+      --orange-soft: #ffedd5;
+      --gray-soft: #f1f5f9;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --purple: #6d28d9;
+      --purple-soft: #ede9fe;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      position: fixed;
+      z-index: 900;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: auto;
+      min-height: 0;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .title-block {
+      min-width: 260px;
+      flex: 1 1 300px;
+    }
+
+    .title-main {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .title-sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    button, select {
+      font-size: 15px;
+      min-height: 36px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    button:hover, select:hover { background: #f8fafc; }
+
+    button:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.25);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #cbd5e1;
+    }
+
+    button.primary {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+    }
+
+    button.primary:hover { background: #1d4ed8; }
+
+    button.primary:disabled,
+    button.primary:disabled:hover {
+      background: #e2e8f0;
+      color: #64748b;
+      border-color: #cbd5e1;
+    }
+
+    body.modal-open { overflow: hidden; }
+
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: var(--gray-soft);
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .pill.result {
+      background: var(--green-soft);
+      color: #14532d;
+      border-color: #bbf7d0;
+      font-weight: 700;
+    }
+
+    .message-box {
+      flex: 1 1 520px;
+      min-height: 42px;
+      font-size: 17px;
+      line-height: 1.45;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .main {
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      display: flex;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .left-panel, .right-panel {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      flex: 0 0 56%;
+      min-width: 360px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-panel {
+      flex: 1 1 auto;
+      min-width: 360px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .splitter {
+      flex: 0 0 9px;
+      cursor: col-resize;
+      background: #e2e8f0;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    .splitter:hover { background: #cbd5e1; }
+
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 10px 12px;
+      font-size: 18px;
+      font-weight: 800;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-body {
+      padding: 12px;
+    }
+
+    .svg-card .card-body {
+      padding: 8px;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      height: 370px;
+      min-height: 320px;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+    }
+
+    /* 只控制主動畫 SVG，避免影響其他套件或行內 SVG。 */
+    .svg-wrap > svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .main {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - var(--toolbar-h));
+        overflow: visible;
+      }
+      .left-panel, .right-panel {
+        min-width: 0;
+        flex: none;
+        width: 100%;
+        overflow: visible;
+      }
+      .right-panel { min-height: 560px; }
+      .splitter { display: none; }
+      .status-grid { grid-template-columns: 1fr; }
+    }
+
+    .info-list {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 8px 12px;
+      font-size: 17px;
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      background: #ffffff;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 800;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr.active-row { background: var(--orange-soft); }
+    tr.done-row { background: var(--green-soft); }
+    tr.wait-row { color: #64748b; }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--gray-soft);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .tag.active { background: var(--orange-soft); border-color: #fed7aa; color: #9a3412; }
+    .tag.done { background: var(--green-soft); border-color: #bbf7d0; color: #14532d; }
+    .tag.todo { background: #f8fafc; color: #64748b; }
+    .tag.key { background: var(--blue-soft); color: #1e3a8a; border-color: #bfdbfe; }
+    .tag.final { background: var(--purple-soft); color: #4c1d95; border-color: #ddd6fe; }
+
+    .compare-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .char-box {
+      min-width: 44px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px;
+      background: #f8fafc;
+      font-weight: 800;
+    }
+
+    .char-box.diff {
+      background: var(--orange-soft);
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .example-grid { grid-template-columns: 1fr; }
+    }
+
+    pre.sample {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.5;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 10px;
+      overflow: auto;
+      min-height: 118px;
+    }
+
+    .code-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .code-scroll {
+      flex: 1 1 auto;
+      overflow: auto;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 0 0 12px 12px;
+      padding: 12px 0;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 18px;
+      line-height: 1.65;
+    }
+
+    .code-line {
+      display: flex;
+      min-width: max-content;
+      padding: 0 16px 0 0;
+      border-left: 5px solid transparent;
+    }
+
+    .code-line.active {
+      background: #fef3c7;
+      color: #111827;
+      border-left-color: #f59e0b;
+      font-weight: 800;
+    }
+
+    .line-no {
+      flex: 0 0 48px;
+      text-align: right;
+      color: #94a3b8;
+      padding-right: 14px;
+      user-select: none;
+    }
+
+    .code-line.active .line-no { color: #92400e; }
+    .code-text { white-space: pre; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: inline-block;
+    }
+
+    .dot-todo { background: #f8fafc; }
+    .dot-active { background: #ffedd5; border-color: #fdba74; }
+    .dot-wait { background: #dbeafe; border-color: #93c5fd; }
+    .dot-done { background: #dcfce7; border-color: #86efac; }
+    .dot-return { background: #ede9fe; border-color: #c4b5fd; }
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 1200;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: min(820px, 96vw);
+      max-height: min(72vh, calc(100vh - 48px));
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      padding: 14px;
+      font-size: 16px;
+      line-height: 1.65;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .problem-section {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .problem-section h3 {
+      margin: 0;
+      padding: 9px 12px;
+      background: #f8fafc;
+      font-size: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .problem-section .inside {
+      padding: 10px 12px;
+    }
+
+    .problem-section .inside p {
+      margin: 5px 0;
+    }
+
+    .inline-code {
+      display: inline-block;
+      padding: 0 5px;
+      border-radius: 5px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 0.95em;
+      font-weight: 700;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rule-item {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 8px 10px;
+      border: 1px solid #dbeafe;
+      border-radius: 9px;
+      background: #eff6ff;
+    }
+
+    .rule-number {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .empty-note {
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .svg-node rect {
+      fill: #f8fafc;
+      stroke: #cbd5e1;
+      stroke-width: 2;
+    }
+    .svg-node.todo rect { fill: #f8fafc; stroke: #cbd5e1; }
+    .svg-node.active rect { fill: #ffedd5; stroke: #f97316; stroke-width: 4; }
+    .svg-node.wait rect { fill: #dbeafe; stroke: #3b82f6; stroke-width: 3; }
+    .svg-node.done rect { fill: #dcfce7; stroke: #16a34a; stroke-width: 3; }
+    .svg-node.return rect { fill: #ede9fe; stroke: #7c3aed; stroke-width: 4; }
+    .svg-node text { font-family: system-ui, -apple-system, "Microsoft JhengHei", Arial, sans-serif; fill: #111827; }
+    .svg-node .sub { fill: #475569; font-size: 20px; }
+    .svg-title { font-size: 22px; font-weight: 800; fill: #334155; }
+    .svg-arrow { stroke: #94a3b8; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    .svg-arrow.active { stroke: #f97316; stroke-width: 5; }
+
+    @media (max-width: 640px) {
+      .toolbar { padding: 8px 10px; }
+      .title-main { font-size: 18px; }
+      .message-box { font-size: 16px; }
+      .modal-backdrop { padding: 12px; }
+      .modal { max-height: calc(100vh - 24px); }
+      .modal-header { padding: 10px 12px; }
+      .modal-title { font-size: 18px; }
+      .modal-body { padding: 10px; font-size: 16px; }
+      .problem-section h3 { font-size: 17px; }
+      .svg-wrap { min-height: 300px; height: 340px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" id="toolbar" aria-label="動畫控制列">
+    <div class="toolbar-row">
+      <div class="title-block">
+        <div class="title-main">e313. 最少相異字母｜一步一步動畫</div>
+        <div class="title-sub">重點：用 <strong>len(set(s))</strong> 算不同字母數，再用字典序處理平手。</div>
+      </div>
+      <button id="problemBtn">題目說明</button>
+      <label>
+        範例：
+        <select id="exampleSelect"></select>
+      </label>
+      <button id="prevBtn">← 上一步</button>
+      <button id="nextBtn" class="primary">下一步 →</button>
+      <button id="playBtn">播放</button>
+      <button id="resetBtn">重設</button>
+    </div>
+    <div class="toolbar-row">
+      <span id="stepLabel" class="pill">步驟 1 / 1</span>
+      <span id="resultLabel" class="pill result" role="status" aria-live="polite">狀態：準備開始</span>
+      <div id="messageBox" class="message-box" role="status" aria-live="polite">請按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main class="main" id="mainArea">
+    <section class="left-panel" id="leftPanel" aria-label="左側資料結構視覺化">
+      <section class="card svg-card">
+        <div class="card-header">
+          <span>資料流程圖 SVG</span>
+          <span class="small-note">原始字串 → 排序 key → 排序後 strs1</span>
+        </div>
+        <div class="card-body">
+          <div class="svg-wrap" id="svgWrap"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">目前狀態</div>
+        <div class="card-body">
+          <div class="info-list" id="currentInfo"></div>
+        </div>
+      </section>
+
+      <div class="status-grid">
+        <section class="card">
+          <div class="card-header">輸入字串清單</div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>編號</th>
+                    <th>字串</th>
+                    <th>讀取狀態</th>
+                  </tr>
+                </thead>
+                <tbody id="inputTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <span>compareRule(s) 計算表</span>
+            <span class="small-note">set 內容為方便閱讀而排序</span>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>s</th>
+                    <th>set(s)</th>
+                    <th>len</th>
+                    <th>排序 key</th>
+                  </tr>
+                </thead>
+                <tbody id="keyTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-header">字典序比較與排序結果</div>
+        <div class="card-body" id="compareArea"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">範例輸入 / 輸出</div>
+        <div class="card-body">
+          <div class="example-grid">
+            <div>
+              <div class="small-note">範例輸入</div>
+              <pre class="sample" id="sampleInput"></pre>
+            </div>
+            <div>
+              <div class="small-note">範例輸出</div>
+              <pre class="sample" id="sampleOutput"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">節點顏色說明</div>
+        <div class="card-body">
+          <div class="legend">
+            <span class="legend-item"><span class="legend-dot dot-todo"></span>尚未處理</span>
+            <span class="legend-item"><span class="legend-dot dot-active"></span>目前處理中</span>
+            <span class="legend-item"><span class="legend-dot dot-wait"></span>等待 sorted 排序</span>
+            <span class="legend-item"><span class="legend-dot dot-done"></span>已完成</span>
+            <span class="legend-item"><span class="legend-dot dot-return"></span>最後答案</span>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" title="拖曳調整左右寬度"></div>
+
+    <section class="right-panel" aria-label="右側 Python 程式碼">
+      <section class="card code-card">
+        <div class="card-header">
+          <span>完整 Python 程式碼</span>
+          <span class="small-note">目前執行行會自動高亮</span>
+        </div>
+        <div class="code-scroll" id="codeScroll"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modal-header">
+        <div id="problemTitle" class="modal-title">題目文字版：e313. 最少相異字母</div>
+        <button id="closeModalBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <section class="problem-section">
+          <h3>題目內容</h3>
+          <div class="inside">
+            <p>字串裡面如果有太多不同的字母，就比較不和諧。</p>
+            <p>現在有 <span class="inline-code">N</span> 個字串，要找出「不同字母種類最少」的字串。</p>
+            <p>如果有多個字串的不同字母數一樣少，就輸出字典序最小的那一個。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>判斷規則</h3>
+          <div class="inside rule-list">
+            <div class="rule-item">
+              <span class="rule-number">1</span>
+              <div>先算每個字串有幾種不同字母，種類越少越好。</div>
+            </div>
+            <div class="rule-item">
+              <span class="rule-number">2</span>
+              <div>如果種類數相同，再比較字典序，字典序較小的字串勝出。</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>輸入說明</h3>
+          <div class="inside">
+            <p>第一行有一個正整數 <span class="inline-code">N</span>，代表接下來有 <span class="inline-code">N</span> 個字串，且 <span class="inline-code">N ≤ 1000</span>。</p>
+            <p>接下來有 <span class="inline-code">N</span> 行，每一行有一個字串。字串只會包含大寫字母 <span class="inline-code">A</span> 到 <span class="inline-code">Z</span>。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>輸出說明</h3>
+          <div class="inside">
+            <p>輸出最和諧的字串。</p>
+            <p>判斷順序是：先比不同字母數量，越少越好；如果一樣少，再比字典序，越小越好。</p>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>官方範例</h3>
+          <div class="inside example-grid">
+            <div>
+              <div class="small-note">範例輸入</div>
+              <pre class="sample">3
+ABBCAAB
+AABBACC
+AAPCCSS</pre>
+            </div>
+            <div>
+              <div class="small-note">範例輸出</div>
+              <pre class="sample">AABBACC</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="problem-section">
+          <h3>範例白話說明</h3>
+          <div class="inside">
+            <p><strong>ABBCAAB</strong> 有 A、B、C，共 3 種不同字母。</p>
+            <p><strong>AABBACC</strong> 有 A、B、C，共 3 種不同字母。</p>
+            <p><strong>AAPCCSS</strong> 有 A、P、C、S，共 4 種不同字母。</p>
+            <p>前兩個都是 3 種，所以比字典序。AABBACC 比 ABBCAAB 小，因此答案是 AABBACC。</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'def compareRule(s):                     #自訂排序方法',
+      '    return len(set(s)), s               #先比較不重複字元長度',
+      '                                        #長度相同字典排序比較',
+      'n = int(input())                        #取得字串數量',
+      'strs = [input() for _ in range(n)]      #取得字串集合',
+      'strs1 = sorted(strs, key=compareRule)   #以自訂排序方法',
+      'print(strs1[0])                         #排序最小者為最和諧字串'
+    ];
+
+    const examples = [
+      {
+        name: '官方範例 #1',
+        input: '3\nABBCAAB\nAABBACC\nAAPCCSS',
+        output: 'AABBACC',
+        strs: ['ABBCAAB', 'AABBACC', 'AAPCCSS'],
+        note: '官方範例：兩個字串都是 3 種字母，再比字典序。'
+      },
+      {
+        name: '教學範例 #2',
+        input: '4\nZZZZ\nABBA\nAACC\nBBBB',
+        output: 'BBBB',
+        strs: ['ZZZZ', 'ABBA', 'AACC', 'BBBB'],
+        note: '自訂教學範例：ZZZZ 與 BBBB 都只有 1 種字母，字典序 BBBB 比 ZZZZ 小。'
+      }
+    ];
+
+    let currentExampleIndex = 0;
+    let steps = [];
+    let stepIndex = 0;
+    let timer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function uniqueLetters(s) {
+      return Array.from(new Set(s.split(''))).sort();
+    }
+
+    function getInfo(s, originalIndex) {
+      const letters = uniqueLetters(s);
+      return {
+        s,
+        originalIndex,
+        letters,
+        count: letters.length,
+        keyText: `(${letters.length}, "${s}")`
+      };
+    }
+
+    function compareInfo(a, b) {
+      if (a.count !== b.count) return a.count - b.count;
+      if (a.s < b.s) return -1;
+      if (a.s > b.s) return 1;
+      return 0;
+    }
+
+    function lexDetail(a, b) {
+      const len = Math.max(a.length, b.length);
+      for (let i = 0; i < len; i++) {
+        const ca = a[i] ?? '';
+        const cb = b[i] ?? '';
+        if (ca !== cb) {
+          return { index: i, a: ca, b: cb, winner: ca < cb ? a : b };
+        }
+      }
+      return { index: -1, a: '', b: '', winner: a };
+    }
+
+    function buildSteps(example) {
+      const infos = example.strs.map((s, index) => getInfo(s, index));
+      const sortedInfos = infos.slice().sort(compareInfo);
+      const minCount = sortedInfos[0].count;
+      const minCandidates = sortedInfos.filter(x => x.count === minCount);
+      const answer = sortedInfos[0].s;
+      const resultText = () => answer ? `目前答案：${answer}` : '尚未有答案';
+
+      const listText = example.strs.join('、');
+      let cur = {
+        activeLine: 1,
+        message: '',
+        result: '準備開始',
+        readCount: 0,
+        keyCount: 0,
+        activeInputIndex: null,
+        activeKeyIndex: null,
+        activeFunction: '尚未進入函數',
+        currentS: '-',
+        sortedReady: false,
+        comparePair: null,
+        minCount: null,
+        answerReady: false
+      };
+      const arr = [];
+      function push(activeLine, message, extra = {}) {
+        cur = { ...cur, activeLine, message, ...extra };
+        arr.push({ ...cur, infos, sortedInfos, example });
+      }
+
+      push(1, 'Python 讀到 def，先建立 compareRule 函數。函數內容目前還沒有執行。', {
+        result: '建立函數 compareRule',
+        activeFunction: '尚未進入函數'
+      });
+      push(4, `讀第一行：n = ${example.strs.length}。代表接下來有 ${example.strs.length} 個字串。`, {
+        result: `n = ${example.strs.length}`
+      });
+
+      example.strs.forEach((s, i) => {
+        push(5, `讀第 ${i + 1} 個字串：${s}。把它放進 strs 清單。`, {
+          readCount: i + 1,
+          activeInputIndex: i,
+          activeKeyIndex: null,
+          currentS: s,
+          activeFunction: '讀取 input()',
+          result: `strs = [${example.strs.slice(0, i + 1).join(', ')}]`
+        });
+      });
+
+      push(5, `輸入完成。strs 裡面現在有：${listText}。`, {
+        activeInputIndex: null,
+        activeFunction: '讀取完成',
+        currentS: '-',
+        result: `已讀 ${example.strs.length}/${example.strs.length} 個字串`
+      });
+
+      push(6, '開始執行 sorted(strs, key=compareRule)。Python 會先幫每個字串算排序用 key。', {
+        activeFunction: 'sorted(...)',
+        result: '準備計算每個 key'
+      });
+
+      infos.forEach((info, i) => {
+        push(6, `sorted 需要知道「${info.s}」的排序 key，所以準備呼叫 compareRule(s)。`, {
+          activeKeyIndex: i,
+          currentS: info.s,
+          activeFunction: 'sorted 呼叫 key 函數',
+          result: `準備處理 ${info.s}`
+        });
+        push(1, `進入 compareRule(s)。目前 s = 「${info.s}」。`, {
+          activeKeyIndex: i,
+          currentS: info.s,
+          activeFunction: 'compareRule(s)',
+          result: `s = ${info.s}`
+        });
+        push(2, `set(s) 會把重複字母拿掉：{${info.letters.join(', ')}}。所以 len(set(s)) = ${info.count}。`, {
+          keyCount: i + 1,
+          activeKeyIndex: i,
+          currentS: info.s,
+          activeFunction: 'compareRule(s) 回傳 key',
+          result: `key = ${info.keyText}`
+        });
+      });
+
+      push(6, '全部 key 都算好了。排序會先比較 key 的第一格：不同字母數量。數字越小越前面。', {
+        activeKeyIndex: null,
+        currentS: '-',
+        activeFunction: 'sorted 內部排序',
+        minCount,
+        result: `最少不同字母數 = ${minCount}`
+      });
+
+      push(6, `目前不同字母數最少是 ${minCount}。符合的字串有：${minCandidates.map(x => x.s).join('、')}。`, {
+        activeFunction: '找出最少種類候選',
+        minCount,
+        result: `候選：${minCandidates.map(x => x.s).join('、')}`
+      });
+
+      if (minCandidates.length > 1) {
+        const first = minCandidates[0].s;
+        const second = minCandidates[1].s;
+        const detail = lexDetail(first, second);
+        push(6, `因為有多個字串都是 ${minCount} 種字母，所以要比字典序。先比較 ${first} 和 ${second}。`, {
+          activeFunction: 'sorted 比字典序',
+          comparePair: { a: first, b: second, detail },
+          result: '平手，改比字典序'
+        });
+        if (detail.index >= 0) {
+          push(6, `從左往右看，第 ${detail.index + 1} 個字不同：${detail.a} 和 ${detail.b}。比較小的字母排前面。`, {
+            activeFunction: '字典序比較中',
+            comparePair: { a: first, b: second, detail },
+            result: `${detail.winner} 暫時排前面`
+          });
+        }
+      } else {
+        push(6, `只有 ${answer} 的不同字母數是 ${minCount}，所以不用再比字典序。`, {
+          activeFunction: '不用處理平手',
+          result: `${answer} 暫時排前面`
+        });
+      }
+
+      push(6, `排序完成。strs1 的第一個就是最和諧字串：${answer}。`, {
+        sortedReady: true,
+        comparePair: null,
+        activeFunction: 'sorted 完成',
+        result: resultText()
+      });
+      push(7, `印出 strs1[0]，也就是答案：${answer}。`, {
+        sortedReady: true,
+        answerReady: true,
+        activeFunction: 'print',
+        result: `輸出：${answer}`
+      });
+
+      return arr;
+    }
+
+    function renderCode() {
+      const html = codeLines.map((line, idx) => {
+        const lineNo = idx + 1;
+        return `<div class="code-line" id="codeLine${lineNo}" data-line="${lineNo}">` +
+          `<span class="line-no">${lineNo}</span>` +
+          `<span class="code-text">${escapeHtml(line)}</span>` +
+          `</div>`;
+      }).join('');
+      $('codeScroll').innerHTML = html;
+    }
+
+    function highlightCode(lineNo) {
+      document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active'));
+      const target = $(`codeLine${lineNo}`);
+      const scroller = $('codeScroll');
+      if (target && scroller) {
+        target.classList.add('active');
+
+        // 只捲動右側程式碼框，不能使用 scrollIntoView()。
+        // 否則在窄螢幕的上下排列模式中，整個網頁會被捲到程式碼區，
+        // 左側動畫與題目資料就會突然離開畫面。
+        const targetTop = target.offsetTop;
+        const centeredTop = targetTop - scroller.clientHeight / 2 + target.offsetHeight / 2;
+        scroller.scrollTo({
+          top: Math.max(0, centeredTop),
+          behavior: 'smooth'
+        });
+      }
+    }
+
+    function renderInputTable(step) {
+      const rows = step.example.strs.map((s, i) => {
+        let state = '<span class="tag todo">未讀</span>';
+        let cls = 'wait-row';
+        if (i < step.readCount) {
+          state = '<span class="tag done">已讀取</span>';
+          cls = 'done-row';
+        }
+        if (i === step.activeInputIndex) {
+          state = '<span class="tag active">正在讀</span>';
+          cls = 'active-row';
+        }
+        return `<tr class="${cls}"><td>${i}</td><td><strong>${escapeHtml(s)}</strong></td><td>${state}</td></tr>`;
+      }).join('');
+      $('inputTable').innerHTML = rows;
+    }
+
+    function renderKeyTable(step) {
+      const rows = step.infos.map((info, i) => {
+        const isActive = i === step.activeKeyIndex;
+        const isDone = i < step.keyCount;
+        let cls = isActive ? 'active-row' : (isDone ? 'done-row' : 'wait-row');
+        let setText = isDone ? `{${info.letters.join(', ')}}` : '等待計算';
+        let countText = isDone ? info.count : '-';
+        let keyText = isDone ? info.keyText : '-';
+        if (isActive && !isDone) {
+          setText = '正在進入 compareRule';
+        }
+        const statusTag = isDone ? '<span class="tag done">完成</span>' : (isActive ? '<span class="tag active">處理中</span>' : '<span class="tag todo">等待</span>');
+        return `<tr class="${cls}"><td><strong>${escapeHtml(info.s)}</strong><br>${statusTag}</td><td>${escapeHtml(setText)}</td><td>${countText}</td><td><span class="tag key">${escapeHtml(keyText)}</span></td></tr>`;
+      }).join('');
+      $('keyTable').innerHTML = rows;
+    }
+
+    function renderCurrentInfo(step) {
+      const waiting = '本題沒有遞迴，也沒有 queue / stack；compareRule 一次只處理 1 個字串。';
+      const html = [
+        ['目前執行行', `第 ${step.activeLine} 行`],
+        ['目前函數', step.activeFunction],
+        ['目前 s', step.currentS],
+        ['已讀字串', `${step.readCount} / ${step.example.strs.length}`],
+        ['已算 key', `${step.keyCount} / ${step.example.strs.length}`],
+        ['等待狀態', waiting]
+      ].map(([k, v]) => `<div class="info-label">${escapeHtml(k)}</div><div>${escapeHtml(v)}</div>`).join('');
+      $('currentInfo').innerHTML = html;
+    }
+
+    function renderCompareArea(step) {
+      const sortedHtml = step.sortedReady
+        ? `<div class="table-wrap"><table><thead><tr><th>排序後位置</th><th>字串</th><th>key</th><th>意義</th></tr></thead><tbody>` +
+          step.sortedInfos.map((info, i) => {
+            const final = i === 0 ? '<span class="tag final">答案</span>' : '<span class="tag done">已排序</span>';
+            return `<tr class="${i === 0 ? 'active-row' : 'done-row'}"><td>${i}</td><td><strong>${escapeHtml(info.s)}</strong></td><td>${escapeHtml(info.keyText)}</td><td>${final}</td></tr>`;
+          }).join('') + `</tbody></table></div>`
+        : '<div class="empty-note">排序結果還沒有完成。先等所有 compareRule(s) 的 key 算出來。</div>';
+
+      let compareHtml = '';
+      if (step.comparePair) {
+        const { a, b, detail } = step.comparePair;
+        const maxLen = Math.max(a.length, b.length);
+        const top = [];
+        const bottom = [];
+        for (let i = 0; i < maxLen; i++) {
+          top.push(`<span class="char-box ${i === detail.index ? 'diff' : ''}">${escapeHtml(a[i] ?? '')}</span>`);
+          bottom.push(`<span class="char-box ${i === detail.index ? 'diff' : ''}">${escapeHtml(b[i] ?? '')}</span>`);
+        }
+        compareHtml = `
+          <p><strong>字典序比較：</strong>從左到右看，第一個不同的字母決定誰比較小。</p>
+          <div class="compare-grid"><strong>${escapeHtml(a)}</strong>${top.join('')}</div>
+          <div class="compare-grid"><strong>${escapeHtml(b)}</strong>${bottom.join('')}</div>
+          <p class="small-note">橘色格子是第一個不同的位置。字母小的字串會排在前面。</p>
+        `;
+      } else if (step.minCount !== null && !step.sortedReady) {
+        compareHtml = `<p>目前最少的不同字母數是 <strong>${step.minCount}</strong>。如果有多個一樣少，就會進入字典序比較。</p>`;
+      } else {
+        compareHtml = '<p class="small-note">等 sorted 開始比較時，這裡會顯示字典序或排序結果。</p>';
+      }
+      $('compareArea').innerHTML = compareHtml + sortedHtml;
+    }
+
+    function nodeClassForOriginal(step, index) {
+      if (index === step.activeInputIndex) return 'active';
+      if (index < step.readCount) return 'done';
+      return 'todo';
+    }
+
+    function nodeClassForKey(step, index) {
+      if (index === step.activeKeyIndex) return step.keyCount > index ? 'return' : 'active';
+      if (index < step.keyCount) return 'done';
+      if (step.readCount === step.example.strs.length) return 'wait';
+      return 'todo';
+    }
+
+    function svgNode(x, y, w, h, label, sub, cls) {
+      const safeLabel = escapeHtml(label);
+      const safeSub = escapeHtml(sub || '');
+      return `
+        <g class="svg-node ${cls}">
+          <rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="14"></rect>
+          <text x="${x}" y="${y - 5}" text-anchor="middle" font-size="24" font-weight="800">${safeLabel}</text>
+          <text class="sub" x="${x}" y="${y + 24}" text-anchor="middle">${safeSub}</text>
+        </g>
+      `;
+    }
+
+    function svgArrow(x1, y1, x2, y2, active) {
+      return `<path class="svg-arrow ${active ? 'active' : ''}" d="M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}" />`;
+    }
+
+    function xPos(i, n) {
+      if (n <= 1) return 500;
+      const left = 135;
+      const right = 865;
+      return left + (right - left) * i / (n - 1);
+    }
+
+    function renderSvg(step) {
+      const n = step.infos.length;
+      const originalY = 95;
+      const keyY = 250;
+      const sortedY = 420;
+      let body = `
+        <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" aria-label="排序資料流程圖">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"></path>
+            </marker>
+          </defs>
+          <text class="svg-title" x="40" y="38">原始輸入</text>
+          <text class="svg-title" x="40" y="195">排序 key</text>
+          <text class="svg-title" x="40" y="365">排序後 strs1</text>
+      `;
+
+      step.infos.forEach((info, i) => {
+        const x = xPos(i, n);
+        const cls = nodeClassForOriginal(step, i);
+        body += svgNode(x, originalY, 220, 74, info.s, `index ${i}`, cls);
+        if (step.readCount > i || step.activeKeyIndex === i) {
+          body += svgArrow(x, originalY + 42, x, keyY - 45, step.activeKeyIndex === i);
+        }
+      });
+
+      step.infos.forEach((info, i) => {
+        const x = xPos(i, n);
+        const cls = nodeClassForKey(step, i);
+        const sub = (step.keyCount > i) ? `key ${info.keyText}` : '等待 key';
+        body += svgNode(x, keyY, 240, 84, `set → ${info.count}`, sub, cls);
+      });
+
+      if (step.sortedReady) {
+        step.sortedInfos.forEach((info, sortedIndex) => {
+          const x1 = xPos(info.originalIndex, n);
+          const x2 = xPos(sortedIndex, n);
+          body += svgArrow(x1, keyY + 50, x2, sortedY - 48, sortedIndex === 0);
+        });
+        step.sortedInfos.forEach((info, i) => {
+          const x = xPos(i, n);
+          const cls = i === 0 ? 'return' : 'done';
+          body += svgNode(x, sortedY, 230, 84, info.s, `strs1[${i}]`, cls);
+        });
+      } else {
+        body += svgNode(500, sortedY, 360, 84, '等待排序完成', '所有 key 算完後才會出現', 'wait');
+      }
+
+      body += '</svg>';
+      $('svgWrap').innerHTML = body;
+    }
+
+    function renderSample(example) {
+      $('sampleInput').textContent = example.input;
+      $('sampleOutput').textContent = example.output;
+    }
+
+    function update() {
+      const step = steps[stepIndex];
+      $('stepLabel').textContent = `步驟 ${stepIndex + 1} / ${steps.length}`;
+      $('resultLabel').textContent = step.result;
+      $('messageBox').textContent = step.message;
+      $('prevBtn').disabled = stepIndex === 0;
+      $('nextBtn').disabled = stepIndex === steps.length - 1;
+      highlightCode(step.activeLine);
+      renderInputTable(step);
+      renderKeyTable(step);
+      renderCurrentInfo(step);
+      renderCompareArea(step);
+      renderSvg(step);
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex += 1;
+        update();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (stepIndex > 0) {
+        stepIndex -= 1;
+        update();
+      }
+    }
+
+    function reset() {
+      pause();
+      stepIndex = 0;
+      update();
+    }
+
+    function play() {
+      if (timer) return;
+      $('playBtn').textContent = '暫停';
+      timer = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          pause();
+        } else {
+          nextStep();
+        }
+      }, 1100);
+    }
+
+    function pause() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      $('playBtn').textContent = '播放';
+    }
+
+    function togglePlay() {
+      if (timer) pause();
+      else play();
+    }
+
+    function loadExample(index) {
+      currentExampleIndex = index;
+      const example = examples[index];
+      steps = buildSteps(example);
+      stepIndex = 0;
+      renderSample(example);
+      update();
+    }
+
+    function initExamples() {
+      const select = $('exampleSelect');
+      select.innerHTML = examples.map((ex, i) => `<option value="${i}">${escapeHtml(ex.name)}</option>`).join('');
+      select.addEventListener('change', () => loadExample(Number(select.value)));
+    }
+
+    function initButtons() {
+      $('nextBtn').addEventListener('click', nextStep);
+      $('prevBtn').addEventListener('click', prevStep);
+      $('resetBtn').addEventListener('click', reset);
+      $('playBtn').addEventListener('click', togglePlay);
+    }
+
+    function initKeyboard() {
+      document.addEventListener('keydown', (e) => {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+    }
+
+    function openModal() {
+      $('problemModal').classList.add('open');
+      $('problemModal').setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      $('closeModalBtn').focus();
+    }
+
+    function closeModal() {
+      if (!$('problemModal').classList.contains('open')) return;
+      $('problemModal').classList.remove('open');
+      $('problemModal').setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      $('problemBtn').focus();
+    }
+
+    function initModal() {
+      $('problemBtn').addEventListener('click', openModal);
+      $('closeModalBtn').addEventListener('click', closeModal);
+      $('problemModal').addEventListener('click', (e) => {
+        if (e.target === $('problemModal')) closeModal();
+      });
+    }
+
+    function syncToolbarHeight() {
+      const toolbar = $('toolbar');
+      const height = Math.ceil(toolbar.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--toolbar-h', `${height}px`);
+    }
+
+    function initToolbarResize() {
+      syncToolbarHeight();
+      if ('ResizeObserver' in window) {
+        const observer = new ResizeObserver(syncToolbarHeight);
+        observer.observe($('toolbar'));
+      } else {
+        window.addEventListener('resize', syncToolbarHeight);
+      }
+    }
+
+    function initSplitter() {
+      const splitter = $('splitter');
+      const left = $('leftPanel');
+      const main = $('mainArea');
+      let dragging = false;
+
+      splitter.addEventListener('mousedown', () => {
+        dragging = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const rect = main.getBoundingClientRect();
+        let width = e.clientX - rect.left;
+        const min = 360;
+        const max = rect.width - 370;
+        width = Math.max(min, Math.min(max, width));
+        left.style.flexBasis = `${width}px`;
+      });
+
+      document.addEventListener('mouseup', () => {
+        dragging = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
+    }
+
+    function init() {
+      renderCode();
+      initExamples();
+      initButtons();
+      initKeyboard();
+      initModal();
+      initToolbarResize();
+      initSplitter();
+      loadExample(0);
+      requestAnimationFrame(syncToolbarHeight);
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>h027 202001_2 矩陣總和｜原始題目與輸出完整教學動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 178px;
+      --left-width: 58%;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d7ddea;
+      --brand: #2563eb;
+      --brand-2: #1d4ed8;
+      --ok: #16a34a;
+      --bad: #dc2626;
+      --wait: #f59e0b;
+      --code-bg: #0f172a;
+      --code-ink: #e5e7eb;
+      --code-muted: #94a3b8;
+      --active-line: rgba(250, 204, 21, .23);
+      --shadow: 0 12px 30px rgba(15, 23, 42, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    button, select {
+      font-family: inherit;
+    }
+
+    .toolbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: var(--toolbar-h);
+      z-index: 20;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 3px 16px rgba(15, 23, 42, .08);
+      padding: 10px 14px 9px;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      gap: 8px;
+    }
+
+    .title-row,
+    .concept-row,
+    .control-row,
+    .message-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+
+
+    .concept-box {
+      width: 100%;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #172554;
+      border-radius: 14px;
+      padding: 7px 12px;
+      font-size: 18px;
+      line-height: 1.5;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .concept-box b {
+      color: #1d4ed8;
+      margin-right: 4px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: .3px;
+      white-space: nowrap;
+      margin-right: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #1d4ed8;
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+      border: 1px solid #d9e7ff;
+    }
+
+    .spacer { flex: 1 1 auto; }
+
+    .toolbar button,
+    .modal button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: .15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+      white-space: nowrap;
+    }
+
+    .toolbar button:hover,
+    .modal button:hover { transform: translateY(-1px); border-color: #b7c3d6; }
+
+    .toolbar button.primary {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .toolbar button.primary:hover { background: var(--brand-2); }
+
+    .toolbar button.active-example {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #111827;
+      color: white;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .result-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      max-width: 38vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .line-pill {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .message-box {
+      flex: 1 1 auto;
+      min-width: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+
+    .main {
+      margin-top: var(--toolbar-h);
+      height: calc(100vh - var(--toolbar-h));
+      display: grid;
+      grid-template-columns: var(--left-width) 8px 1fr;
+      background: var(--bg);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .pane {
+      min-width: 0;
+      min-height: 0;
+      position: relative;
+    }
+
+    .left-pane {
+      padding: 12px;
+      background: #f5f7fb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: auto;
+    }
+
+    .left-section {
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #d7ddea;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+      padding: 12px 14px;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.5;
+      font-weight: 900;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 22px;
+      border-radius: 99px;
+      background: var(--brand);
+      flex: 0 0 auto;
+    }
+
+    .section-body {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #263246;
+      font-weight: 700;
+    }
+
+    .core-rule {
+      font-size: 19px;
+      line-height: 1.6;
+      font-weight: 900;
+      color: #172554;
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .core-rule .section-title::before { background: #1d4ed8; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .info-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 9px 11px;
+      min-width: 0;
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .info-item b { color: #111827; }
+    .info-item.ok { border-color:#bbf7d0; background:#f0fdf4; }
+    .info-item.bad { border-color:#fecaca; background:#fff1f2; }
+    .info-item.warn { border-color:#fde68a; background:#fffbeb; }
+
+    .problem-summary {
+      display: grid;
+      gap: 10px;
+    }
+
+    .problem-summary .lead {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #172554;
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-size: 18px;
+      line-height: 1.65;
+      font-weight: 900;
+    }
+
+    .goal-grid,
+    .output-grid,
+    .settlement-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .goal-item,
+    .output-card,
+    .metric-card {
+      min-width: 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      line-height: 1.65;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .goal-item b,
+    .output-card b,
+    .metric-card b {
+      color: #111827;
+    }
+
+    .output-card.first {
+      border-left: 6px solid #2563eb;
+      background: #eff6ff;
+    }
+
+    .output-card.second {
+      border-left: 6px solid #7e22ce;
+      background: #faf5ff;
+    }
+
+    .fixed-rule {
+      margin-top: 10px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      color: #713f12;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      line-height: 1.65;
+      font-weight: 900;
+    }
+
+    .comparison-explain {
+      margin-top: 10px;
+      border: 1px solid #dbe4f0;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      line-height: 1.65;
+      font-weight: 800;
+    }
+
+    .final-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .final-output {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 12px;
+      padding: 13px 15px;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 22px;
+      line-height: 1.55;
+      font-weight: 900;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    .final-output small {
+      display: block;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      white-space: normal;
+    }
+
+    .metric-card.ok {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+
+    .metric-card.warn {
+      border-color: #fde68a;
+      background: #fffbeb;
+    }
+
+    .mini-pre {
+      margin: 8px 0 0;
+      padding: 10px 12px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 150px;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    .visual-section { padding: 12px; }
+
+    .visual-card {
+      position: relative;
+      flex-shrink: 0;
+      width: 100%;
+      height: 430px;
+      min-height: 360px;
+      max-height: 58vh;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #d7ddea;
+      overflow: hidden;
+    }
+
+    .visual-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      max-height: 92px;
+      overflow: auto;
+    }
+
+    .legend span {
+      background: #f8fafc;
+      border: 1px solid #dbe4f0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 15px;
+      line-height: 1.5;
+      font-weight: 900;
+      color: #344054;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: -1px;
+      border: 1px solid rgba(0,0,0,.12);
+    }
+
+    .right-pane {
+      background: #0b1220;
+      color: var(--code-ink);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .divider {
+      cursor: col-resize;
+      background: linear-gradient(90deg, #e6ebf5 0%, #cbd5e1 50%, #e6ebf5 100%);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+      position: relative;
+    }
+
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 54px;
+      border-radius: 99px;
+      background: #64748b;
+      transform: translate(-50%, -50%);
+      opacity: .55;
+    }
+
+    .right-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, .25);
+      background: #111827;
+      min-height: 52px;
+    }
+
+    .right-head-title {
+      font-size: 15px;
+      font-weight: 900;
+      margin-right: auto;
+    }
+
+    .right-head button {
+      border: 1px solid rgba(148, 163, 184, .35);
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .right-head button:hover { background: #334155; }
+
+    .code-scroll {
+      flex: 1 1 auto;
+      overflow: auto;
+      padding: 10px 0 22px;
+      scroll-behavior: smooth;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 12px;
+      min-height: 24px;
+      padding: 2px 12px 2px 0;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.55;
+      white-space: pre;
+      border-left: 4px solid transparent;
+    }
+
+    .line-no {
+      text-align: right;
+      color: var(--code-muted);
+      user-select: none;
+      padding-right: 2px;
+    }
+
+    .code-text { color: var(--code-ink); }
+    .code-line.active {
+      background: var(--active-line);
+      border-left-color: #facc15;
+    }
+    .code-line.active .line-no {
+      color: #fde68a;
+      font-weight: 900;
+    }
+    .code-line.active .code-text {
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .modal.hidden { display: none; }
+
+    .modal-card {
+      position: absolute;
+      top: calc(var(--toolbar-h) + 16px);
+      left: 48px;
+      width: min(980px, calc(100vw - 96px));
+      max-height: 70vh;
+      background: #fff;
+      border: 1px solid #d7ddea;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(15,23,42,.28);
+      overflow: hidden;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      flex: 0 0 auto;
+      cursor: move;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, #111827, #1e3a8a);
+      color: #fff;
+      padding: 12px 14px;
+      font-weight: 900;
+    }
+
+    .modal-head .modal-title { flex: 1 1 auto; }
+    .modal-head button {
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.25);
+      color: #fff;
+      box-shadow: none;
+    }
+
+    .modal-body {
+      overflow: auto;
+      padding: 18px 20px 24px;
+      line-height: 1.75;
+      font-size: 16px;
+    }
+
+
+    .modal-body .one-line {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #172554;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.6;
+      margin: 8px 0 16px;
+    }
+    .modal-body .one-line b { color: #1d4ed8; }
+
+    .modal-body h2,
+    .modal-body h3 { margin: 14px 0 8px; }
+    .modal-body p { margin: 7px 0; }
+    .modal-body .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .modal-body .box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .modal-body pre {
+      margin: 8px 0 0;
+      padding: 10px 12px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 12px;
+      overflow: auto;
+      line-height: 1.45;
+      font-size: 16px;
+    }
+    .modal-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-size: 15px;
+    }
+    .modal-body th,
+    .modal-body td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .modal-body th { background: #eff6ff; }
+
+    .hint {
+      color: #475467;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .kbd {
+      display: inline-block;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #334155;
+    }
+
+    @media (max-width: 900px) {
+      :root { --toolbar-h: 230px; --left-width: 54%; }
+      .toolbar { height: var(--toolbar-h); }
+      .title-row, .concept-row, .control-row, .message-row { flex-wrap: wrap; }
+      .message-box { white-space: normal; }
+      .concept-box { white-space: normal; }
+      .info-grid,
+      .goal-grid,
+      .output-grid,
+      .settlement-grid { grid-template-columns: 1fr; }
+      .visual-card { height: 360px; max-height: 52vh; }
+      .code-line { font-size: 14px; grid-template-columns: 42px 1fr; }
+      .modal-card {
+        left: 12px;
+        top: calc(var(--toolbar-h) + 12px);
+        width: calc(100vw - 24px);
+        max-height: 70vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" aria-label="動畫控制列">
+    <div class="title-row">
+      <div class="title">h027 202001_2 矩陣總和｜原始題目、比對與輸出完整動畫</div>
+      <span class="badge">矩陣滑動框</span>
+      <span class="badge">距離 = 不同格數</span>
+      <div class="spacer"></div>
+      <button id="example1Btn" class="active-example">範例 #1</button>
+      <button id="example2Btn">範例 #2</button>
+      <button id="openProblemBtn">顯示題目</button>
+    </div>
+    <div class="concept-row">
+      <div class="concept-box"><b>本題一句話：</b>從大矩陣 B 框出和 A 一樣大的 b1，比較相同位置；不同格數 cnt ≤ r 才算符合，接著才計算總和差。</div>
+    </div>
+    <div class="control-row">
+      <button id="prevBtn">← 上一步</button>
+      <button id="nextBtn" class="primary">下一步 →</button>
+      <button id="playBtn">▶ 播放</button>
+      <button id="resetBtn">重設</button>
+      <span id="stepText" class="step-pill">步驟 1 / 1</span>
+      <span id="resultText" class="result-pill">狀態：尚未開始</span>
+      <span class="hint">鍵盤：<span class="kbd">←</span> <span class="kbd">→</span> <span class="kbd">Space</span></span>
+    </div>
+    <div class="message-row">
+      <span id="lineInfo" class="line-pill">程式碼第 - 行</span>
+      <div id="messageText" class="message-box">按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main class="main" id="mainSplit">
+    <section class="pane left-pane" aria-label="矩陣動畫區">
+      <section class="left-section core-rule" aria-label="核心規則">
+        <h2 class="section-title">整題最重要的規則</h2>
+        <div class="section-body">
+          先從大矩陣 <b>B</b> 框出一塊和小矩陣 <b>A</b> 一樣大的子矩陣 <b>b1</b>。<br>
+          再把 <b>A 與 b1 相同位置</b>的數字逐格比較：不同一格，<b>cnt 就加 1</b>。<br>
+          全部格子比完後，只有 <b>cnt ≤ r</b>，這塊 b1 才符合，<b>count 才加 1</b>，接著才計算矩陣總和。
+        </div>
+      </section>
+
+      <section class="left-section" aria-label="原始題目">
+        <h2 class="section-title">原始題目在問什麼？</h2>
+        <div class="problem-summary">
+          <div class="lead">
+            給定一個 s×t 的小矩陣 A、一個 n×m 的大矩陣 B，以及允許不同格數的門檻 r。請檢查 B 中每一個 s×t 子矩陣，找出與 A 的距離不超過 r 的子矩陣。
+          </div>
+          <div class="goal-grid">
+            <div class="goal-item">
+              <b>矩陣距離</b><br>
+              比較 A 與 b1 的相同位置。數字不同的位置有幾格，距離就是幾；程式用 cnt 記錄。
+            </div>
+            <div class="goal-item">
+              <b>符合條件</b><br>
+              全部格子比較完成後，判斷 cnt ≤ r。成立才算符合，不成立就跳過。
+            </div>
+            <div class="goal-item">
+              <b>符合數量</b><br>
+              每找到一塊符合的 b1，count 才加 1。count 是全部符合子矩陣的總數。
+            </div>
+            <div class="goal-item">
+              <b>總和差</b><br>
+              只有符合者才計算 sumb，再算 |sumb − suma|，最後留下最小的 mDiff。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="left-section" aria-label="輸出要求">
+        <h2 class="section-title">題目最後要輸出什麼？</h2>
+        <div class="output-grid">
+          <div class="output-card first">
+            <b>第一行：count</b><br>
+            輸出「不同格數 cnt 沒有超過 r」的子矩陣共有幾塊。
+          </div>
+          <div class="output-card second">
+            <b>第二行：mDiff</b><br>
+            在所有符合的子矩陣中，輸出最小的 |sumb − suma|。
+          </div>
+        </div>
+        <div class="fixed-rule">
+          特別情況：如果一塊符合的子矩陣都沒有，第一行輸出 0，第二行輸出 -1。
+        </div>
+      </section>
+
+      <section class="left-section" aria-label="目前輸入與範例">
+        <h2 class="section-title">目前輸入 / 範例</h2>
+        <div id="inputPanel" class="section-body"></div>
+      </section>
+
+      <section class="left-section visual-section" aria-label="SVG 矩陣視覺化">
+        <h2 class="section-title">矩陣視覺化</h2>
+        <div class="visual-card">
+          <svg id="visualSvg" class="visual-svg" viewBox="0 0 1200 590" preserveAspectRatio="xMidYMid meet" role="img" aria-label="矩陣滑動比較動畫"></svg>
+        </div>
+        <div class="legend" aria-label="顏色說明">
+          <span><i style="background:#dbeafe"></i>滑動框範圍</span>
+          <span><i style="background:#fde68a"></i>目前比較</span>
+          <span><i style="background:#bbf7d0"></i>已比且相同</span>
+          <span><i style="background:#fecaca"></i>已比且不同</span>
+          <span><i style="background:#16a34a"></i>已處理且符合</span>
+          <span><i style="background:#dc2626"></i>已處理但不符合</span>
+        </div>
+      </section>
+
+      <section class="left-section" aria-label="目前比較">
+        <h2 class="section-title">目前比較</h2>
+        <div id="comparePanel" class="section-body"></div>
+      </section>
+
+      <section class="left-section" aria-label="目前變數與答案">
+        <h2 class="section-title">目前變數 / 答案累積</h2>
+        <div id="statePanel" class="section-body"></div>
+      </section>
+
+      <section class="left-section" aria-label="最後輸出與結算">
+        <h2 class="section-title">最後輸出 / 完整結算</h2>
+        <div id="finalPanel" class="section-body final-panel"></div>
+      </section>
+    </section>
+
+    <div class="divider" id="divider" aria-label="拖曳調整左右寬度"></div>
+
+    <section class="pane right-pane" aria-label="Python 程式碼區">
+      <div class="right-head">
+        <div class="right-head-title">完整 Python 程式碼</div>
+        <button id="openProblemBtn2">顯示題目</button>
+        <button id="copyCodeBtn">複製程式碼</button>
+      </div>
+      <div class="code-scroll" id="codeScroll">
+        <div id="codeBlock"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="problemModal" aria-hidden="true">
+    <div class="modal-card" id="problemCard">
+      <div class="modal-head" id="problemDragHandle">
+        <div class="modal-title">題目文字版：h027 矩陣總和</div>
+        <button id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <h2>題目在做什麼？</h2>
+        <div class="one-line"><b>一句話：</b>從 B 取出每一塊和 A 一樣大的 b1，比較相同位置；不同格數沒有超過 r 的才符合。</div>
+        <p>原始題目給一個 <b>s×t 的小矩陣 A</b>、一個 <b>n×m 的大矩陣 B</b>，以及距離門檻 <b>r</b>。</p>
+        <p>我們把一個和 A 一樣大的框框放在 B 上，依序移動。每個位置都會得到一個 <b>s×t 子矩陣 b1</b>。</p>
+        <p>接著比較 A 與 b1 的相同位置，例如 A[0][0] 只能和 b1[0][0] 比，不能拿去和其他位置比較。</p>
+
+        <h3>距離怎麼算？</h3>
+        <p>這題的矩陣距離，是「相同位置有幾格數字不同」。程式用 <b>cnt</b> 記錄不同格數。</p>
+        <p>相同：cnt 不變；不同：cnt 加 1。數字差多少不重要，只要不一樣就算不同 1 格。</p>
+        <p>全部格子比較完成後才判斷：<b>cnt ≤ r</b>。成立才是符合的子矩陣。</p>
+
+        <h3>符合後要算什麼？</h3>
+        <p>只有 cnt ≤ r 的 b1 才進行下面計算：</p>
+        <p>① count 加 1。② 計算 b1 的元素總和 sumb。③ 計算 \( |sumb-suma| \)。④ 用這個值更新最小值 mDiff。</p>
+
+        <h3>最後輸出兩行</h3>
+        <table>
+          <tr><th>第一行</th><td><b>count</b>：符合 cnt ≤ r 的子矩陣數量。</td></tr>
+          <tr><th>第二行</th><td><b>mDiff</b>：符合者中最小的 |sumb − suma|；如果沒有符合者，輸出 -1。</td></tr>
+        </table>
+        <p>所以若完全沒有符合者，輸出會是：</p>
+        <pre>0
+-1</pre>
+
+        <h3>輸入格式</h3>
+        <p>第一行有五個整數：\(s, t, n, m, r\)。</p>
+        <table>
+          <tr><th>變數</th><th>意思</th></tr>
+          <tr><td>s</td><td>A 有幾列</td></tr>
+          <tr><td>t</td><td>A 有幾欄</td></tr>
+          <tr><td>n</td><td>B 有幾列</td></tr>
+          <tr><td>m</td><td>B 有幾欄</td></tr>
+          <tr><td>r</td><td>最多允許幾格不同</td></tr>
+        </table>
+        <p>接下來 s 行是 A 矩陣，接下來 n 行是 B 矩陣。</p>
+
+        <div class="grid-2">
+          <div class="box">
+            <h3>範例輸入 #1</h3>
+            <pre>1 3 1 10 1
+7 4 7
+6 7 7 7 4 5 0 4 4 7</pre>
+            <h3>範例輸出 #1</h3>
+            <pre>3
+2</pre>
+          </div>
+          <div class="box">
+            <h3>範例輸入 #2</h3>
+            <pre>3 3 5 5 2
+1 2 1
+2 4 2
+2 4 5
+1 2 1 2 3
+2 4 2 4 2
+2 4 2 3 5
+3 2 4 2 0
+3 2 4 5 5</pre>
+            <h3>範例輸出 #2</h3>
+            <pre>3
+1</pre>
+          </div>
+        </div>
+
+        <h3>這題最容易搞錯</h3>
+        <p><b>不是直接比較 A 與整個 B，也不是只看兩邊是否出現相同數字。</b></p>
+        <p>必須先從 B 框出 b1，再比較 A 與 b1 的相同位置。</p>
+        <p><b>判斷順序不能顛倒：</b>先算 cnt，確認 cnt ≤ r；符合後才 count 加 1、計算 sumb 與總和差。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeLines = [
+      'def compareM(m1,m2):                #定義比對矩陣距離函式',
+      '    cnt=0                           #兩矩陣距離:對應位置元素不相同的數量',
+      '    global r                        #全域變數r,距離門檻',
+      '    for i in range(len(m1)):',
+      '        for j in range(len(m1[0])):',
+      '            if m1[i][j]!=m2[i][j]:  #對應位置值不相同,cnt+1',
+      '                cnt += 1',
+      '    #print(m1, m2, cnt)',
+      '    return cnt<=r                   #傳回距離是否小於門檻',
+      '',
+      's,t,n,m,r = map(int, input().split())',
+      'a = [list(map(int, input().split())) for _ in range(s)]',
+      'b = [list(map(int, input().split())) for _ in range(n)]',
+      'suma = sum(sum(r) for r in a)       #矩陣a數值總和',
+      'count=0                             #符合條件的子矩陣個數',
+      "mDiff=float('inf')                  #子矩陣與矩陣a總和相差最小值,預設無窮大",
+      'for i in range(n-s+1):              #逐一取b的子矩陣',
+      '    for j in range(m-t+1):',
+      '        b1 = [row[j:j+t] for row in b[i:i+s]]   #b的子矩陣',
+      '        if compareM(a, b1):                     #比對矩陣距離函式是否低於門檻',
+      '            count+=1                            #符合次數+1',
+      '            sumb = sum(sum(r) for r in b1)      #子矩陣總和',
+      '            mDiff = min(mDiff,abs(sumb-suma))   #更新矩陣相差最小值',
+      '',
+      'print(count)                            #符合條件的子矩陣個數',
+      'print(mDiff if count!=0 else -1)        #矩陣相差最小值,沒有符合條件的子矩陣輸出-1'
+    ];
+
+    const examples = [
+      {
+        name: '範例 #1',
+        s: 1, t: 3, n: 1, m: 10, r: 1,
+        a: [[7,4,7]],
+        b: [[6,7,7,7,4,5,0,4,4,7]],
+        input: '1 3 1 10 1\n7 4 7\n6 7 7 7 4 5 0 4 4 7',
+        output: '3\n2'
+      },
+      {
+        name: '範例 #2',
+        s: 3, t: 3, n: 5, m: 5, r: 2,
+        a: [[1,2,1],[2,4,2],[2,4,5]],
+        b: [[1,2,1,2,3],[2,4,2,4,2],[2,4,2,3,5],[3,2,4,2,0],[3,2,4,5,5]],
+        input: '3 3 5 5 2\n1 2 1\n2 4 2\n2 4 5\n1 2 1 2 3\n2 4 2 4 2\n2 4 2 3 5\n3 2 4 2 0\n3 2 4 5 5',
+        output: '3\n1'
+      }
+    ];
+
+    let currentExampleIndex = 0;
+    let steps = [];
+    let stepIndex = 0;
+    let timer = null;
+
+    const $ = (id) => document.getElementById(id);
+    const svgNS = 'http://www.w3.org/2000/svg';
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function deepCopy(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function sumMatrix(mat) {
+      return mat.reduce((total, row) => total + row.reduce((a, b) => a + b, 0), 0);
+    }
+
+    function getSubMatrix(ex, top, left) {
+      return ex.b.slice(top, top + ex.s).map(row => row.slice(left, left + ex.t));
+    }
+
+    function matrixToText(mat) {
+      return mat.map(row => row.join(' ')).join(' / ');
+    }
+
+    function fmtInf(v) {
+      return v === null || v === undefined || v === Infinity ? '尚未有' : v;
+    }
+
+    function renderCode() {
+      const block = $('codeBlock');
+      block.innerHTML = codeLines.map((line, idx) => {
+        const no = idx + 1;
+        return `<div class="code-line" data-line="${no}"><span class="line-no">${no}</span><span class="code-text">${escapeHtml(line)}</span></div>`;
+      }).join('');
+    }
+
+    function makeSteps(ex) {
+      const out = [];
+      const suma = sumMatrix(ex.a);
+      let count = 0;
+      let mDiff = Infinity;
+      const processed = [];
+      let state = {
+        phase: 'start',
+        exIndex: currentExampleIndex,
+        i: null,
+        j: null,
+        sub: null,
+        compareCell: null,
+        compareRow: null,
+        cnt: null,
+        cellStatuses: {},
+        ok: null,
+        count,
+        mDiff: null,
+        suma,
+        sumb: null,
+        diff: null,
+        processed: [],
+        finalOut: null
+      };
+
+      function add(activeLine, message, patch = {}) {
+        state = { ...state, ...patch };
+        const snapshot = deepCopy({
+          ...state,
+          processed: processed.map(p => ({...p})),
+          mDiff: state.mDiff === Infinity ? null : state.mDiff
+        });
+        const result = makeResultText(snapshot, ex);
+        out.push({ activeLine, message, visualState: snapshot, result });
+      }
+
+      add(11, `讀第一行：s=${ex.s}, t=${ex.t}, n=${ex.n}, m=${ex.m}, r=${ex.r}。`, { phase: 'readHeader' });
+      add(12, `讀入小矩陣 A，大小是 ${ex.s} × ${ex.t}。`, { phase: 'readA' });
+      add(13, `讀入大矩陣 B，大小是 ${ex.n} × ${ex.m}。`, { phase: 'readB' });
+      add(14, `先把 A 全部加起來：suma = ${suma}。`, { phase: 'suma', suma });
+      add(15, 'count = 0，表示目前還沒有找到符合的子矩陣。', { phase: 'initCount', count: 0 });
+      add(16, 'mDiff 先放成無限大，等找到符合的子矩陣後再更新。', { phase: 'initDiff', mDiff: null });
+
+      for (let i = 0; i <= ex.n - ex.s; i++) {
+        add(17, `外層 i = ${i}：滑動框從 B 的第 ${i + 1} 列開始。`, {
+          phase: 'loopI', i, j: null, sub: null, compareCell: null, compareRow: null,
+          cnt: null, cellStatuses: {}, ok: null, sumb: null, diff: null, count, mDiff: mDiff === Infinity ? null : mDiff
+        });
+        for (let j = 0; j <= ex.m - ex.t; j++) {
+          const sub = getSubMatrix(ex, i, j);
+          let cnt = 0;
+          let cellStatuses = {};
+          add(18, `內層 j = ${j}：滑動框從 B 的第 ${j + 1} 欄開始。`, {
+            phase: 'loopJ', i, j, sub, compareCell: null, compareRow: null,
+            cnt: null, cellStatuses: {}, ok: null, sumb: null, diff: null, count, mDiff: mDiff === Infinity ? null : mDiff
+          });
+          add(19, `切出 b1 = B[${i}:${i + ex.s}][${j}:${j + ex.t}]，內容是：${matrixToText(sub)}。`, {
+            phase: 'makeSub', i, j, sub, compareCell: null, compareRow: null,
+            cnt: null, cellStatuses: {}, ok: null, sumb: null, diff: null
+          });
+          add(20, '進入 if compareM(a, b1)：先呼叫 compareM 來判斷像不像。', {
+            phase: 'callCompare', i, j, sub, cnt: 0, cellStatuses: {}, ok: null
+          });
+          add(1, '進入 compareM(m1, m2)：m1 是 A，m2 是目前的 b1。', {
+            phase: 'enterCompare', cnt: 0, cellStatuses: {}, compareCell: null, compareRow: null
+          });
+          add(2, 'cnt = 0，先從「不同 0 格」開始數。', {
+            phase: 'compareInitCnt', cnt: 0, cellStatuses: {}, compareCell: null, compareRow: null
+          });
+          add(3, `使用全域變數 r = ${ex.r}，最多允許 ${ex.r} 格不同。`, {
+            phase: 'compareUseR', cnt: 0
+          });
+
+          for (let ci = 0; ci < ex.s; ci++) {
+            add(4, `compareM 外層 i = ${ci}：準備比較第 ${ci + 1} 列。`, {
+              phase: 'compareRow', compareRow: ci, compareCell: null, cnt, cellStatuses: {...cellStatuses}
+            });
+            for (let cj = 0; cj < ex.t; cj++) {
+              add(5, `compareM 內層 j = ${cj}：準備比較這一格。`, {
+                phase: 'compareCellStart', compareRow: ci, compareCell: { row: ci, col: cj }, cnt, cellStatuses: {...cellStatuses}
+              });
+              const av = ex.a[ci][cj];
+              const bv = sub[ci][cj];
+              const key = `${ci},${cj}`;
+              if (av === bv) {
+                cellStatuses[key] = 'same';
+                add(6, `A[${ci}][${cj}] = ${av}，b1[${ci}][${cj}] = ${bv}，一樣，所以 cnt 不變。`, {
+                  phase: 'cellSame', compareCell: { row: ci, col: cj }, cnt, cellStatuses: {...cellStatuses}
+                });
+              } else {
+                add(6, `A[${ci}][${cj}] = ${av}，b1[${ci}][${cj}] = ${bv}，不一樣。`, {
+                  phase: 'cellDiffFound', compareCell: { row: ci, col: cj }, cnt, cellStatuses: {...cellStatuses}
+                });
+                cnt += 1;
+                cellStatuses[key] = 'diff';
+                add(7, `不同格數 cnt + 1，現在 cnt = ${cnt}。`, {
+                  phase: 'cellDiffAdd', compareCell: { row: ci, col: cj }, cnt, cellStatuses: {...cellStatuses}
+                });
+              }
+            }
+          }
+
+          const ok = cnt <= ex.r;
+          add(9, `全部 ${ex.s * ex.t} 格比較完成：相同 ${ex.s * ex.t - cnt} 格、不同 cnt = ${cnt} 格。判斷 ${cnt} ≤ ${ex.r}，所以回傳 ${ok ? 'True（符合）' : 'False（不符合）'}。`, {
+            phase: 'returnCompare', compareCell: null, compareRow: null, cnt, cellStatuses: {...cellStatuses}, ok
+          });
+
+          if (ok) {
+            add(20, `if 條件成立：cnt = ${cnt} ≤ r = ${ex.r}，所以這塊 b1 符合，接下來 count 才能加 1。`, {
+              phase: 'ifTrue', cnt, ok, cellStatuses: {...cellStatuses}
+            });
+            count += 1;
+            add(21, `count += 1，符合的子矩陣數量變成 ${count}。`, {
+              phase: 'countPlus', count, cnt, ok, cellStatuses: {...cellStatuses}
+            });
+            const sumb = sumMatrix(sub);
+            add(22, `計算 b1 的總和：sumb = ${sumb}。`, {
+              phase: 'sumB', sumb, count, cnt, ok, cellStatuses: {...cellStatuses}
+            });
+            const rawDiff = sumb - suma;
+            const diff = Math.abs(rawDiff);
+            const oldDiff = mDiff;
+            mDiff = Math.min(mDiff, diff);
+            const oldText = oldDiff === Infinity ? '尚未有' : oldDiff;
+            add(23, `總和差 = |sumb - suma| = |${sumb} - ${suma}| = |${rawDiff}| = ${diff}；舊 mDiff 是 ${oldText}，更新後是 ${mDiff}。`, {
+              phase: 'updateDiff', sumb, diff, count, mDiff, cnt, ok, cellStatuses: {...cellStatuses}
+            });
+            processed.push({ i, j, ok: true, cnt, sumb, diff });
+            add(17, `位置 (i=${i}, j=${j}) 處理完：符合，記錄下來，準備看下一個位置。`, {
+              phase: 'finishPosition', sumb, diff, count, mDiff, cnt, ok, cellStatuses: {...cellStatuses}
+            });
+          } else {
+            add(20, `if 條件不成立：cnt = ${cnt} > r = ${ex.r}。這塊 b1 不符合，所以 count 不變，也不計算 sumb、|sumb-suma| 與 mDiff。`, {
+              phase: 'ifFalse', cnt, ok, cellStatuses: {...cellStatuses}
+            });
+            processed.push({ i, j, ok: false, cnt, sumb: null, diff: null });
+            add(17, `位置 (i=${i}, j=${j}) 處理完：不符合，滑動框移到下一個位置。`, {
+              phase: 'finishPosition', count, mDiff: mDiff === Infinity ? null : mDiff, cnt, ok, cellStatuses: {...cellStatuses}
+            });
+          }
+        }
+      }
+
+      const finalSecond = count === 0 ? -1 : mDiff;
+      add(25, `所有位置都檢查完成。題目第一行要輸出符合 cnt ≤ r 的子矩陣數量，所以輸出 count = ${count}。`, {
+        phase: 'printCount', count, mDiff: mDiff === Infinity ? null : mDiff, finalOut: `${count}\n${finalSecond}`,
+        compareCell: null, compareRow: null
+      });
+      add(26, count === 0
+        ? '因為 count = 0，沒有任何符合的子矩陣，所以題目第二行規定輸出 -1。'
+        : `符合的子矩陣中，最小的 |sumb-suma| 是 mDiff = ${mDiff}，所以題目第二行輸出 ${mDiff}。`, {
+        phase: 'printDiff', count, mDiff: mDiff === Infinity ? null : mDiff, finalOut: `${count}\n${finalSecond}`,
+        compareCell: null, compareRow: null
+      });
+
+      return out;
+    }
+
+    function makeResultText(state, ex) {
+      const pos = (state.i === null || state.j === null) ? '位置：尚未開始' : `位置：i=${state.i}, j=${state.j}`;
+      const cnt = state.cnt === null ? '不同 cnt：-' : `不同 cnt：${state.cnt}，門檻 r：${ex.r}`;
+      const diff = `count：${state.count ?? 0}，mDiff：${fmtInf(state.mDiff)}`;
+      return `${pos}｜${cnt}｜${diff}`;
+    }
+
+    function createSvg(tag, attrs = {}) {
+      const el = document.createElementNS(svgNS, tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        el.setAttribute(k, v);
+      }
+      return el;
+    }
+
+    function addText(svg, x, y, text, attrs = {}) {
+      const el = createSvg('text', { x, y, ...attrs });
+      el.textContent = text;
+      svg.appendChild(el);
+      return el;
+    }
+
+    function addRect(svg, x, y, w, h, attrs = {}) {
+      const el = createSvg('rect', { x, y, width: w, height: h, ...attrs });
+      svg.appendChild(el);
+      return el;
+    }
+
+    function addLine(svg, x1, y1, x2, y2, attrs = {}) {
+      const el = createSvg('line', { x1, y1, x2, y2, ...attrs });
+      svg.appendChild(el);
+      return el;
+    }
+
+    function addCircle(svg, cx, cy, r, attrs = {}) {
+      const el = createSvg('circle', { cx, cy, r, ...attrs });
+      svg.appendChild(el);
+      return el;
+    }
+
+    function drawMatrix(svg, mat, x, y, cell, opts = {}) {
+      const rows = mat.length;
+      const cols = mat[0]?.length || 0;
+      const title = opts.title || '';
+      if (title) {
+        addText(svg, x, y - 18, title, {
+          'font-size': 26, 'font-weight': 900, fill: '#111827'
+        });
+      }
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const info = opts.cellInfo ? opts.cellInfo(r, c) : {};
+          const fill = info.fill || '#ffffff';
+          const stroke = info.stroke || '#475467';
+          const strokeWidth = info.strokeWidth || 1.6;
+          addRect(svg, x + c * cell, y + r * cell, cell, cell, {
+            fill,
+            stroke,
+            'stroke-width': strokeWidth,
+            rx: 6,
+            ry: 6
+          });
+          addText(svg, x + c * cell + cell / 2, y + r * cell + cell / 2 + 8, String(mat[r][c]), {
+            'text-anchor': 'middle',
+            'font-size': Math.min(30, cell * .43),
+            'font-weight': 900,
+            fill: '#111827'
+          });
+        }
+      }
+      return { width: cols * cell, height: rows * cell };
+    }
+
+    function drawCard(svg, x, y, w, h, title, lines, accent = '#2563eb') {
+      addRect(svg, x, y, w, h, {
+        fill: '#ffffff', stroke: '#d7ddea', 'stroke-width': 2, rx: 18, ry: 18,
+        filter: 'drop-shadow(0 8px 16px rgba(15,23,42,.10))'
+      });
+      addRect(svg, x, y, 8, h, { fill: accent, rx: 4, ry: 4 });
+      addText(svg, x + 22, y + 32, title, {
+        'font-size': 20, 'font-weight': 900, fill: '#111827'
+      });
+      lines.forEach((line, idx) => {
+        addText(svg, x + 22, y + 62 + idx * 26, line, {
+          'font-size': 17, 'font-weight': 800, fill: idx === 0 ? '#344054' : '#475467'
+        });
+      });
+    }
+
+    function renderSvg(step) {
+      const ex = examples[currentExampleIndex];
+      const state = step.visualState;
+      const svg = $('visualSvg');
+      svg.innerHTML = '';
+
+      addRect(svg, 0, 0, 1200, 590, { fill: '#f8fbff' });
+      addText(svg, 44, 62, `${ex.name}：從 B 框出 b1，再和 A 的相同位置逐格比較`, {
+        'font-size': 28, 'font-weight': 900, fill: '#0f172a'
+      });
+      addText(svg, 44, 94, '不同格數記為 cnt；cnt <= r 才符合，count 才加 1，接著才計算總和差。', {
+        'font-size': 18, 'font-weight': 800, fill: '#475467'
+      });
+
+      const bCell = Math.min(72, 560 / ex.m, 380 / ex.n);
+      const bX = 58;
+      const bY = ex.n === 1 ? 245 : 185;
+      const bW = ex.m * bCell;
+      const bH = ex.n * bCell;
+
+      const aCell = Math.min(62, 310 / ex.t, 210 / ex.s);
+      const aX = 760;
+      const aY = 130;
+      const subY = 382;
+
+      const currentI = state.i;
+      const currentJ = state.j;
+      const active = state.compareCell;
+      const cellStatuses = state.cellStatuses || {};
+      const inCurrentWindow = (r, c) => currentI !== null && currentJ !== null && r >= currentI && r < currentI + ex.s && c >= currentJ && c < currentJ + ex.t;
+
+      drawMatrix(svg, ex.b, bX, bY, bCell, {
+        title: '大矩陣 B：滑動框會在這裡移動',
+        cellInfo: (r, c) => {
+          let fill = '#ffffff';
+          let stroke = '#64748b';
+          let strokeWidth = 1.5;
+          if (inCurrentWindow(r, c)) {
+            fill = '#dbeafe';
+            stroke = '#2563eb';
+            strokeWidth = 2;
+            if (active && r === currentI + active.row && c === currentJ + active.col) {
+              fill = '#fde68a';
+              stroke = '#b45309';
+              strokeWidth = 4;
+            } else if (currentI !== null && currentJ !== null) {
+              const rr = r - currentI;
+              const cc = c - currentJ;
+              const status = cellStatuses[`${rr},${cc}`];
+              if (status === 'same') fill = '#bbf7d0';
+              if (status === 'diff') fill = '#fecaca';
+            }
+          }
+          return { fill, stroke, strokeWidth };
+        }
+      });
+
+      if (currentI !== null && currentJ !== null) {
+        addRect(svg, bX + currentJ * bCell - 4, bY + currentI * bCell - 4, ex.t * bCell + 8, ex.s * bCell + 8, {
+          fill: 'none', stroke: '#1d4ed8', 'stroke-width': 5, rx: 12, ry: 12
+        });
+        addText(svg, bX + currentJ * bCell, bY + currentI * bCell - 16,
+          `目前框框：i=${currentI}, j=${currentJ}`, {
+          'font-size': 17, 'font-weight': 900, fill: '#1d4ed8'
+        });
+      }
+
+      // processed start dots
+      (state.processed || []).forEach((p, idx) => {
+        const cx = bX + p.j * bCell + Math.min(14, bCell * .22);
+        const cy = bY + p.i * bCell + Math.min(14, bCell * .22);
+        addCircle(svg, cx, cy, Math.max(5, bCell * .11), {
+          fill: p.ok ? '#16a34a' : '#dc2626',
+          stroke: '#ffffff', 'stroke-width': 2
+        });
+        addText(svg, cx, cy + 4, String(idx + 1), {
+          'text-anchor': 'middle', 'font-size': Math.max(9, bCell * .18), 'font-weight': 900, fill: '#ffffff'
+        });
+      });
+
+      // current dot
+      if (currentI !== null && currentJ !== null) {
+        const cx = bX + currentJ * bCell + Math.min(14, bCell * .22);
+        const cy = bY + currentI * bCell + Math.min(14, bCell * .22);
+        addCircle(svg, cx, cy, Math.max(6, bCell * .12), {
+          fill: '#f59e0b', stroke: '#ffffff', 'stroke-width': 2
+        });
+      }
+
+      const aInfo = (r, c) => {
+        let fill = '#ffffff', stroke = '#64748b', strokeWidth = 1.5;
+        if (active && active.row === r && active.col === c) {
+          fill = '#fde68a'; stroke = '#b45309'; strokeWidth = 4;
+        } else {
+          const st = cellStatuses[`${r},${c}`];
+          if (st === 'same') fill = '#bbf7d0';
+          if (st === 'diff') fill = '#fecaca';
+        }
+        return { fill, stroke, strokeWidth };
+      };
+
+      drawMatrix(svg, ex.a, aX, aY, aCell, {
+        title: '小矩陣 A：樣板',
+        cellInfo: aInfo
+      });
+
+      const sub = state.sub || Array.from({length: ex.s}, () => Array.from({length: ex.t}, () => ''));
+      drawMatrix(svg, sub, aX, subY, aCell, {
+        title: '目前切出的 b1',
+        cellInfo: (r, c) => {
+          let fill = '#ffffff', stroke = '#64748b', strokeWidth = 1.5;
+          if (active && active.row === r && active.col === c) {
+            fill = '#fde68a'; stroke = '#b45309'; strokeWidth = 4;
+          } else {
+            const st = cellStatuses[`${r},${c}`];
+            if (st === 'same') fill = '#bbf7d0';
+            if (st === 'diff') fill = '#fecaca';
+          }
+          return { fill, stroke, strokeWidth };
+        }
+      });
+
+      // comparison arrow and text
+      if (active) {
+        const ax = aX + active.col * aCell + aCell / 2;
+        const ay = aY + active.row * aCell + aCell / 2;
+        const sx = aX + active.col * aCell + aCell / 2;
+        const sy = subY + active.row * aCell + aCell / 2;
+        addLine(svg, ax, ay + aCell / 2 + 6, sx, sy - aCell / 2 - 6, {
+          stroke: '#f59e0b', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-dasharray': '10 8'
+        });
+      }
+
+      // 狀態文字改放在 SVG 外面的固定 section，避免遮住矩陣。
+
+    }
+
+    function renderStatePanel(step) {
+      const ex = examples[currentExampleIndex];
+      const s = step.visualState;
+      const pos = (s.i === null || s.j === null) ? '-' : `i=${s.i}, j=${s.j}`;
+      const cell = s.compareCell ? `A[${s.compareCell.row}][${s.compareCell.col}] 對 b1[${s.compareCell.row}][${s.compareCell.col}]` : '-';
+      const b1Text = s.sub ? matrixToText(s.sub) : '尚未切出 b1';
+      const okText = s.ok === null ? '尚未判斷' : (s.ok ? '符合' : '不符合');
+      const okClass = s.ok === null ? 'warn' : (s.ok ? 'ok' : 'bad');
+      const sumbText = s.sumb === null || s.sumb === undefined ? '尚未計算' : s.sumb;
+      const diffText = s.diff === null || s.diff === undefined ? '尚未計算' : s.diff;
+      const finalText = s.finalOut ? s.finalOut : '還沒到最後輸出';
+
+      const statuses = Object.values(s.cellStatuses || {});
+      const sameCount = statuses.filter(v => v === 'same').length;
+      const differentCount = statuses.filter(v => v === 'diff').length;
+      const comparedCount = sameCount + differentCount;
+      const totalCells = ex.s * ex.t;
+      const remainingCount = Math.max(0, totalCells - comparedCount);
+
+      const processed = s.processed || [];
+      const accepted = processed.filter(p => p.ok);
+      const acceptedDiffs = accepted.map(p => p.diff);
+      const acceptedDiffText = acceptedDiffs.length ? acceptedDiffs.join('、') : '尚未有';
+      const finalSecond = (s.count ?? 0) === 0 ? -1 : fmtInf(s.mDiff);
+
+      $('inputPanel').innerHTML = `
+        <div class="info-grid">
+          <div class="info-item"><b>${ex.name}</b><br>門檻 r：<b>${ex.r}</b>，表示最多允許 ${ex.r} 格不同</div>
+          <div class="info-item">A 大小：<b>${ex.s} × ${ex.t}</b><br>B 大小：<b>${ex.n} × ${ex.m}</b></div>
+        </div>
+        <div class="comparison-explain">
+          這個範例要檢查 B 中所有 ${ex.s}×${ex.t} 子矩陣。每一塊都要和 A 的相同位置逐格比較；不同格數 cnt ≤ ${ex.r} 才算符合。
+        </div>
+        <div class="mini-pre">${escapeHtml(ex.input)}</div>
+      `;
+
+      $('comparePanel').innerHTML = `
+        <div class="info-grid">
+          <div class="info-item">
+            目前框框位置：<b>${pos}</b><br>
+            框框大小：<b>${ex.s} × ${ex.t}</b>
+          </div>
+          <div class="info-item">
+            目前比較格：<b>${cell}</b><br>
+            已比較：<b>${comparedCount}</b> / ${totalCells} 格
+          </div>
+          <div class="info-item ok">
+            相同位置且數字相同：<b>${sameCount}</b> 格<br>
+            相同時 cnt 不增加
+          </div>
+          <div class="info-item bad">
+            相同位置但數字不同：<b>${differentCount}</b> 格<br>
+            不同格數 cnt = <b>${s.cnt === null ? '-' : s.cnt}</b>
+          </div>
+          <div class="info-item ${okClass}">
+            門檻判斷：<b>${s.cnt === null ? '尚未完成比較' : `${s.cnt} ≤ ${ex.r}`}</b><br>
+            結果：<b>${okText}</b>
+          </div>
+          <div class="info-item">
+            還沒比較：<b>${remainingCount}</b> 格<br>
+            必須全部比完才決定是否符合
+          </div>
+          <div class="info-item" style="grid-column:1/-1;">
+            目前 b1：<b>${escapeHtml(b1Text)}</b>
+          </div>
+        </div>
+        <div class="comparison-explain">
+          <b>cnt 與 count 不同：</b>cnt 是目前這一塊 b1 有幾格不同；count 是到目前為止，總共有幾塊 b1 通過 cnt ≤ r。
+        </div>
+      `;
+
+      $('statePanel').innerHTML = `
+        <div class="info-grid">
+          <div class="info-item">
+            A 總和 suma：<b>${s.suma}</b><br>
+            目前 b1 總和 sumb：<b>${sumbText}</b>
+          </div>
+          <div class="info-item">
+            本次總和差：<b>${diffText}</b><br>
+            公式：<b>|sumb − suma|</b>
+          </div>
+          <div class="info-item">
+            符合數 count：<b>${s.count ?? 0}</b><br>
+            已處理位置：<b>${processed.length}</b>
+          </div>
+          <div class="info-item">
+            最小總和差 mDiff：<b>${fmtInf(s.mDiff)}</b><br>
+            符合者差值：<b>${acceptedDiffText}</b>
+          </div>
+        </div>
+        <div class="fixed-rule">
+          判斷順序：先完成 A 與 b1 的逐格比較 → 算出 cnt → 確認 cnt ≤ r → count 才加 1 → 才計算 sumb、|sumb − suma| 與 mDiff。
+        </div>
+        <div class="info-item warn" style="margin-top:10px;">
+          程式第 14、22 行 sum(sum(r) ...) 裡面的 r 是「每一列 row」，不是距離門檻 r。
+        </div>
+      `;
+
+      const isFinal = s.phase === 'printCount' || s.phase === 'printDiff';
+      $('finalPanel').innerHTML = `
+        <div class="settlement-grid">
+          <div class="metric-card ${isFinal ? 'ok' : ''}">
+            <b>第一行要回答</b><br>
+            符合 cnt ≤ r 的子矩陣數量：count = ${s.count ?? 0}
+          </div>
+          <div class="metric-card ${isFinal ? 'ok' : 'warn'}">
+            <b>第二行要回答</b><br>
+            ${isFinal
+              ? ((s.count ?? 0) === 0
+                  ? '沒有符合者，所以輸出 -1'
+                  : `符合者中最小的 |sumb − suma|：mDiff = ${fmtInf(s.mDiff)}`)
+              : '尚未檢查完所有位置，mDiff 仍可能更新'}
+          </div>
+        </div>
+        <div class="final-output"><small>${isFinal ? '題目最後輸出的兩行' : '目前輸出預覽（尚未完成時仍可能改變）'}</small>${s.count ?? 0}
+${isFinal ? finalSecond : (s.count ?? 0) === 0 ? '-1（暫時）' : fmtInf(s.mDiff)}</div>
+        <div class="comparison-explain">
+          ${isFinal
+            ? `第一行 ${s.count ?? 0}：共有 ${s.count ?? 0} 塊子矩陣符合。第二行 ${finalSecond}：${(s.count ?? 0) === 0 ? '沒有符合者，依題意輸出 -1。' : '符合者中最小的矩陣總和差。'}`
+            : `正確範例輸出是：${ex.output.replace(/\n/g, '、')}。動畫尚未結束，因此上面的預覽不是最後答案。`}
+        </div>
+      `;
+    }
+
+    function render() {
+      if (!steps.length) return;
+      const step = steps[stepIndex];
+      $('stepText').textContent = `步驟 ${stepIndex + 1} / ${steps.length}`;
+      $('resultText').textContent = `狀態：${step.result}`;
+      $('messageText').textContent = step.message;
+      $('lineInfo').textContent = `程式碼第 ${step.activeLine} 行`;
+
+      document.querySelectorAll('.code-line').forEach(line => line.classList.remove('active'));
+      const active = document.querySelector(`.code-line[data-line="${step.activeLine}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+      renderSvg(step);
+      renderStatePanel(step);
+
+      $('prevBtn').disabled = stepIndex === 0;
+      $('nextBtn').disabled = stepIndex === steps.length - 1;
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex += 1;
+        render();
+      } else {
+        stopPlay();
+      }
+    }
+
+    function prevStep() {
+      if (stepIndex > 0) {
+        stepIndex -= 1;
+        render();
+      }
+    }
+
+    function resetSteps() {
+      stopPlay();
+      stepIndex = 0;
+      render();
+    }
+
+    function startPlay() {
+      if (timer) return;
+      $('playBtn').textContent = '⏸ 暫停';
+      timer = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          stopPlay();
+        } else {
+          nextStep();
+        }
+      }, 760);
+    }
+
+    function stopPlay() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      $('playBtn').textContent = '▶ 播放';
+    }
+
+    function togglePlay() {
+      if (timer) stopPlay();
+      else startPlay();
+    }
+
+    function switchExample(index) {
+      currentExampleIndex = index;
+      stopPlay();
+      steps = makeSteps(examples[currentExampleIndex]);
+      stepIndex = 0;
+      $('example1Btn').classList.toggle('active-example', index === 0);
+      $('example2Btn').classList.toggle('active-example', index === 1);
+      render();
+    }
+
+    function copyCode() {
+      const text = codeLines.join('\n');
+      navigator.clipboard?.writeText(text).then(() => {
+        $('copyCodeBtn').textContent = '已複製';
+        setTimeout(() => $('copyCodeBtn').textContent = '複製程式碼', 1000);
+      }).catch(() => {
+        alert('瀏覽器不允許直接複製，請手動選取程式碼。');
+      });
+    }
+
+    function setupDivider() {
+      const divider = $('divider');
+      let dragging = false;
+      divider.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        divider.setPointerCapture(e.pointerId);
+        document.body.style.cursor = 'col-resize';
+      });
+      divider.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const rect = $('mainSplit').getBoundingClientRect();
+        const pct = ((e.clientX - rect.left) / rect.width) * 100;
+        const clamped = Math.max(34, Math.min(72, pct));
+        document.documentElement.style.setProperty('--left-width', `${clamped}%`);
+      });
+      divider.addEventListener('pointerup', (e) => {
+        dragging = false;
+        try { divider.releasePointerCapture(e.pointerId); } catch (_) {}
+        document.body.style.cursor = '';
+      });
+    }
+
+    function setupModal() {
+      const modal = $('problemModal');
+      const card = $('problemCard');
+      const handle = $('problemDragHandle');
+      let dragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      function open() {
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([modal]);
+      }
+      function close() {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+
+      $('openProblemBtn').addEventListener('click', open);
+      $('openProblemBtn2').addEventListener('click', open);
+      $('closeProblemBtn').addEventListener('click', close);
+
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        dragging = true;
+        const rect = card.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const maxX = window.innerWidth - Math.min(card.offsetWidth, window.innerWidth - 30);
+        const x = Math.max(10, Math.min(window.innerWidth - 80, e.clientX - offsetX));
+        const y = Math.max(10, Math.min(window.innerHeight - 70, e.clientY - offsetY));
+        card.style.left = `${Math.min(x, Math.max(10, window.innerWidth - card.offsetWidth - 10))}px`;
+        card.style.top = `${y}px`;
+      });
+      handle.addEventListener('pointerup', (e) => {
+        dragging = false;
+        try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+      });
+    }
+
+    function setupKeyboard() {
+      window.addEventListener('keydown', (e) => {
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+    }
+
+    function setupButtons() {
+      $('prevBtn').addEventListener('click', prevStep);
+      $('nextBtn').addEventListener('click', nextStep);
+      $('playBtn').addEventListener('click', togglePlay);
+      $('resetBtn').addEventListener('click', resetSteps);
+      $('example1Btn').addEventListener('click', () => switchExample(0));
+      $('example2Btn').addEventListener('click', () => switchExample(1));
+      $('copyCodeBtn').addEventListener('click', copyCode);
+    }
+
+    function init() {
+      renderCode();
+      setupButtons();
+      setupKeyboard();
+      setupDivider();
+      setupModal();
+      switchExample(0);
+    }
+
+    init();
+  </script>
+</body>
+</html>

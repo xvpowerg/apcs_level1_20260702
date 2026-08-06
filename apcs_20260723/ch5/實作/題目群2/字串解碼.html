@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>i400. 2. 字串解碼｜白話教學動畫</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root {
+  --toolbar-h: 118px;
+  --border: #d6dbe3;
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #667085;
+  --active: #fef3c7;
+  --active-border: #f59e0b;
+  --done: #dcfce7;
+  --wait: #e5e7eb;
+  --returning: #dbeafe;
+  --danger: #fee2e2;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: "Microsoft JhengHei", "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 16px;
+  line-height: 1.5;
+}
+button, select {
+  font: inherit;
+}
+.toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--toolbar-h);
+  z-index: 20;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+.toolbar-top, .toolbar-bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 7px 12px;
+  min-width: 76px;
+  cursor: pointer;
+}
+.btn:hover { background: #f1f5f9; }
+.btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn.primary:hover { background: #1d4ed8; }
+.btn.small { min-width: auto; padding: 5px 10px; }
+.status-pill {
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.message-box {
+  flex: 1 1 420px;
+  min-width: 280px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.app {
+  height: calc(100vh - var(--toolbar-h));
+  margin-top: var(--toolbar-h);
+  display: flex;
+  overflow: hidden;
+}
+.pane {
+  height: 100%;
+  overflow: auto;
+}
+.left-pane {
+  width: 60%;
+  min-width: 360px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.right-pane {
+  flex: 1;
+  min-width: 340px;
+  padding: 12px;
+  background: #ffffff;
+  border-left: 1px solid var(--border);
+}
+.resizer {
+  width: 9px;
+  flex: 0 0 9px;
+  cursor: col-resize;
+  background: linear-gradient(90deg, #e5e7eb, #cbd5e1, #e5e7eb);
+  border-left: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+}
+.card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.card h2, .card h3 {
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+.card h2 { font-size: 20px; }
+.card h3 { font-size: 18px; }
+.card-scroll {
+  max-height: 260px;
+  overflow: auto;
+}
+.visual-card {
+  min-height: 430px;
+}
+.svg-box {
+  width: 100%;
+  height: 360px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fbfdff;
+  overflow: hidden;
+}
+.svg-box svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 900px) {
+  .app { flex-direction: column; overflow: auto; }
+  .left-pane, .right-pane { width: 100%; min-width: 0; height: auto; overflow: visible; }
+  .resizer { display: none; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+.kv-list {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 6px 10px;
+  align-items: start;
+}
+.kv-key { color: var(--muted); font-weight: 700; }
+.kv-val { font-weight: 700; word-break: break-word; }
+.input-pre, .code-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+}
+.input-pre {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 16px;
+}
+.char-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+.row-label {
+  min-width: 78px;
+  font-weight: 800;
+}
+.char-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  font-weight: 800;
+}
+.char-chip.active { background: var(--active); border-color: var(--active-border); }
+.char-chip.muted { color: #64748b; background: #f1f5f9; }
+.char-chip.append { background: #dcfce7; border-color: #22c55e; }
+.char-chip.prepend { background: #dbeafe; border-color: #3b82f6; }
+.mini-note {
+  color: #475569;
+  font-size: 15px;
+}
+.concept-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.concept-step {
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+.concept-step b {
+  font-size: 18px;
+}
+.concept-step.rule {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+.concept-step.warn {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+.inline-code {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-weight: 800;
+}
+.big-state {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.order-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.order-status {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.order-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.order-box {
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 150px;
+}
+.order-box h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+.order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 8px;
+  margin: 6px 0;
+  font-size: 17px;
+  font-weight: 800;
+}
+.order-row.current {
+  background: var(--active);
+  border-color: var(--active-border);
+}
+.order-row.done {
+  background: var(--done);
+  border-color: #22c55e;
+}
+.order-index {
+  flex: 0 0 auto;
+  color: #475569;
+  font-weight: 900;
+}
+.order-op {
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #111827;
+}
+.order-arrow-line {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  word-break: break-word;
+}
+.order-warning {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+@media (max-width: 900px) {
+  .order-columns { grid-template-columns: 1fr; }
+}
+
+.operation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.operation-summary {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.operation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.operation-item {
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 8px;
+  min-height: 76px;
+}
+.operation-item .label {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.operation-item .value {
+  font-size: 20px;
+  font-weight: 900;
+  word-break: break-word;
+}
+.operation-formula {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 20px;
+  font-weight: 900;
+  word-break: break-word;
+}
+.operation-reason {
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.operation-reason.append {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+}
+.operation-reason.prepend {
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+}
+.action-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.action-rule {
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  padding: 8px;
+  background: #ffffff;
+}
+.action-rule b { font-size: 18px; }
+@media (max-width: 900px) {
+  .operation-grid, .action-compare { grid-template-columns: 1fr; }
+}
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-weight: 800;
+  margin: 2px;
+}
+.badge.current { background: var(--active); border-color: var(--active-border); }
+.badge.done { background: var(--done); border-color: #22c55e; }
+.badge.swap { background: #fce7f3; border-color: #ec4899; }
+.code-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.code-container {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: auto;
+  background: #0f172a;
+  max-height: calc(100vh - var(--toolbar-h) - 72px);
+}
+.code-line {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  min-height: 28px;
+  font-family: "Consolas", "Cascadia Mono", monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre;
+  color: #e5e7eb;
+  border-left: 5px solid transparent;
+}
+.code-line .ln {
+  color: #94a3b8;
+  text-align: right;
+  padding-right: 10px;
+  user-select: none;
+  background: rgba(255,255,255,0.04);
+}
+.code-line .txt { padding-left: 10px; }
+.code-line.active {
+  background: #fff7cc;
+  color: #111827;
+  border-left-color: var(--active-border);
+}
+.code-line.active .ln {
+  background: #fde68a;
+  color: #78350f;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+}
+.legend-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #94a3b8;
+}
+.dot-wait { background: var(--wait); }
+.dot-current { background: var(--active); border-color: var(--active-border); }
+.dot-done { background: var(--done); border-color: #22c55e; }
+.dot-return { background: var(--returning); border-color: #3b82f6; }
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal-backdrop.hidden { display: none; }
+.modal {
+  width: min(980px, 96vw);
+  max-height: 70vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  box-shadow: 0 20px 80px rgba(15,23,42,0.35);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+.modal-header h2 { margin: 0; font-size: 22px; }
+.close-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.table-wrap { overflow: auto; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 520px;
+}
+th, td {
+  border: 1px solid #d7dde8;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: #f1f5f9; }
+.svg-node { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2; }
+.svg-node.current { fill: #fef3c7; stroke: #f59e0b; stroke-width: 4; }
+.svg-node.done { fill: #dcfce7; stroke: #22c55e; stroke-width: 3; }
+.svg-node.returning { fill: #dbeafe; stroke: #3b82f6; stroke-width: 3; }
+.svg-node.swap { fill: #fce7f3; stroke: #ec4899; stroke-width: 3; }
+.svg-text { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; fill: #111827; font-size: 20px; font-weight: 800; }
+.svg-small { font-size: 15px; font-weight: 700; fill: #475569; }
+.svg-char { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; }
+.svg-char.active { fill: #fef3c7; stroke: #f59e0b; stroke-width: 4; }
+.svg-char.done { fill: #dcfce7; stroke: #22c55e; stroke-width: 3; }
+.svg-arrow { stroke: #64748b; stroke-width: 3; fill: none; marker-end: url(#arrowHead); }
+.svg-arrow.active { stroke: #f59e0b; stroke-width: 5; }
+</style>
+</head>
+<body>
+<header class="toolbar" aria-label="控制列">
+  <div class="toolbar-top">
+    <div class="title">i400. 2. 字串解碼｜一步一步動畫</div>
+    <button class="btn" id="prevBtn">上一步</button>
+    <button class="btn primary" id="nextBtn">下一步</button>
+    <button class="btn" id="playBtn">播放</button>
+    <button class="btn" id="pauseBtn">暫停</button>
+    <button class="btn" id="resetBtn">重設</button>
+    <label>範例：</label>
+    <select id="sampleSelect" aria-label="切換範例"></select>
+    <button class="btn small" id="openProblemBtn">題目說明</button>
+  </div>
+  <div class="toolbar-bottom">
+    <span class="status-pill" id="stepInfo">步驟 0 / 0</span>
+    <span class="status-pill" id="resultInfo">目前狀態：尚未開始</span>
+    <div class="message-box" id="messageInfo">請按「下一步」開始。</div>
+  </div>
+</header>
+
+<main class="app">
+  <section class="pane left-pane" id="leftPane">
+    <section class="card">
+      <h2>目前範例與輸入</h2>
+      <div class="grid-2">
+        <div>
+          <div class="mini-note">範例輸入</div>
+          <pre class="input-pre" id="sampleInput"></pre>
+        </div>
+        <div>
+          <div class="mini-note">正確輸出</div>
+          <pre class="input-pre" id="sampleOutput"></pre>
+          <div class="mini-note" style="margin-top:8px;">這題要倒著讀操作，依照 0 或 1，把字母放回 S 的左邊或右邊。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>操作順序對照：<code>es.reverse()</code></h2>
+      <div id="orderPanel" class="order-panel"></div>
+    </section>
+
+
+    <section class="card">
+      <h2>解碼核心觀念</h2>
+      <div class="concept-panel card-scroll">
+        <div class="concept-step warn"><b>第一件事：</b>這題不是把整串字母直接倒過來，而是把「操作順序」倒過來。加密是一步一步做，解碼要從最後一次操作開始往回推。</div>
+        <div class="concept-step"><b>第二件事：</b>每一組操作字串 <span class="inline-code">e</span> 也要從右邊往左邊看，所以 <span class="inline-code">i</span> 會是 <span class="inline-code">-1, -2, -3...</span>。</div>
+        <div class="concept-step"><b>第三件事：</b>每一步都同時看兩個內容：<span class="inline-code">e[i]</span> 是 0 或 1 的指令，<span class="inline-code">T[i]</span> 是要放回去的字母。</div>
+        <div class="concept-step rule"><b>看到 1：</b>執行 <span class="inline-code">S = S + T[i]</span>，意思是把這個字母放回 <b>S 的右邊</b>。</div>
+        <div class="concept-step rule"><b>看到 0：</b>執行 <span class="inline-code">S = T[i] + S</span>，意思是把這個字母放回 <b>S 的左邊</b>。</div>
+        <div class="concept-step"><b>一輪做完：</b>算這組 <span class="inline-code">e</span> 裡面的 1 有幾個。奇數就交換左右半邊；偶數就不交換。</div>
+        <div class="concept-step"><b>最後：</b>把這輪還原出的 <span class="inline-code">S</span> 變成新的 <span class="inline-code">T</span>，再繼續下一輪。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>重要狀態</h2>
+      <div class="kv-list" id="statePanel"></div>
+    </section>
+
+    <section class="card">
+      <h2>目前操作卡</h2>
+      <div id="operationPanel" class="operation-panel"></div>
+    </section>
+
+    <section class="card visual-card">
+      <h2>資料結構視覺化</h2>
+      <div class="svg-box" id="svgBox"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot dot-wait"></span>尚未處理</span>
+        <span class="legend-item"><span class="legend-dot dot-current"></span>目前處理</span>
+        <span class="legend-item"><span class="legend-dot dot-done"></span>已完成</span>
+        <span class="legend-item"><span class="legend-dot dot-return"></span>回寫 T</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>字元追蹤表</h2>
+      <div id="charPanel"></div>
+    </section>
+
+    <section class="card">
+      <h2>本步驟小抄</h2>
+      <div id="detailPanel" class="card-scroll"></div>
+    </section>
+  </section>
+
+  <div class="resizer" id="resizer" title="拖曳調整左右寬度"></div>
+
+  <section class="pane right-pane">
+    <div class="code-title">
+      <h2 style="margin:0;">完整 Python 程式碼</h2>
+      <span class="mini-note">程式碼會跟著步驟高亮</span>
+    </div>
+    <div class="code-container" id="codeContainer"></div>
+  </section>
+</main>
+
+<div class="modal-backdrop hidden" id="problemModal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+  <article class="modal">
+    <div class="modal-header">
+      <h2 id="problemTitle">題目文字版：i400. 2. 字串解碼</h2>
+      <button class="close-btn" id="closeProblemBtn">關閉</button>
+    </div>
+    <section>
+      <h3>題目在做什麼？</h3>
+      <p>有一個字串加密系統。它會拿一個長度為 \(n\) 的原始字串 \(S\)，再搭配一個長度為 \(n\) 的 01 操作字串 \(e\)，產生加密後的字串 \(T\)。</p>
+      <p>現在題目給你 \(m\) 個 01 操作字串，還有最後加密後的字串。請你把它還原成最原本的字串。</p>
+      <h3>加密規則</h3>
+      <ol>
+        <li>如果 \(e\) 裡面 1 的數量是奇數，就先把 \(S\) 的前半段和後半段交換。若 \(n\) 是奇數，中間字元不動。</li>
+        <li>接著從左到右讀 \(e\)。如果 \(e[i]=0\)，就把 \(S\) 的第一個字元接到 \(T\) 後面；如果 \(e[i]=1\)，就把 \(S\) 的最後一個字元接到 \(T\) 後面。</li>
+      </ol>
+      <h3>解碼核心</h3>
+      <p>程式不是重新加密，而是「倒著還原」。最後做的操作要最先反解，所以程式先做 <code>es.reverse()</code>。</p>
+      <p>這裡也不是把字母整串直接倒過來，而是把「操作順序」倒過來。原本加密是第 1 組、第 2 組、第 3 組；解碼時要反過來，先處理最後一組。</p>
+      <p>每一輪解碼時，從右往左讀 \(e\) 和目前的 \(T\)。因為加密時字元是一直接到 \(T\) 的最後面，所以解碼時要從 \(T\) 的最後一個字元開始拿回來。</p>
+      <p>每一步都看兩個東西：<code>e[i]</code> 是操作指令，<code>T[i]</code> 是目前要放回去的字母。</p>
+      <p>如果 <code>e[i]</code> 是 <code>1</code>，就做 <code>S = S + T[i]</code>，把字母放回右邊。如果 <code>e[i]</code> 是 <code>0</code>，就做 <code>S = T[i] + S</code>，把字母放回左邊。</p>
+      <p>一整組 <code>e</code> 做完後，才去算 1 的數量。1 的數量是奇數就交換左右半邊；1 的數量是偶數就不用交換。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>看到的操作</th><th>加密時代表</th><th>解碼時要怎麼放回 S</th></tr></thead>
+          <tbody>
+            <tr><td>\(e[i]=1\)</td><td>從 \(S\) 後面拿走</td><td>放回 \(S\) 後面</td></tr>
+            <tr><td>\(e[i]=0\)</td><td>從 \(S\) 前面拿走</td><td>放回 \(S\) 前面</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>範例</h3>
+      <div class="grid-2">
+        <div><h3>範例 #1</h3><pre class="input-pre">1 5
+10110
+CABAD</pre><p>輸出：<b>BCAAD</b></p></div>
+        <div><h3>範例 #2</h3><pre class="input-pre">3 6
+111110
+101101
+000000
+RETYWQ</pre><p>輸出：<b>QWERTY</b></p></div>
+      </div>
+    </section>
+  </article>
+</div>
+
+<script>
+const samples = [
+  {
+    "name": "範例 #1",
+    "m": 1,
+    "n": 5,
+    "ops": [
+      "10110"
+    ],
+    "encrypted": "CABAD",
+    "expected": "BCAAD",
+    "input": "1 5\n10110\nCABAD",
+    "output": "BCAAD"
+  },
+  {
+    "name": "範例 #2",
+    "m": 3,
+    "n": 6,
+    "ops": [
+      "111110",
+      "101101",
+      "000000"
+    ],
+    "encrypted": "RETYWQ",
+    "expected": "QWERTY",
+    "input": "3 6\n111110\n101101\n000000\nRETYWQ",
+    "output": "QWERTY"
+  }
+];
+const codeLines = [
+  "m, n = map(int, input().split())",
+  "es = [list(input()) for _ in range(m)]      # 加密操作 01 字串集合",
+  "es.reverse()                                # 操作字串集合反向",
+  "T = input()                                 # 加密操作後字串",
+  "S = \"\"                                      # 加密操作前字串",
+  "for e in es:                                # 反向取出操作字串",
+  "    for i in range(-1, -len(e)-1, -1):      # 反向取出 0 或 1 操作指令",
+  "        if e[i]==\"1\":                       # 操作指令為 1",
+  "            S = S + T[i]                    # T 第 i 個字元接在 S 後面",
+  "        else:                               # 操作指令為 0",
+  "            S = T[i] + S                    # T 第 i 個字元放在 S 前面",
+  "    if e.count(\"1\")%2==1:                   # 操作字串有奇數個 1",
+  "        mid = len(S)//2                     # 字串中間點",
+  "        if len(S)%2==0:                     # 偶數個字元",
+  "            S = S[mid:]+S[:mid]             # 將字串 S 分成兩等份，前後順序交換",
+  "        else:                               # 奇數個字元",
+  "            S = S[mid+1:]+S[mid]+S[:mid]    # 中間的字元不動，前後順序交換",
+  "    T, S = S, \"\"                            # 字串還原",
+  "print(T)"
+];
+
+let currentSampleIndex = 0;
+let steps = [];
+let currentStep = 0;
+let playTimer = null;
+
+const $ = (id) => document.getElementById(id);
+
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function strChars(value) {
+  return String(value ?? '').split('');
+}
+
+function negativeIndex(j, n) {
+  return j - n;
+}
+
+function buildSteps(sample) {
+  const result = [];
+  const n = sample.n;
+  const m = sample.m;
+  const opsOriginal = sample.ops.slice();
+  const opsReversed = sample.ops.slice().reverse();
+  let T = sample.encrypted;
+  let S = '';
+
+  function makeState(extra = {}) {
+    return {
+      m, n,
+      opsOriginal: opsOriginal.slice(),
+      opsReversed: opsReversed.slice(),
+      T,
+      S,
+      encrypted: sample.encrypted,
+      expected: sample.expected,
+      currentRound: extra.currentRound ?? -1,
+      e: extra.e ?? '',
+      charIndex: extra.charIndex ?? null,
+      negIndex: extra.negIndex ?? null,
+      eChar: extra.eChar ?? '',
+      tChar: extra.tChar ?? '',
+      action: extra.action ?? '',
+      beforeS: extra.beforeS ?? S,
+      afterS: extra.afterS ?? S,
+      onesCount: extra.onesCount ?? null,
+      mid: extra.mid ?? null,
+      beforeSwap: extra.beforeSwap ?? '',
+      afterSwap: extra.afterSwap ?? '',
+      leftPart: extra.leftPart ?? '',
+      middlePart: extra.middlePart ?? '',
+      rightPart: extra.rightPart ?? '',
+      phase: extra.phase ?? 'normal',
+      note: extra.note ?? ''
+    };
+  }
+
+  function add(activeLine, message, status, extra = {}) {
+    result.push({ activeLine, message, status, state: makeState(extra) });
+  }
+
+  add(1, `讀入 m=${m}、n=${n}。m 是操作次數，n 是字串長度。`, `m=${m}, n=${n}`, { phase: 'read' });
+  add(2, `讀入 ${m} 條 01 操作字串。現在 es 原本順序是：[${opsOriginal.join(', ')}]。`, `原本 es：[${opsOriginal.join(', ')}]`, { phase: 'read' });
+  add(3, `執行 es.reverse()：原本 es = [${opsOriginal.join(', ')}]，反過來後 es = [${opsReversed.join(', ')}]。解碼會依序使用：${opsReversed.join(' → ')}。`, `es.reverse() 後：[${opsReversed.join(', ')}]`, { phase: 'reverseOps' });
+  add(4, `讀入最後加密後的字串 T。`, `T=${T}`, { phase: 'readT' });
+  add(5, `準備空字串 S。每一輪會把 T 的字母，一個一個放回 S 的左邊或右邊。`, `S=""`, { phase: 'initS' });
+
+  for (let r = 0; r < opsReversed.length; r++) {
+    const e = opsReversed[r];
+    S = '';
+    add(6, `第 ${r + 1} 輪解碼，使用反向後的 es[${r}] = ${e}。這一輪會從右邊往左邊讀 e 和 T。`, `目前 T=${T}`, { phase: 'roundStart', currentRound: r, e, beforeS: '', afterS: '' });
+
+    for (let j = n - 1; j >= 0; j--) {
+      const neg = negativeIndex(j, n);
+      const eChar = e[j];
+      const tChar = T[j];
+      add(7, `現在 i=${neg}：e[${neg}]=${eChar} 是操作指令，T[${neg}]=${tChar} 是要放回去的字母。`, `S=${S || '空字串'}`, {
+        phase: 'readChar', currentRound: r, e, charIndex: j, negIndex: neg, eChar, tChar, beforeS: S, afterS: S
+      });
+      if (eChar === '1') {
+        add(8, `e[${neg}]=1，代表加密時從 S 右邊拿字；解碼要把 ${tChar} 放回 S 右邊。`, `T[${neg}]=${tChar}`, {
+          phase: 'branchAppend', currentRound: r, e, charIndex: j, negIndex: neg, eChar, tChar, action: 'append', beforeS: S, afterS: S
+        });
+        const before = S;
+        S = S + tChar;
+        add(9, `e[${neg}]=1，T[${neg}]=${tChar}，放右邊：${before || '空'} + ${tChar} = ${S}。`, `S=${S}`, {
+          phase: 'charMove', currentRound: r, e, charIndex: j, negIndex: neg, eChar, tChar, action: 'append', beforeS: before, afterS: S
+        });
+      } else {
+        add(10, `e[${neg}]=0，代表加密時從 S 左邊拿字；解碼要把 ${tChar} 放回 S 左邊。`, `T[${neg}]=${tChar}`, {
+          phase: 'branchPrepend', currentRound: r, e, charIndex: j, negIndex: neg, eChar, tChar, action: 'prepend', beforeS: S, afterS: S
+        });
+        const before = S;
+        S = tChar + S;
+        add(11, `e[${neg}]=0，T[${neg}]=${tChar}，放左邊：${tChar} + ${before || '空'} = ${S}。`, `S=${S}`, {
+          phase: 'charMove', currentRound: r, e, charIndex: j, negIndex: neg, eChar, tChar, action: 'prepend', beforeS: before, afterS: S
+        });
+      }
+    }
+
+    const ones = strChars(e).filter(c => c === '1').length;
+    add(12, `這輪 e 裡面的 1 有 ${ones} 個。最後要算它是奇數還是偶數。`, `S=${S}`, {
+      phase: ones % 2 === 1 ? 'oddCheckYes' : 'oddCheckNo', currentRound: r, e, onesCount: ones, beforeS: S, afterS: S
+    });
+
+    if (ones % 2 === 1) {
+      const mid = Math.floor(S.length / 2);
+      add(13, `1 的數量是奇數，要算中間點 mid=${mid}。`, `mid=${mid}`, {
+        phase: 'mid', currentRound: r, e, onesCount: ones, mid, beforeS: S, afterS: S
+      });
+      const beforeSwap = S;
+      if (S.length % 2 === 0) {
+        const leftPart = S.slice(0, mid);
+        const rightPart = S.slice(mid);
+        add(14, `S 長度是偶數，切成左半和右半。`, `左半=${leftPart}, 右半=${rightPart}`, {
+          phase: 'evenLen', currentRound: r, e, onesCount: ones, mid, beforeS: S, afterS: S, leftPart, rightPart, beforeSwap
+        });
+        S = rightPart + leftPart;
+        add(15, `前後交換：${beforeSwap} → ${S}。`, `S=${S}`, {
+          phase: 'swap', currentRound: r, e, onesCount: ones, mid, beforeS: beforeSwap, afterS: S, beforeSwap, afterSwap: S, leftPart, rightPart
+        });
+      } else {
+        const leftPart = S.slice(0, mid);
+        const middlePart = S[mid];
+        const rightPart = S.slice(mid + 1);
+        add(16, `S 長度是奇數，中間字元 ${middlePart} 不動。`, `左半=${leftPart}, 中間=${middlePart}, 右半=${rightPart}`, {
+          phase: 'oddLen', currentRound: r, e, onesCount: ones, mid, beforeS: S, afterS: S, leftPart, middlePart, rightPart, beforeSwap
+        });
+        S = rightPart + middlePart + leftPart;
+        add(17, `右半 + 中間 + 左半：${beforeSwap} → ${S}。`, `S=${S}`, {
+          phase: 'swap', currentRound: r, e, onesCount: ones, mid, beforeS: beforeSwap, afterS: S, beforeSwap, afterSwap: S, leftPart, middlePart, rightPart
+        });
+      }
+    } else {
+      add(12, `1 的數量是偶數，這輪不用交換 S。`, `S=${S}`, {
+        phase: 'noSwap', currentRound: r, e, onesCount: ones, beforeS: S, afterS: S
+      });
+    }
+
+    const completed = S;
+    add(18, `這一輪還原完成。把 S 變成新的 T，下一輪才可以繼續往前還原。`, `T=${completed}`, {
+      phase: 'commitBefore', currentRound: r, e, beforeS: S, afterS: S
+    });
+    T = completed;
+    S = '';
+    add(18, `執行 T, S = S, ""。T 更新，S 清空。`, `T=${T}`, {
+      phase: 'commitAfter', currentRound: r, e, beforeS: completed, afterS: '', T
+    });
+  }
+
+  add(19, `所有操作都反解完了，輸出 T。`, `答案=${T}`, { phase: 'done' });
+  return result;
+}
+
+function renderCode() {
+  const html = codeLines.map((line, idx) => {
+    const lineNo = idx + 1;
+    return `<div class="code-line" id="codeLine-${lineNo}" data-line="${lineNo}"><span class="ln">${lineNo}</span><span class="txt">${escapeHTML(line)}</span></div>`;
+  }).join('');
+  $('codeContainer').innerHTML = html;
+}
+
+function highlightCode(lineNo) {
+  document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active'));
+  const active = $(`codeLine-${lineNo}`);
+  if (active) {
+    active.classList.add('active');
+    active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+function chipChars(str, activeIndex = null, mode = '') {
+  const chars = strChars(str);
+  if (!chars.length) return '<span class="char-chip muted">空</span>';
+  return chars.map((ch, idx) => {
+    const active = idx === activeIndex ? ' active' : '';
+    const extra = mode ? ` ${mode}` : '';
+    return `<span class="char-chip${active}${extra}">${escapeHTML(ch)}</span>`;
+  }).join('');
+}
+
+
+function renderOrderPanel(step) {
+  const s = step.state;
+  const reverseAlready = currentStep >= steps.findIndex(x => x.state.phase === 'reverseOps');
+  const phaseText = reverseAlready
+    ? '已執行 es.reverse()，接下來解碼會照右邊「reverse 後」的順序處理。'
+    : '還沒執行 es.reverse()，先看清楚原本 es 的順序。下一步會把整個操作順序反過來。';
+
+  const originalRows = s.opsOriginal.map((op, idx) => {
+    return `<div class="order-row"><span class="order-index">第 ${idx + 1} 次加密</span><span class="order-op">${escapeHTML(op)}</span></div>`;
+  }).join('');
+
+  const reversedRows = s.opsReversed.map((op, idx) => {
+    let cls = '';
+    if (s.currentRound === idx) cls = 'current';
+    else if (s.currentRound > idx) cls = 'done';
+    const originalIndex = s.opsOriginal.length - idx;
+    return `<div class="order-row ${cls}"><span class="order-index">第 ${idx + 1} 個還原</span><span class="order-op">${escapeHTML(op)}</span><span class="mini-note">← 原本第 ${originalIndex} 次加密</span></div>`;
+  }).join('');
+
+  const originalText = s.opsOriginal.join(' → ');
+  const reversedText = s.opsReversed.join(' → ');
+  const firstExample = s.opsOriginal[0] || '';
+  const reversedFirstExample = firstExample.split('').reverse().join('');
+
+  $('orderPanel').innerHTML = `
+    <div class="order-status">${phaseText}</div>
+    <div class="order-columns">
+      <div class="order-box">
+        <h3>原本 es：加密順序</h3>
+        ${originalRows || '<div class="mini-note">沒有操作字串</div>'}
+      </div>
+      <div class="order-box">
+        <h3>reverse 後 es：解碼順序</h3>
+        ${reversedRows || '<div class="mini-note">沒有操作字串</div>'}
+      </div>
+    </div>
+    <div class="order-arrow-line">原本：${escapeHTML(originalText || '空')}<br>reverse 後：${escapeHTML(reversedText || '空')}</div>
+    <div class="order-warning">注意：<code>es.reverse()</code> 只會把「哪一條操作字串先做、哪一條後做」反過來。它不是把每一條 01 字串自己反轉。${firstExample ? `例如 <code>${escapeHTML(firstExample)}</code> 不會在這一步變成 <code>${escapeHTML(reversedFirstExample)}</code>。` : ''}</div>
+  `;
+}
+
+function renderStatePanel(step) {
+  const s = step.state;
+  const roundText = s.currentRound >= 0 ? `第 ${s.currentRound + 1} 輪 / 共 ${s.opsReversed.length} 輪` : '尚未進入迴圈';
+  const indexText = s.negIndex === null ? '-' : `i=${s.negIndex}，正向位置=${s.charIndex}`;
+  const actionMap = {
+    append: '放回 S 後面',
+    prepend: '放回 S 前面'
+  };
+  const actionText = s.action ? actionMap[s.action] : '-';
+  const rows = [
+    ['目前輪次', roundText],
+    ['es 原本內容', s.opsOriginal.map((op, idx) => `<span class="badge">原${idx + 1}: ${escapeHTML(op)}</span>`).join(' ')],
+    ['es.reverse() 後', s.opsReversed.map((op, idx) => `<span class="badge ${idx === s.currentRound ? 'current' : (s.currentRound > idx ? 'done' : '')}">反${idx + 1}: ${escapeHTML(op)}</span>`).join(' ')],
+    ['目前 e', s.e ? `<span class="big-state">${escapeHTML(s.e)}</span>` : '-'],
+    ['目前 T', `<span class="big-state">${escapeHTML(s.T || '空')}</span>`],
+    ['正在組回的 S', `<span class="big-state">${escapeHTML(s.S || s.afterS || '空')}</span>`],
+    ['目前索引', indexText],
+    ['目前字元', s.charIndex === null ? '-' : `e[${s.negIndex}]=${escapeHTML(s.eChar)}，T[${s.negIndex}]=${escapeHTML(s.tChar)}`],
+    ['目前動作', actionText],
+    ['1 的數量', s.onesCount === null ? '-' : `${s.onesCount} 個 → ${s.onesCount % 2 ? '奇數，要交換' : '偶數，不交換'}`],
+    ['mid', s.mid === null ? '-' : String(s.mid)]
+  ];
+  $('statePanel').innerHTML = rows.map(([k, v]) => `<div class="kv-key">${k}</div><div class="kv-val">${v}</div>`).join('');
+}
+
+
+function renderOperationPanel(step) {
+  const s = step.state;
+
+  if (s.phase === 'reverseOps') {
+    const originalList = s.opsOriginal.map((op, idx) => `<span class="badge">原${idx + 1}: ${escapeHTML(op)}</span>`).join(' ');
+    const reversedList = s.opsReversed.map((op, idx) => `<span class="badge current">反${idx + 1}: ${escapeHTML(op)}</span>`).join(' ');
+    $('operationPanel').innerHTML = `
+      <div class="operation-summary">執行 <code>es.reverse()</code>：原本 es = [${s.opsOriginal.join(', ')}]，反過來後 es = [${s.opsReversed.join(', ')}]。</div>
+      <div class="operation-grid">
+        <div class="operation-item"><div class="label">原本 es</div><div class="value">[${escapeHTML(s.opsOriginal.join(', '))}]</div></div>
+        <div class="operation-item"><div class="label">反過來後 es</div><div class="value">[${escapeHTML(s.opsReversed.join(', '))}]</div></div>
+        <div class="operation-item"><div class="label">第一輪會用</div><div class="value">${escapeHTML(s.opsReversed[0] || '-')}</div></div>
+        <div class="operation-item"><div class="label">原因</div><div class="value">倒著還原</div></div>
+      </div>
+      <div class="operation-formula">原本順序：${originalList}<br>解碼順序：${reversedList}</div>
+      <div class="operation-reason prepend">這一步不是把 T 的字母倒過來，而是把操作字串集合 <b>es</b> 的順序反過來。因為最後加密的操作，要最先被還原。</div>
+    `;
+    return;
+  }
+
+  const hasChar = s.charIndex !== null;
+  const sideText = s.eChar === '1' ? '右邊' : (s.eChar === '0' ? '左邊' : '-');
+  const actionClass = s.eChar === '1' ? 'append' : (s.eChar === '0' ? 'prepend' : '');
+  const actionText = s.eChar === '1'
+    ? '1：加密時從 S 右邊拿走，解碼時放回 S 右邊。'
+    : (s.eChar === '0'
+      ? '0：加密時從 S 左邊拿走，解碼時放回 S 左邊。'
+      : '尚未讀到 0 或 1 操作。');
+
+  let formula = '尚未開始搬字元。';
+  if (hasChar) {
+    if (s.eChar === '1') {
+      formula = `新的 S = 舊 S + T[${s.negIndex}] = ${escapeHTML(s.beforeS || '空')} + ${escapeHTML(s.tChar)} = ${escapeHTML(s.afterS || s.beforeS || '空')}`;
+    } else if (s.eChar === '0') {
+      formula = `新的 S = T[${s.negIndex}] + 舊 S = ${escapeHTML(s.tChar)} + ${escapeHTML(s.beforeS || '空')} = ${escapeHTML(s.afterS || s.beforeS || '空')}`;
+    }
+  }
+
+  const summary = hasChar
+    ? `目前看 i=${s.negIndex}，e[${s.negIndex}]=${escapeHTML(s.eChar)}，T[${s.negIndex}]=${escapeHTML(s.tChar)}，所以把 ${escapeHTML(s.tChar)} 放回 S 的${sideText}。`
+    : '這裡會顯示目前正在讀哪個位置、e[i] 是 0 還是 1、T[i] 是哪個字母、最後要把字母放回 S 的哪一邊。';
+
+  const detail = hasChar
+    ? `<div class="operation-reason ${actionClass}">${escapeHTML(actionText)}<br>這裡不是單純把字串合併，而是把 <b>${escapeHTML(s.tChar)}</b> 放回它原本被拿走的那一邊。</div>`
+    : `<div class="operation-reason">先按下一步，進入內層 for 迴圈後會開始逐字還原。</div>`;
+
+  $('operationPanel').innerHTML = `
+    <div class="operation-summary">${summary}</div>
+    <div class="operation-grid">
+      <div class="operation-item"><div class="label">目前 i</div><div class="value">${hasChar ? s.negIndex : '-'}</div></div>
+      <div class="operation-item"><div class="label">e[i] 內容</div><div class="value">${hasChar ? escapeHTML(s.eChar) : '-'}</div></div>
+      <div class="operation-item"><div class="label">T[i] 內容</div><div class="value">${hasChar ? escapeHTML(s.tChar) : '-'}</div></div>
+      <div class="operation-item"><div class="label">放回位置</div><div class="value">${hasChar ? sideText : '-'}</div></div>
+    </div>
+    <div class="operation-formula">${formula}</div>
+    ${detail}
+    <div class="action-compare">
+      <div class="action-rule"><b>看到 1</b><br>放回 S 右邊：<code>S = S + T[i]</code></div>
+      <div class="action-rule"><b>看到 0</b><br>放回 S 左邊：<code>S = T[i] + S</code></div>
+    </div>
+  `;
+}
+
+function renderCharPanel(step) {
+  const s = step.state;
+  const activeIdx = s.charIndex;
+  const eRow = s.e ? `<div class="char-row"><span class="row-label">e</span>${chipChars(s.e, activeIdx)}</div>` : '<div class="mini-note">尚未進入某一條 e。</div>';
+  const tRow = `<div class="char-row"><span class="row-label">T</span>${chipChars(s.T, activeIdx)}</div>`;
+  const negRow = s.e ? `<div class="char-row"><span class="row-label">負索引</span>${strChars(s.e).map((_, idx) => `<span class="char-chip muted">${idx - s.n}</span>`).join('')}</div>` : '';
+  const posRow = s.e ? `<div class="char-row"><span class="row-label">正索引</span>${strChars(s.e).map((_, idx) => `<span class="char-chip muted">${idx}</span>`).join('')}</div>` : '';
+  const sNow = s.phase === 'charMove' ? s.afterS : (s.S || s.afterS || '');
+  const sRow = `<div class="char-row"><span class="row-label">S</span>${chipChars(sNow, null, s.action === 'append' ? 'append' : s.action === 'prepend' ? 'prepend' : '')}</div>`;
+  $('charPanel').innerHTML = `${posRow}${negRow}${eRow}${tRow}${sRow}`;
+}
+
+function renderDetailPanel(step) {
+  const s = step.state;
+  let html = '';
+  if (s.phase === 'readChar' || s.phase === 'branchAppend' || s.phase === 'branchPrepend' || s.phase === 'charMove') {
+    const isOne = s.eChar === '1';
+    const side = isOne ? '右邊' : '左邊';
+    const formula = isOne
+      ? `${escapeHTML(s.beforeS || '空')} + ${escapeHTML(s.tChar)} = ${escapeHTML(s.afterS || s.beforeS || '空')}`
+      : `${escapeHTML(s.tChar)} + ${escapeHTML(s.beforeS || '空')} = ${escapeHTML(s.afterS || s.beforeS || '空')}`;
+    html += `<p><b>目前讀到的內容</b></p>`;
+    html += `<p>i=${s.negIndex}，所以現在看 <b>e[${s.negIndex}]=${escapeHTML(s.eChar)}</b> 與 <b>T[${s.negIndex}]=${escapeHTML(s.tChar)}</b>。</p>`;
+    html += `<p><b>為什麼放到 ${side}？</b></p>`;
+    html += `<p>${isOne ? '因為 e 是 1，表示加密時這個字是從 S 右邊拿走。' : '因為 e 是 0，表示加密時這個字是從 S 左邊拿走。'}所以解碼時，要把 <b>${escapeHTML(s.tChar)}</b> 放回 S 的${side}。</p>`;
+    html += `<p><b>更新方式：</b>${formula}</p>`;
+  } else if (s.phase === 'swap') {
+    html += `<p><b>為什麼要交換？</b></p>`;
+    html += `<p>這輪 e 裡面的 1 是 ${s.onesCount} 個，是奇數。加密時有做前後交換，解碼時也要再交換一次才會回到原本。</p>`;
+    if (s.middlePart) {
+      html += `<p>左半：<b>${escapeHTML(s.leftPart || '空')}</b>，中間：<b>${escapeHTML(s.middlePart)}</b>，右半：<b>${escapeHTML(s.rightPart || '空')}</b></p>`;
+      html += `<p>右半 + 中間 + 左半 = <b>${escapeHTML(s.afterSwap)}</b></p>`;
+    } else {
+      html += `<p>左半：<b>${escapeHTML(s.leftPart || '空')}</b>，右半：<b>${escapeHTML(s.rightPart || '空')}</b></p>`;
+      html += `<p>右半 + 左半 = <b>${escapeHTML(s.afterSwap)}</b></p>`;
+    }
+  } else if (s.phase === 'noSwap' || s.phase === 'oddCheckNo') {
+    html += `<p>這輪 e 裡面的 1 是偶數，所以不用做前後交換。</p>`;
+  } else if (s.phase === 'commitAfter' || s.phase === 'commitBefore') {
+    html += `<p>一輪 e 處理完後，S 就是「往前還原一層」的結果。</p>`;
+    html += `<p>所以把 S 存回 T，下一輪再繼續反解。</p>`;
+  } else if (s.phase === 'reverseOps') {
+    html += `<p>解碼一定要從最後一次加密操作開始。</p>`;
+    html += `<p>原本 <b>es = [${s.opsOriginal.join(', ')}]</b>。</p>`;
+    html += `<p>執行 <b>es.reverse()</b> 後，變成 <b>es = [${s.opsReversed.join(', ')}]</b>。</p>`;
+    html += `<p>所以解碼使用順序是：<b>${s.opsReversed.join(' → ')}</b>。</p>`;
+    html += `<p>注意：這不是把字母整串倒過來，而是把操作順序倒過來。</p>`;
+  } else if (s.phase === 'initS') {
+    html += `<p><b>S 的角色：</b>S 是這一輪正在組回來的字串。</p>`;
+    html += `<p>等一下會依照 e[i] 是 0 還是 1，決定把 T[i] 放到 S 的左邊或右邊。</p>`;
+  } else if (s.phase === 'roundStart') {
+    html += `<p>這一輪使用 e = <b>${escapeHTML(s.e)}</b>。</p>`;
+    html += `<p>接下來會從右往左看：i = -1, -2, -3 ...。</p>`;
+    html += `<p>每次都看 e[i] 和 T[i]，再決定字母要放回 S 的哪一邊。</p>`;
+  } else {
+    html += `<p>觀察上方狀態與右邊程式碼高亮，按下一步會繼續往下跑。</p>`;
+  }
+  html += `<hr><p class="mini-note">目前對應程式碼第 ${step.activeLine} 行。</p>`;
+  $('detailPanel').innerHTML = html;
+}
+
+function svgNode(x, y, w, h, title, sub, cls = '') {
+  return `<g><rect class="svg-node ${cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="14"></rect><text class="svg-text" x="${x + w / 2}" y="${y + 33}" text-anchor="middle">${escapeHTML(title)}</text>${sub ? `<text class="svg-text svg-small" x="${x + w / 2}" y="${y + 60}" text-anchor="middle">${escapeHTML(sub)}</text>` : ''}</g>`;
+}
+
+function svgCharRow(label, text, y, activeIndex, doneUntil = null) {
+  const chars = strChars(text);
+  const startX = 330;
+  const boxW = 48;
+  const gap = 8;
+  let out = `<text class="svg-text" x="210" y="${y + 31}" text-anchor="start">${escapeHTML(label)}</text>`;
+  if (!chars.length) {
+    out += `<rect class="svg-char" x="${startX}" y="${y}" width="70" height="46" rx="10"></rect><text class="svg-text" x="${startX + 35}" y="${y + 31}" text-anchor="middle">空</text>`;
+    return out;
+  }
+  chars.forEach((ch, idx) => {
+    const x = startX + idx * (boxW + gap);
+    let cls = '';
+    if (idx === activeIndex) cls = 'active';
+    else if (doneUntil !== null && idx >= doneUntil) cls = 'done';
+    out += `<rect class="svg-char ${cls}" x="${x}" y="${y}" width="${boxW}" height="46" rx="10"></rect><text class="svg-text" x="${x + boxW/2}" y="${y + 31}" text-anchor="middle">${escapeHTML(ch)}</text>`;
+  });
+  return out;
+}
+
+function renderSvg(step) {
+  const s = step.state;
+  const isAppend = s.action === 'append';
+  const isPrepend = s.action === 'prepend';
+  const isSwap = ['swap', 'mid', 'evenLen', 'oddLen', 'oddCheckYes'].includes(s.phase);
+  const isCommit = s.phase.startsWith('commit');
+  const scanCls = ['readChar', 'branchAppend', 'branchPrepend', 'charMove'].includes(s.phase) ? 'current' : (s.currentRound >= 0 ? 'done' : '');
+  const appendCls = isAppend ? 'current' : '';
+  const prependCls = isPrepend ? 'current' : '';
+  const swapCls = isSwap ? 'swap' : '';
+  const commitCls = isCommit ? 'returning' : '';
+  const activeIdx = s.charIndex;
+  const doneUntil = activeIdx === null ? null : activeIdx + 1;
+
+  let opsSvg = '';
+  const opStartY = 34;
+  s.opsReversed.forEach((op, idx) => {
+    const cls = idx === s.currentRound ? 'current' : (s.currentRound > idx ? 'done' : '');
+    opsSvg += svgNode(25, opStartY + idx * 76, 170, 58, `第 ${idx + 1} 輪`, op, cls);
+  });
+
+  const arrowClass = s.phase === 'charMove' ? 'active' : '';
+  const svg = `
+  <svg viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="字串解碼資料結構視覺化">
+    <defs>
+      <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L9,3 z" fill="#64748b"></path>
+      </marker>
+    </defs>
+    <rect x="0" y="0" width="1200" height="520" fill="#fbfdff"></rect>
+    <text class="svg-text" x="25" y="24">解碼操作順序</text>
+    ${opsSvg}
+
+    ${svgNode(250, 32, 210, 74, '讀 e 與 T', '從右往左', scanCls)}
+    ${svgNode(500, 32, 210, 74, 'e[i] == 1', '放回 S 後面', appendCls)}
+    ${svgNode(750, 32, 210, 74, 'e[i] == 0', '放回 S 前面', prependCls)}
+    ${svgNode(990, 32, 180, 74, '奇數個 1', '前後交換', swapCls)}
+
+    <path class="svg-arrow ${arrowClass}" d="M460 69 C480 69 480 69 500 69"></path>
+    <path class="svg-arrow ${arrowClass}" d="M710 69 C730 69 730 69 750 69"></path>
+    <path class="svg-arrow ${isSwap ? 'active' : ''}" d="M960 69 C976 69 976 69 990 69"></path>
+
+    <text class="svg-text" x="250" y="155">目前字元表</text>
+    ${svgCharRow('e', s.e || '', 178, activeIdx, null)}
+    ${svgCharRow('T', s.T || '', 246, activeIdx, doneUntil)}
+
+    <text class="svg-text" x="250" y="347">正在組回 S</text>
+    ${svgCharRow('S', s.phase === 'charMove' ? s.afterS : (s.S || s.afterS || ''), 370, null, null)}
+
+    ${svgNode(890, 350, 250, 82, isCommit ? '回寫完成' : 'T, S = S, ""', isCommit ? `新的 T：${s.T}` : '一輪完成後執行', commitCls)}
+
+    <text class="svg-text svg-small" x="330" y="478">目前說明：${escapeHTML(step.message).slice(0, 55)}</text>
+  </svg>`;
+  $('svgBox').innerHTML = svg;
+}
+
+function renderStep(index) {
+  if (!steps.length) return;
+  currentStep = Math.max(0, Math.min(index, steps.length - 1));
+  const step = steps[currentStep];
+  $('stepInfo').textContent = `步驟 ${currentStep + 1} / ${steps.length}`;
+  $('resultInfo').textContent = `目前狀態：${step.status}`;
+  $('messageInfo').textContent = step.message;
+  highlightCode(step.activeLine);
+  renderOrderPanel(step);
+  renderStatePanel(step);
+  renderOperationPanel(step);
+  renderCharPanel(step);
+  renderDetailPanel(step);
+  renderSvg(step);
+}
+
+function setSample(index) {
+  stopPlay();
+  currentSampleIndex = index;
+  const sample = samples[currentSampleIndex];
+  $('sampleInput').textContent = sample.input;
+  $('sampleOutput').textContent = sample.output;
+  steps = buildSteps(sample);
+  renderStep(0);
+}
+
+function nextStep() {
+  if (currentStep < steps.length - 1) renderStep(currentStep + 1);
+  else stopPlay();
+}
+function prevStep() {
+  if (currentStep > 0) renderStep(currentStep - 1);
+}
+function resetStep() {
+  stopPlay();
+  renderStep(0);
+}
+function startPlay() {
+  if (playTimer) return;
+  playTimer = setInterval(() => {
+    if (currentStep >= steps.length - 1) stopPlay();
+    else nextStep();
+  }, 850);
+}
+function stopPlay() {
+  if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = null;
+  }
+}
+function togglePlay() {
+  if (playTimer) stopPlay();
+  else startPlay();
+}
+
+function initResizer() {
+  const resizer = $('resizer');
+  const left = $('leftPane');
+  let dragging = false;
+
+  resizer.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    resizer.setPointerCapture(e.pointerId);
+    document.body.style.userSelect = 'none';
+  });
+
+  resizer.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const appRect = document.querySelector('.app').getBoundingClientRect();
+    const newWidth = e.clientX - appRect.left;
+    const min = 360;
+    const max = appRect.width - 340;
+    const finalWidth = Math.max(min, Math.min(max, newWidth));
+    left.style.width = `${finalWidth}px`;
+  });
+
+  resizer.addEventListener('pointerup', (e) => {
+    dragging = false;
+    resizer.releasePointerCapture(e.pointerId);
+    document.body.style.userSelect = '';
+  });
+}
+
+function init() {
+  renderCode();
+  const select = $('sampleSelect');
+  select.innerHTML = samples.map((s, idx) => `<option value="${idx}">${escapeHTML(s.name)}</option>`).join('');
+  select.addEventListener('change', () => setSample(Number(select.value)));
+
+  $('prevBtn').addEventListener('click', prevStep);
+  $('nextBtn').addEventListener('click', nextStep);
+  $('playBtn').addEventListener('click', startPlay);
+  $('pauseBtn').addEventListener('click', stopPlay);
+  $('resetBtn').addEventListener('click', resetStep);
+
+  $('openProblemBtn').addEventListener('click', () => {
+    $('problemModal').classList.remove('hidden');
+    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+  });
+  $('closeProblemBtn').addEventListener('click', () => $('problemModal').classList.add('hidden'));
+  $('problemModal').addEventListener('click', (e) => {
+    if (e.target.id === 'problemModal') $('problemModal').classList.add('hidden');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!$('problemModal').classList.contains('hidden') && e.key === 'Escape') {
+      $('problemModal').classList.add('hidden');
+      return;
+    }
+    if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextStep(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prevStep(); }
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  });
+
+  initResizer();
+  setSample(0);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

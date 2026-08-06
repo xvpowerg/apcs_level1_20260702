@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>q182.2 字串操作｜白話教學動畫</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']] },
+      chtml: { scale: 1.05 }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --toolbar-h: 130px;
+      --border: #d9dee8;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --orange: #f97316;
+      --purple: #7c3aed;
+      --red: #dc2626;
+      --yellow: #fff4bf;
+      --code-bg: #0f172a;
+      --code-text: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    button, select {
+      font-family: inherit;
+      font-size: 16px;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      padding: 10px 14px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .title-row h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.3;
+    }
+
+    .title-badge {
+      color: #334155;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button,
+    .toolbar select {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .toolbar button:hover {
+      background: #f8fafc;
+    }
+
+    .toolbar button.primary {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .toolbar button.danger {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
+    .toolbar button.active-sample {
+      background: #ecfeff;
+      border-color: #06b6d4;
+      color: #155e75;
+      font-weight: 700;
+    }
+
+    .status-line {
+      display: grid;
+      grid-template-columns: auto minmax(180px, 1fr) auto minmax(260px, 2fr);
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .message-box {
+      min-height: 34px;
+      padding: 5px 10px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .main {
+      height: calc(100vh - var(--toolbar-h));
+      margin-top: var(--toolbar-h);
+      display: flex;
+      overflow: hidden;
+    }
+
+    .panel {
+      height: 100%;
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .left-panel {
+      flex: 0 0 58%;
+      min-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .right-panel {
+      flex: 1 1 auto;
+      min-width: 360px;
+      padding-left: 12px;
+    }
+
+    .splitter {
+      flex: 0 0 8px;
+      cursor: col-resize;
+      background: linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0);
+      border-left: 1px solid #cbd5e1;
+      border-right: 1px solid #cbd5e1;
+    }
+
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .card h3 {
+      margin: 10px 0 6px;
+      font-size: 18px;
+    }
+
+    .card p {
+      margin: 6px 0;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+    }
+
+    .kv {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #f8fafc;
+      min-height: 48px;
+    }
+
+    .kv .label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .kv .value {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 18px;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .sample-pre {
+      margin: 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #dbe4f0;
+      background: #f8fafc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 17px;
+      overflow: auto;
+      max-height: 170px;
+    }
+
+    .op-chip-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .op-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      padding: 4px 8px;
+      background: #ffffff;
+      font-weight: 700;
+    }
+
+    .op-chip.current {
+      background: #dbeafe;
+      border-color: #60a5fa;
+      color: #1d4ed8;
+    }
+
+    .string-row-wrap {
+      overflow: auto;
+      padding-bottom: 4px;
+    }
+
+    .string-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      min-height: 70px;
+    }
+
+    .char-box {
+      min-width: 54px;
+      height: 64px;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .char-box .idx {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.2;
+    }
+
+    .char-box .ch {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .char-box.todo { background: #ffffff; }
+    .char-box.waiting { background: #eef2ff; border-color: #a5b4fc; }
+    .char-box.active { background: #fef3c7; border-color: #f59e0b; transform: translateY(-1px); }
+    .char-box.done { background: #dcfce7; border-color: #22c55e; }
+    .char-box.returning { background: #f3e8ff; border-color: #a855f7; }
+
+    .empty-hint {
+      color: #64748b;
+      padding: 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .svg-wrap {
+      width: 100%;
+      height: 350px;
+      max-height: 48vh;
+      overflow: hidden;
+      border: 1px solid #dbe4f0;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+
+    #diagramSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      color: #475569;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+    }
+
+    .legend-dot.active { background: #fef3c7; border-color: #f59e0b; }
+    .legend-dot.done { background: #dcfce7; border-color: #22c55e; }
+    .legend-dot.returning { background: #f3e8ff; border-color: #a855f7; }
+    .legend-dot.waiting { background: #eef2ff; border-color: #a5b4fc; }
+
+    .history-table-wrap {
+      overflow: auto;
+      max-height: 240px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr.current-row td {
+      background: #fffbeb;
+      font-weight: 700;
+    }
+
+    .code-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .code-title {
+      padding: 12px;
+      border-bottom: 1px solid #334155;
+      background: #111827;
+      color: #f8fafc;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .code-scroll {
+      flex: 1 1 auto;
+      overflow: auto;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 8px 0 20px;
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 54px minmax(720px, 1fr);
+      gap: 10px;
+      align-items: start;
+      min-height: 26px;
+      padding: 1px 12px 1px 0;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 16px;
+      white-space: pre;
+    }
+
+    .code-line .line-no {
+      text-align: right;
+      color: #94a3b8;
+      user-select: none;
+      padding-right: 8px;
+    }
+
+    .code-line.active {
+      background: #facc15;
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .code-line.active .line-no {
+      color: #7c2d12;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .modal-mask.show { display: flex; }
+
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 70vh;
+      overflow: auto;
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      font-size: 17px;
+    }
+
+    .modal-body h3 {
+      margin-top: 16px;
+      margin-bottom: 6px;
+      font-size: 20px;
+    }
+
+    .modal-body .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .close-btn {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .note {
+      color: #475569;
+      font-size: 15px;
+    }
+
+    .nowrap { white-space: nowrap; }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .main {
+        height: auto;
+        min-height: calc(100vh - var(--toolbar-h));
+        flex-direction: column;
+        overflow: visible;
+      }
+      .left-panel, .right-panel {
+        min-width: 0;
+        width: 100%;
+        flex-basis: auto !important;
+        height: auto;
+      }
+      .splitter { display: none; }
+      .right-panel { padding-left: 12px; }
+      .code-card { height: 70vh; }
+      .status-line {
+        grid-template-columns: 1fr;
+      }
+      .message-box { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="title-row">
+      <h1>q182.2 字串操作｜白話教學動畫</h1>
+      <span class="title-badge">左右分割｜SVG 視覺化｜程式碼同步高亮</span>
+    </div>
+    <div class="toolbar">
+      <button id="prevBtn">上一步</button>
+      <button id="nextBtn" class="primary">下一步</button>
+      <button id="playBtn">播放</button>
+      <button id="pauseBtn">暫停</button>
+      <button id="resetBtn" class="danger">重設</button>
+      <button id="problemBtn">題目說明</button>
+      <span class="pill" id="stepCounter">步驟 1 / 1</span>
+      <span class="pill" id="sampleButtons"></span>
+    </div>
+    <div class="status-line">
+      <span class="pill">目前答案或狀態</span>
+      <span class="pill" id="resultText">尚未開始</span>
+      <span class="pill">本步驟說明</span>
+      <div class="message-box" id="messageText">請按「下一步」開始。</div>
+    </div>
+  </header>
+
+  <main class="main" id="main">
+    <section class="panel left-panel" id="leftPanel">
+      <section class="card">
+        <h2>目前範例</h2>
+        <div class="visual-grid">
+          <div>
+            <h3>輸入</h3>
+            <pre class="sample-pre" id="sampleInput"></pre>
+          </div>
+          <div>
+            <h3>預期輸出</h3>
+            <pre class="sample-pre" id="sampleOutput"></pre>
+          </div>
+        </div>
+        <div class="op-chip-row" id="opChipRow"></div>
+      </section>
+
+      <section class="card">
+        <h2>重要變數</h2>
+        <div class="visual-grid">
+          <div class="kv"><div class="label">目前字串 s</div><div class="value" id="kvS">-</div></div>
+          <div class="kv"><div class="label">目前讀到的操作 op</div><div class="value" id="kvOp">-</div></div>
+          <div class="kv"><div class="label">目前進入的函數</div><div class="value" id="kvFunc">-</div></div>
+          <div class="kv"><div class="label">out 暫存結果</div><div class="value" id="kvOut">-</div></div>
+          <div class="kv"><div class="label">完美重排前半 f</div><div class="value" id="kvF">-</div></div>
+          <div class="kv"><div class="label">完美重排後半 t</div><div class="value" id="kvT">-</div></div>
+          <div class="kv"><div class="label">h = len(s) // 2</div><div class="value" id="kvH">-</div></div>
+          <div class="kv"><div class="label">比較或提醒</div><div class="value" id="kvNote">-</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>字串盒子：目前正在看的字母</h2>
+        <p class="note">上排是函數正在處理的字串。黃色是目前處理中，綠色是已經放進結果。</p>
+        <div class="string-row-wrap"><div class="string-row" id="inputBoxes"></div></div>
+      </section>
+
+      <section class="card">
+        <h2>out 暫存結果：正在慢慢組成新字串</h2>
+        <p class="note">程式不是直接改原字串，而是先用 out 一個一個放新字母，最後再 join 成新字串。</p>
+        <div class="string-row-wrap"><div class="string-row" id="outputBoxes"></div></div>
+      </section>
+
+      <section class="card">
+        <h2>本次操作圖</h2>
+        <div class="svg-wrap">
+          <svg id="diagramSvg" viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid meet" role="img" aria-label="字串操作 SVG 動畫圖"></svg>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot waiting"></span>等待處理</span>
+          <span class="legend-item"><span class="legend-dot active"></span>目前處理</span>
+          <span class="legend-item"><span class="legend-dot done"></span>已完成</span>
+          <span class="legend-item"><span class="legend-dot returning"></span>回傳結果</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>操作歷程</h2>
+        <div class="history-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>次數</th>
+                <th>操作</th>
+                <th>操作前</th>
+                <th>操作後</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <div class="splitter" id="splitter" title="拖曳調整左右寬度"></div>
+
+    <section class="panel right-panel" id="rightPanel">
+      <section class="card code-card">
+        <div class="code-title">完整 Python 程式碼｜目前執行行會高亮</div>
+        <div class="code-scroll" id="codeScroll"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-mask" id="problemModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="problemTitle">
+      <div class="modal-header">
+        <h2 id="problemTitle">題目說明：字串操作</h2>
+        <button class="close-btn" id="closeProblemBtn">關閉</button>
+      </div>
+      <div class="modal-body">
+        <p>給一個字串 <strong>S</strong>，還有很多次操作。每次操作會把字串變成新的樣子。所有操作都做完後，輸出最後的字串。</p>
+        <p>字串長度保證是偶數，設長度為 \(n\)。字元位置編號是 \(0, 1, 2, \ldots, n-1\)。</p>
+
+        <h3>操作 0：兩兩交換</h3>
+        <p>每兩個字母一組，左右交換。例如 <code>apcsntnu</code> 分成 <code>(ap)(cs)(nt)(nu)</code>，交換後變成 <code>pa</code><code>sc</code><code>tn</code><code>un</code>。</p>
+
+        <h3>操作 1：兩兩排序</h3>
+        <p>每兩個字母一組，每組裡面小的字母放前面，大的字母放後面。注意：不是整個字串排序，只是每一組兩個字母自己排序。</p>
+
+        <h3>操作 2：完美重排</h3>
+        <p>先把字串切成前半段與後半段。前半是位置 \(0,1,\ldots,\frac{n}{2}-1\)，後半是位置 \(\frac{n}{2},\ldots,n-1\)。</p>
+        <p>再交錯拿：前半第 1 個、後半第 1 個、前半第 2 個、後半第 2 個，一直拿完。</p>
+
+        <h3>輸入格式</h3>
+        <pre class="sample-pre">第一行：字串 S
+第二行：整數 k，代表操作次數
+接下來 k 行：每行一個操作數字，可能是 0、1、2</pre>
+
+        <h3>輸出格式</h3>
+        <pre class="sample-pre">輸出操作完成後的字串</pre>
+
+        <h3>範例</h3>
+        <div class="two-col">
+          <div>
+            <h3>範例輸入 #1</h3>
+            <pre class="sample-pre">apcsntnu
+1
+2</pre>
+          </div>
+          <div>
+            <h3>範例輸出 #1</h3>
+            <pre class="sample-pre">anptcnsu</pre>
+          </div>
+          <div>
+            <h3>範例輸入 #2</h3>
+            <pre class="sample-pre">facebook
+4
+2
+0
+2
+1</pre>
+          </div>
+          <div>
+            <h3>範例輸出 #2</h3>
+            <pre class="sample-pre">bocfkoae</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sourceCode = [
+      'def twoSwitch(s):       # 兩兩交換字元位置',
+      '    out = []',
+      '    for i in range(0, len(s), 2):',
+      '        out.append(s[i + 1])',
+      '        out.append(s[i])',
+      "    return ''.join(out)",
+      '',
+      'def twoSort(s):         # 兩兩排序字元',
+      '    out = []',
+      '    for i in range(0, len(s), 2):',
+      '        f = s[i]',
+      '        s_char = s[i + 1]',
+      '        if f > s_char:',
+      '            f, s_char = s_char, f',
+      '        out.append(f)',
+      '        out.append(s_char)',
+      "    return ''.join(out)",
+      '',
+      'def perfect(s):         # 完美重排：前半後半交錯組合',
+      '    h = len(s) // 2',
+      '    f = s[:h]',
+      '    t = s[h:]',
+      '    out = []',
+      '    for i in range(h):',
+      '        out.append(f[i])',
+      '        out.append(t[i])',
+      "    return ''.join(out)",
+      '',
+      's = input().strip()',
+      'k = int(input())',
+      'for _ in range(k):',
+      '    op = int(input())   # 讀取操作指令',
+      '    if op == 0:',
+      '        s = twoSwitch(s)',
+      '    elif op == 1:',
+      '        s = twoSort(s)',
+      '    elif op == 2:',
+      '        s = perfect(s)',
+      '',
+      'print(s)'
+    ];
+
+    const samples = [
+      {
+        name: '範例 1',
+        initial: 'apcsntnu',
+        ops: [2],
+        output: 'anptcnsu'
+      },
+      {
+        name: '範例 2',
+        initial: 'facebook',
+        ops: [2, 0, 2, 1],
+        output: 'bocfkoae'
+      }
+    ];
+
+    let currentSampleIndex = 0;
+    let steps = [];
+    let currentStep = 0;
+    let timer = null;
+
+    const el = {
+      topbar: document.getElementById('topbar'),
+      stepCounter: document.getElementById('stepCounter'),
+      resultText: document.getElementById('resultText'),
+      messageText: document.getElementById('messageText'),
+      codeScroll: document.getElementById('codeScroll'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      playBtn: document.getElementById('playBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      sampleButtons: document.getElementById('sampleButtons'),
+      sampleInput: document.getElementById('sampleInput'),
+      sampleOutput: document.getElementById('sampleOutput'),
+      opChipRow: document.getElementById('opChipRow'),
+      kvS: document.getElementById('kvS'),
+      kvOp: document.getElementById('kvOp'),
+      kvFunc: document.getElementById('kvFunc'),
+      kvOut: document.getElementById('kvOut'),
+      kvF: document.getElementById('kvF'),
+      kvT: document.getElementById('kvT'),
+      kvH: document.getElementById('kvH'),
+      kvNote: document.getElementById('kvNote'),
+      inputBoxes: document.getElementById('inputBoxes'),
+      outputBoxes: document.getElementById('outputBoxes'),
+      diagramSvg: document.getElementById('diagramSvg'),
+      historyBody: document.getElementById('historyBody'),
+      problemBtn: document.getElementById('problemBtn'),
+      problemModal: document.getElementById('problemModal'),
+      closeProblemBtn: document.getElementById('closeProblemBtn'),
+      splitter: document.getElementById('splitter'),
+      leftPanel: document.getElementById('leftPanel'),
+      rightPanel: document.getElementById('rightPanel')
+    };
+
+    function syncToolbarHeight() {
+      const h = el.topbar.offsetHeight;
+      document.documentElement.style.setProperty('--toolbar-h', h + 'px');
+    }
+
+    function opName(op) {
+      if (op === 0) return '0：兩兩交換';
+      if (op === 1) return '1：兩兩排序';
+      if (op === 2) return '2：完美重排';
+      return '-';
+    }
+
+    function functionNameForOp(op) {
+      if (op === 0) return 'twoSwitch';
+      if (op === 1) return 'twoSort';
+      if (op === 2) return 'perfect';
+      return '主程式';
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeSvg(str) {
+      return escapeHtml(str);
+    }
+
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function statusForState(state, line) {
+      if (line === 40) return `最後答案：${state.currentString}`;
+      if (state.functionName && state.functionName !== '主程式') {
+        const out = state.out ? state.out : '空';
+        return `${state.functionName} 執行中，out = ${out}`;
+      }
+      if (state.op !== null && state.op !== undefined) {
+        return `目前 s = ${state.currentString}，op = ${state.op}`;
+      }
+      return `目前 s = ${state.currentString}`;
+    }
+
+    function makeBaseState(sample) {
+      return {
+        currentString: sample.initial,
+        inputString: sample.initial,
+        opIndex: -1,
+        op: null,
+        functionName: '主程式',
+        out: '',
+        f: '',
+        t: '',
+        h: null,
+        activeSourceIndices: [],
+        processedSourceIndices: [],
+        activeOutputIndex: null,
+        activeFromHalf: '',
+        activeHalfIndex: null,
+        pairIndex: null,
+        compareText: '',
+        extraNote: '',
+        returnValue: '',
+        history: []
+      };
+    }
+
+    function buildSteps(sample) {
+      const built = [];
+      let state = makeBaseState(sample);
+
+      function push(activeLine, message, result) {
+        built.push({
+          activeLine,
+          message,
+          result: result || statusForState(state, activeLine),
+          visualState: deepClone(state)
+        });
+      }
+
+      push(29, `讀入第一行字串，s = "${sample.initial}"。`, `目前 s = ${sample.initial}`);
+      push(30, `讀入操作次數 k = ${sample.ops.length}。`, `準備做 ${sample.ops.length} 次操作`);
+
+      for (let idx = 0; idx < sample.ops.length; idx++) {
+        const op = sample.ops[idx];
+        const before = state.currentString;
+        state.opIndex = idx;
+        state.op = op;
+        state.functionName = '主程式';
+        state.inputString = before;
+        state.out = '';
+        state.f = '';
+        state.t = '';
+        state.h = null;
+        state.activeSourceIndices = [];
+        state.processedSourceIndices = [];
+        state.activeOutputIndex = null;
+        state.compareText = '';
+        state.extraNote = `第 ${idx + 1} 次操作，準備讀 op。`;
+        push(31, `進入第 ${idx + 1} 次迴圈，這次要處理下一個操作。`);
+
+        state.extraNote = `讀到 op = ${op}，意思是「${opName(op)}」。`;
+        push(32, `讀到第 ${idx + 1} 個操作：op = ${op}。`);
+
+        if (op === 0) {
+          state.extraNote = 'op == 0 成立，所以走 twoSwitch。';
+          push(33, '判斷 op == 0 成立，準備做「兩兩交換」。');
+          push(34, `主程式呼叫 twoSwitch("${before}")。`);
+          const after = runTwoSwitch(before, state, push);
+          state.functionName = '主程式';
+          state.currentString = after;
+          state.inputString = after;
+          state.out = '';
+          state.activeSourceIndices = [];
+          state.processedSourceIndices = [];
+          state.activeOutputIndex = null;
+          state.returnValue = after;
+          state.history.push({ no: idx + 1, op, before, after });
+          state.extraNote = `回到主程式，把 s 更新成 ${after}。`;
+          push(34, `twoSwitch 回傳 "${after}"，所以 s 變成 "${after}"。`);
+        } else if (op === 1) {
+          state.extraNote = 'op == 0 不成立。';
+          push(33, '判斷 op == 0 不成立，繼續往下看。');
+          state.extraNote = 'op == 1 成立，所以走 twoSort。';
+          push(35, '判斷 op == 1 成立，準備做「兩兩排序」。');
+          push(36, `主程式呼叫 twoSort("${before}")。`);
+          const after = runTwoSort(before, state, push);
+          state.functionName = '主程式';
+          state.currentString = after;
+          state.inputString = after;
+          state.out = '';
+          state.activeSourceIndices = [];
+          state.processedSourceIndices = [];
+          state.activeOutputIndex = null;
+          state.returnValue = after;
+          state.history.push({ no: idx + 1, op, before, after });
+          state.extraNote = `回到主程式，把 s 更新成 ${after}。`;
+          push(36, `twoSort 回傳 "${after}"，所以 s 變成 "${after}"。`);
+        } else if (op === 2) {
+          state.extraNote = 'op == 0 不成立。';
+          push(33, '判斷 op == 0 不成立，繼續往下看。');
+          state.extraNote = 'op == 1 也不成立。';
+          push(35, '判斷 op == 1 不成立，繼續往下看。');
+          state.extraNote = 'op == 2 成立，所以走 perfect。';
+          push(37, '判斷 op == 2 成立，準備做「完美重排」。');
+          push(38, `主程式呼叫 perfect("${before}")。`);
+          const after = runPerfect(before, state, push);
+          state.functionName = '主程式';
+          state.currentString = after;
+          state.inputString = after;
+          state.out = '';
+          state.activeSourceIndices = [];
+          state.processedSourceIndices = [];
+          state.activeOutputIndex = null;
+          state.activeFromHalf = '';
+          state.activeHalfIndex = null;
+          state.returnValue = after;
+          state.history.push({ no: idx + 1, op, before, after });
+          state.extraNote = `回到主程式，把 s 更新成 ${after}。`;
+          push(38, `perfect 回傳 "${after}"，所以 s 變成 "${after}"。`);
+        }
+      }
+
+      state.functionName = '主程式';
+      state.op = null;
+      state.opIndex = sample.ops.length;
+      state.inputString = state.currentString;
+      state.out = '';
+      state.extraNote = '所有操作都完成，印出最後的 s。';
+      push(40, `所有操作做完，輸出最後字串 "${state.currentString}"。`, `最後答案：${state.currentString}`);
+      return built;
+    }
+
+    function runTwoSwitch(s, state, push) {
+      let out = '';
+      state.functionName = 'twoSwitch';
+      state.inputString = s;
+      state.out = '';
+      state.f = '';
+      state.t = '';
+      state.h = null;
+      state.activeSourceIndices = [];
+      state.processedSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.returnValue = '';
+      state.extraNote = '進入 twoSwitch：每兩個字母左右交換。';
+      push(1, `進入 twoSwitch，收到 s = "${s}"。`);
+      state.extraNote = '建立空的 out，等等慢慢放新字母。';
+      push(2, '建立 out = []，先準備一個空盒子。');
+
+      const processed = [];
+      for (let i = 0; i < s.length; i += 2) {
+        state.pairIndex = i / 2;
+        state.activeSourceIndices = [i, i + 1];
+        state.processedSourceIndices = processed.slice();
+        state.activeOutputIndex = null;
+        state.extraNote = `目前看第 ${i}、${i + 1} 格，也就是 (${s[i]}${s[i + 1]})。`;
+        push(3, `for 迴圈：i = ${i}，處理一組 (${s[i]}${s[i + 1]})。`);
+
+        out += s[i + 1];
+        state.out = out;
+        state.activeSourceIndices = [i + 1];
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `先放右邊字母 ${s[i + 1]}。`;
+        push(4, `把 s[${i + 1}] = "${s[i + 1]}" 放進 out。`);
+
+        out += s[i];
+        state.out = out;
+        state.activeSourceIndices = [i];
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `再放左邊字母 ${s[i]}，這組就交換完成。`;
+        push(5, `把 s[${i}] = "${s[i]}" 放進 out。`);
+
+        processed.push(i, i + 1);
+        state.processedSourceIndices = processed.slice();
+      }
+      state.activeSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.returnValue = out;
+      state.extraNote = `out 全部接起來，得到 ${out}。`;
+      push(6, `return ''.join(out)，回傳 "${out}"。`, `twoSwitch 回傳 ${out}`);
+      return out;
+    }
+
+    function runTwoSort(s, state, push) {
+      let out = '';
+      state.functionName = 'twoSort';
+      state.inputString = s;
+      state.out = '';
+      state.f = '';
+      state.t = '';
+      state.h = null;
+      state.activeSourceIndices = [];
+      state.processedSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.returnValue = '';
+      state.extraNote = '進入 twoSort：每兩個字母自己排小到大。';
+      push(8, `進入 twoSort，收到 s = "${s}"。`);
+      state.extraNote = '建立空的 out，排序後的字母會放進這裡。';
+      push(9, '建立 out = []，先準備一個空盒子。');
+
+      const processed = [];
+      for (let i = 0; i < s.length; i += 2) {
+        let f = s[i];
+        let sChar = s[i + 1];
+        state.pairIndex = i / 2;
+        state.activeSourceIndices = [i, i + 1];
+        state.processedSourceIndices = processed.slice();
+        state.activeOutputIndex = null;
+        state.compareText = '';
+        state.extraNote = `目前看第 ${i}、${i + 1} 格，也就是 (${f}${sChar})。`;
+        push(10, `for 迴圈：i = ${i}，處理一組 (${f}${sChar})。`);
+
+        state.f = f;
+        state.t = '';
+        state.activeSourceIndices = [i];
+        state.extraNote = `f 先拿左邊字母 ${f}。`;
+        push(11, `f = s[${i}] = "${f}"。`);
+
+        state.t = sChar;
+        state.activeSourceIndices = [i + 1];
+        state.extraNote = `s_char 拿右邊字母 ${sChar}。`;
+        push(12, `s_char = s[${i + 1}] = "${sChar}"。`);
+
+        state.activeSourceIndices = [i, i + 1];
+        const needSwap = f > sChar;
+        state.compareText = needSwap ? `${f} > ${sChar}，要交換。` : `${f} <= ${sChar}，不用交換。`;
+        state.extraNote = state.compareText;
+        push(13, `比較 f 和 s_char：${state.compareText}`);
+
+        if (needSwap) {
+          const oldF = f;
+          f = sChar;
+          sChar = oldF;
+          state.f = f;
+          state.t = sChar;
+          state.compareText = `交換後：f = ${f}，s_char = ${sChar}`;
+          state.extraNote = '因為左邊比較大，所以交換，讓小的在前面。';
+          push(14, `交換後，這組變成 (${f}${sChar})。`);
+        }
+
+        out += f;
+        state.out = out;
+        state.activeSourceIndices = [];
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `把排序後第一個字母 ${f} 放進 out。`;
+        push(15, `out.append(f)，放入 "${f}"。`);
+
+        out += sChar;
+        state.out = out;
+        state.activeSourceIndices = [];
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `把排序後第二個字母 ${sChar} 放進 out。`;
+        push(16, `out.append(s_char)，放入 "${sChar}"。`);
+
+        processed.push(i, i + 1);
+        state.processedSourceIndices = processed.slice();
+      }
+      state.activeSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.returnValue = out;
+      state.extraNote = `out 全部接起來，得到 ${out}。`;
+      push(17, `return ''.join(out)，回傳 "${out}"。`, `twoSort 回傳 ${out}`);
+      return out;
+    }
+
+    function runPerfect(s, state, push) {
+      let out = '';
+      state.functionName = 'perfect';
+      state.inputString = s;
+      state.out = '';
+      state.f = '';
+      state.t = '';
+      state.h = null;
+      state.activeSourceIndices = [];
+      state.processedSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.activeFromHalf = '';
+      state.activeHalfIndex = null;
+      state.returnValue = '';
+      state.extraNote = '進入 perfect：先切兩半，再交錯組合。';
+      push(19, `進入 perfect，收到 s = "${s}"。`);
+
+      const h = Math.floor(s.length / 2);
+      state.h = h;
+      state.extraNote = `字串長度 ${s.length}，一半 h = ${h}。`;
+      push(20, `h = len(s) // 2 = ${h}。`);
+
+      const f = s.slice(0, h);
+      state.f = f;
+      state.extraNote = `前半段 f = "${f}"。`;
+      state.activeSourceIndices = Array.from({ length: h }, (_, idx) => idx);
+      push(21, `f = s[:h]，取得前半段 "${f}"。`);
+
+      const t = s.slice(h);
+      state.t = t;
+      state.extraNote = `後半段 t = "${t}"。`;
+      state.activeSourceIndices = Array.from({ length: h }, (_, idx) => h + idx);
+      push(22, `t = s[h:]，取得後半段 "${t}"。`);
+
+      state.out = '';
+      state.activeSourceIndices = [];
+      state.extraNote = '建立空的 out，等等 f 拿一個、t 拿一個。';
+      push(23, '建立 out = []，先準備一個空盒子。');
+
+      const processed = [];
+      for (let i = 0; i < h; i++) {
+        state.activeSourceIndices = [i, h + i];
+        state.activeFromHalf = '';
+        state.activeHalfIndex = i;
+        state.activeOutputIndex = null;
+        state.processedSourceIndices = processed.slice();
+        state.extraNote = `第 ${i + 1} 輪交錯：準備拿 f[${i}] 和 t[${i}]。`;
+        push(24, `for 迴圈：i = ${i}，準備交錯拿一組。`);
+
+        out += f[i];
+        state.out = out;
+        state.activeSourceIndices = [i];
+        state.activeFromHalf = 'f';
+        state.activeHalfIndex = i;
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `先拿前半段 f[${i}] = ${f[i]}。`;
+        push(25, `out.append(f[${i}])，放入 "${f[i]}"。`);
+
+        out += t[i];
+        state.out = out;
+        state.activeSourceIndices = [h + i];
+        state.activeFromHalf = 't';
+        state.activeHalfIndex = i;
+        state.activeOutputIndex = out.length - 1;
+        state.extraNote = `再拿後半段 t[${i}] = ${t[i]}。`;
+        push(26, `out.append(t[${i}])，放入 "${t[i]}"。`);
+
+        processed.push(i, h + i);
+        state.processedSourceIndices = processed.slice();
+      }
+      state.activeSourceIndices = [];
+      state.activeOutputIndex = null;
+      state.activeFromHalf = '';
+      state.activeHalfIndex = null;
+      state.returnValue = out;
+      state.extraNote = `out 全部接起來，得到 ${out}。`;
+      push(27, `return ''.join(out)，回傳 "${out}"。`, `perfect 回傳 ${out}`);
+      return out;
+    }
+
+    function renderCode() {
+      el.codeScroll.innerHTML = sourceCode.map((line, idx) => {
+        const lineNo = idx + 1;
+        return `<div class="code-line" data-line="${lineNo}"><span class="line-no">${lineNo}</span><span>${escapeHtml(line)}</span></div>`;
+      }).join('');
+    }
+
+    function highlightLine(line) {
+      const lines = el.codeScroll.querySelectorAll('.code-line');
+      lines.forEach(x => x.classList.remove('active'));
+      const active = el.codeScroll.querySelector(`.code-line[data-line="${line}"]`);
+      if (active) {
+        active.classList.add('active');
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    function renderSampleButtons() {
+      el.sampleButtons.innerHTML = samples.map((s, idx) => {
+        const cls = idx === currentSampleIndex ? 'active-sample' : '';
+        return `<button class="${cls}" data-sample="${idx}">${s.name}</button>`;
+      }).join('');
+      el.sampleButtons.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => switchSample(Number(btn.dataset.sample)));
+      });
+    }
+
+    function renderSamplePanel(sample, state) {
+      el.sampleInput.textContent = [sample.initial, String(sample.ops.length), ...sample.ops.map(String)].join('\n');
+      el.sampleOutput.textContent = sample.output;
+      const currentOpIndex = state ? state.opIndex : -1;
+      el.opChipRow.innerHTML = sample.ops.map((op, idx) => {
+        const cls = idx === currentOpIndex ? 'current' : '';
+        return `<span class="op-chip ${cls}">#${idx + 1}｜${op}</span>`;
+      }).join('');
+    }
+
+    function renderBoxes(container, str, state, isOutput) {
+      if (!str) {
+        container.innerHTML = `<div class="empty-hint">目前還是空的。</div>`;
+        return;
+      }
+      const activeSet = new Set(isOutput && state.activeOutputIndex !== null ? [state.activeOutputIndex] : (state.activeSourceIndices || []));
+      const doneSet = new Set(isOutput ? Array.from({ length: Math.max(0, str.length - 1) }, (_, i) => i) : (state.processedSourceIndices || []));
+      container.innerHTML = [...str].map((ch, idx) => {
+        let cls = 'todo';
+        if (activeSet.has(idx)) cls = 'active';
+        else if (doneSet.has(idx)) cls = 'done';
+        if (state.returnValue && !isOutput && state.functionName !== '主程式' && idx < str.length && (state.activeSourceIndices || []).length === 0) {
+          cls = 'returning';
+        }
+        return `<div class="char-box ${cls}"><div class="idx">${idx}</div><div class="ch">${escapeHtml(ch)}</div></div>`;
+      }).join('');
+    }
+
+    function renderVariables(state) {
+      el.kvS.textContent = state.currentString || '-';
+      el.kvOp.textContent = state.op === null || state.op === undefined ? '-' : `${state.op}（${opName(state.op)}）`;
+      el.kvFunc.textContent = state.functionName || '主程式';
+      el.kvOut.textContent = state.out ? state.out : '空';
+      el.kvF.textContent = state.f ? state.f : '-';
+      el.kvT.textContent = state.t ? state.t : '-';
+      el.kvH.textContent = state.h === null || state.h === undefined ? '-' : String(state.h);
+      el.kvNote.textContent = state.compareText || state.extraNote || '-';
+    }
+
+    function renderHistory(sample, state) {
+      const rows = [];
+      for (const h of state.history || []) {
+        rows.push(`<tr><td>${h.no}</td><td>${opName(h.op)}</td><td><code>${escapeHtml(h.before)}</code></td><td><code>${escapeHtml(h.after)}</code></td></tr>`);
+      }
+      if (state.opIndex >= 0 && state.opIndex < sample.ops.length && !(state.history || []).some(h => h.no === state.opIndex + 1)) {
+        rows.push(`<tr class="current-row"><td>${state.opIndex + 1}</td><td>${opName(state.op)}</td><td><code>${escapeHtml(state.inputString || state.currentString)}</code></td><td>執行中</td></tr>`);
+      }
+      if (rows.length === 0) {
+        rows.push('<tr><td colspan="4">還沒開始做操作。</td></tr>');
+      }
+      el.historyBody.innerHTML = rows.join('');
+    }
+
+    function svgText(x, y, text, size = 24, fill = '#1f2937', weight = 700, anchor = 'middle') {
+      return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" font-weight="${weight}" fill="${fill}" font-family="Microsoft JhengHei, Arial">${escapeSvg(text)}</text>`;
+    }
+
+    function svgBox(x, y, w, h, text, cls = 'todo', idxText = '') {
+      const fillMap = {
+        todo: '#ffffff', waiting: '#eef2ff', active: '#fef3c7', done: '#dcfce7', returning: '#f3e8ff'
+      };
+      const strokeMap = {
+        todo: '#94a3b8', waiting: '#818cf8', active: '#f59e0b', done: '#22c55e', returning: '#a855f7'
+      };
+      const fill = fillMap[cls] || fillMap.todo;
+      const stroke = strokeMap[cls] || strokeMap.todo;
+      return `
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="3"></rect>
+        ${idxText !== '' ? svgText(x + w / 2, y + 18, idxText, 14, '#64748b', 600) : ''}
+        ${svgText(x + w / 2, y + h / 2 + 14, text, 30, '#0f172a', 800)}
+      `;
+    }
+
+    function svgArrow(x1, y1, x2, y2, color = '#2563eb') {
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="4" marker-end="url(#arrowHead)"></line>`;
+    }
+
+    function svgDefs() {
+      return `
+        <defs>
+          <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"></path>
+          </marker>
+        </defs>
+      `;
+    }
+
+    function coordForIndex(idx, n, y) {
+      const startX = 70;
+      const areaW = 860;
+      const step = areaW / Math.max(n, 1);
+      const w = Math.min(72, step * 0.72);
+      const x = startX + step * idx + step / 2 - w / 2;
+      return { x, y, w, h: 58, cx: x + w / 2, cy: y + 29 };
+    }
+
+    function renderPairSvg(state) {
+      const s = state.inputString || state.currentString || '';
+      const n = s.length;
+      const out = state.out || '';
+      const activeSet = new Set(state.activeSourceIndices || []);
+      const doneSet = new Set(state.processedSourceIndices || []);
+      let html = svgDefs();
+      const title = state.op === 0 ? '操作 0：每兩個字母左右交換' : '操作 1：每兩個字母自己排序';
+      html += svgText(500, 36, title, 26, '#1f2937', 800);
+      html += svgText(120, 82, '原字串', 20, '#475569', 700, 'start');
+      html += svgText(120, 260, 'out 結果', 20, '#475569', 700, 'start');
+
+      for (let i = 0; i < n; i++) {
+        let cls = 'todo';
+        if (activeSet.has(i)) cls = 'active';
+        else if (doneSet.has(i)) cls = 'done';
+        const c = coordForIndex(i, n, 100);
+        html += svgBox(c.x, c.y, c.w, c.h, s[i], cls, String(i));
+      }
+
+      for (let g = 0; g < n / 2; g++) {
+        const i = g * 2;
+        const c1 = coordForIndex(i, n, 100);
+        const c2 = coordForIndex(i + 1, n, 100);
+        const isCurrent = state.pairIndex === g;
+        const color = isCurrent ? '#f59e0b' : '#cbd5e1';
+        html += `<rect x="${c1.x - 6}" y="${c1.y - 8}" width="${c2.x + c2.w - c1.x + 12}" height="${c1.h + 16}" rx="14" fill="none" stroke="${color}" stroke-width="${isCurrent ? 4 : 2}" stroke-dasharray="${isCurrent ? '0' : '6 6'}"></rect>`;
+        html += svgText((c1.cx + c2.cx) / 2, 185, `第 ${g + 1} 組`, 15, '#64748b', 700);
+      }
+
+      for (let i = 0; i < n; i++) {
+        const c = coordForIndex(i, n, 285);
+        const ch = i < out.length ? out[i] : '';
+        let cls = 'waiting';
+        if (i < out.length) cls = 'done';
+        if (state.activeOutputIndex === i) cls = 'active';
+        html += svgBox(c.x, c.y, c.w, c.h, ch || ' ', cls, String(i));
+      }
+
+      if (state.activeSourceIndices && state.activeSourceIndices.length === 1 && state.activeOutputIndex !== null) {
+        const src = coordForIndex(state.activeSourceIndices[0], n, 100);
+        const dst = coordForIndex(state.activeOutputIndex, n, 285);
+        html += svgArrow(src.cx, src.y + src.h + 8, dst.cx, dst.y - 8, '#2563eb');
+      }
+
+      if (state.compareText) {
+        html += `<rect x="250" y="202" width="500" height="42" rx="10" fill="#fffbeb" stroke="#facc15" stroke-width="2"></rect>`;
+        html += svgText(500, 230, state.compareText, 21, '#92400e', 800);
+      }
+
+      el.diagramSvg.innerHTML = html;
+    }
+
+    function renderPerfectSvg(state) {
+      const s = state.inputString || state.currentString || '';
+      const h = state.h || Math.floor(s.length / 2);
+      const f = state.f || s.slice(0, h);
+      const t = state.t || s.slice(h);
+      const out = state.out || '';
+      const n = s.length;
+      let html = svgDefs();
+      html += svgText(500, 36, '操作 2：先切兩半，再交錯組合', 26, '#1f2937', 800);
+      html += svgText(110, 86, '前半 f', 20, '#475569', 700, 'start');
+      html += svgText(110, 178, '後半 t', 20, '#475569', 700, 'start');
+      html += svgText(110, 300, 'out 結果', 20, '#475569', 700, 'start');
+
+      for (let i = 0; i < h; i++) {
+        const c = coordForIndex(i, h, 100);
+        const globalIndex = i;
+        let cls = 'todo';
+        if ((state.activeSourceIndices || []).includes(globalIndex)) cls = 'active';
+        else if ((state.processedSourceIndices || []).includes(globalIndex)) cls = 'done';
+        html += svgBox(c.x + 40, c.y, c.w, c.h, f[i] || ' ', cls, String(globalIndex));
+      }
+
+      for (let i = 0; i < h; i++) {
+        const c = coordForIndex(i, h, 190);
+        const globalIndex = h + i;
+        let cls = 'todo';
+        if ((state.activeSourceIndices || []).includes(globalIndex)) cls = 'active';
+        else if ((state.processedSourceIndices || []).includes(globalIndex)) cls = 'done';
+        html += svgBox(c.x + 40, c.y, c.w, c.h, t[i] || ' ', cls, String(globalIndex));
+      }
+
+      for (let i = 0; i < n; i++) {
+        const c = coordForIndex(i, n, 325);
+        const ch = i < out.length ? out[i] : '';
+        let cls = 'waiting';
+        if (i < out.length) cls = 'done';
+        if (state.activeOutputIndex === i) cls = 'active';
+        html += svgBox(c.x, c.y, c.w, c.h, ch || ' ', cls, String(i));
+      }
+
+      if (state.activeFromHalf && state.activeOutputIndex !== null && state.activeHalfIndex !== null) {
+        if (state.activeFromHalf === 'f') {
+          const src = coordForIndex(state.activeHalfIndex, h, 100);
+          const dst = coordForIndex(state.activeOutputIndex, n, 325);
+          html += svgArrow(src.cx + 40, src.y + src.h + 8, dst.cx, dst.y - 8, '#2563eb');
+        } else {
+          const src = coordForIndex(state.activeHalfIndex, h, 190);
+          const dst = coordForIndex(state.activeOutputIndex, n, 325);
+          html += svgArrow(src.cx + 40, src.y + src.h + 8, dst.cx, dst.y - 8, '#2563eb');
+        }
+      }
+
+      if (state.h !== null && state.h !== undefined) {
+        html += `<rect x="360" y="58" width="280" height="34" rx="8" fill="#eef2ff" stroke="#a5b4fc" stroke-width="2"></rect>`;
+        html += svgText(500, 82, `h = ${state.h}，所以切成 ${f || '-'} / ${t || '-'}`, 18, '#3730a3', 800);
+      }
+
+      el.diagramSvg.innerHTML = html;
+    }
+
+    function renderIdleSvg(state) {
+      let html = svgDefs();
+      html += svgText(500, 80, '目前在主程式', 30, '#1f2937', 800);
+      html += svgText(500, 130, '左邊字串盒子會顯示目前 s，下一步會依照 op 呼叫對應函數。', 22, '#475569', 700);
+      const s = state.currentString || '';
+      const n = s.length;
+      for (let i = 0; i < n; i++) {
+        const c = coordForIndex(i, n, 210);
+        html += svgBox(c.x, c.y, c.w, c.h, s[i], 'waiting', String(i));
+      }
+      if (state.returnValue) {
+        html += `<rect x="260" y="320" width="480" height="50" rx="12" fill="#f3e8ff" stroke="#a855f7" stroke-width="3"></rect>`;
+        html += svgText(500, 352, `剛剛回傳：${state.returnValue}`, 24, '#6b21a8', 800);
+      }
+      el.diagramSvg.innerHTML = html;
+    }
+
+    function renderDiagram(state) {
+      if (state.functionName === 'twoSwitch' || state.functionName === 'twoSort') {
+        renderPairSvg(state);
+      } else if (state.functionName === 'perfect') {
+        renderPerfectSvg(state);
+      } else {
+        renderIdleSvg(state);
+      }
+    }
+
+    function renderStep() {
+      const sample = samples[currentSampleIndex];
+      const step = steps[currentStep];
+      if (!step) return;
+      const state = step.visualState;
+
+      el.stepCounter.textContent = `步驟 ${currentStep + 1} / ${steps.length}`;
+      el.resultText.textContent = step.result;
+      el.messageText.textContent = step.message;
+
+      renderSamplePanel(sample, state);
+      renderVariables(state);
+      renderBoxes(el.inputBoxes, state.functionName === '主程式' ? state.currentString : (state.inputString || state.currentString), state, false);
+      renderBoxes(el.outputBoxes, state.out || '', state, true);
+      renderDiagram(state);
+      renderHistory(sample, state);
+      highlightLine(step.activeLine);
+    }
+
+    function nextStep() {
+      if (currentStep < steps.length - 1) {
+        currentStep += 1;
+        renderStep();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep -= 1;
+        renderStep();
+      }
+    }
+
+    function reset() {
+      pause();
+      currentStep = 0;
+      renderStep();
+    }
+
+    function play() {
+      if (timer) return;
+      timer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          pause();
+          return;
+        }
+        nextStep();
+      }, 950);
+    }
+
+    function pause() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function switchSample(index) {
+      pause();
+      currentSampleIndex = index;
+      steps = buildSteps(samples[currentSampleIndex]);
+      currentStep = 0;
+      renderSampleButtons();
+      renderStep();
+      syncToolbarHeight();
+    }
+
+    function openProblemModal() {
+      el.problemModal.classList.add('show');
+      el.problemModal.setAttribute('aria-hidden', 'false');
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise([el.problemModal]).catch(() => {});
+      }
+    }
+
+    function closeProblemModal() {
+      el.problemModal.classList.remove('show');
+      el.problemModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function initSplitter() {
+      let dragging = false;
+      el.splitter.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        el.splitter.setPointerCapture(e.pointerId);
+      });
+      el.splitter.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const mainRect = document.getElementById('main').getBoundingClientRect();
+        const minLeft = 360;
+        const minRight = 360;
+        let leftWidth = e.clientX - mainRect.left;
+        leftWidth = Math.max(minLeft, Math.min(leftWidth, mainRect.width - minRight));
+        el.leftPanel.style.flexBasis = leftWidth + 'px';
+      });
+      el.splitter.addEventListener('pointerup', () => { dragging = false; });
+      el.splitter.addEventListener('pointercancel', () => { dragging = false; });
+    }
+
+    function initEvents() {
+      el.nextBtn.addEventListener('click', nextStep);
+      el.prevBtn.addEventListener('click', prevStep);
+      el.playBtn.addEventListener('click', play);
+      el.pauseBtn.addEventListener('click', pause);
+      el.resetBtn.addEventListener('click', reset);
+      el.problemBtn.addEventListener('click', openProblemModal);
+      el.closeProblemBtn.addEventListener('click', closeProblemModal);
+      el.problemModal.addEventListener('click', (e) => {
+        if (e.target === el.problemModal) closeProblemModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          if (timer) pause();
+          else play();
+        } else if (e.key === 'Escape') {
+          closeProblemModal();
+        }
+      });
+      window.addEventListener('resize', syncToolbarHeight);
+    }
+
+    function init() {
+      renderCode();
+      renderSampleButtons();
+      steps = buildSteps(samples[currentSampleIndex]);
+      currentStep = 0;
+      initEvents();
+      initSplitter();
+      syncToolbarHeight();
+      renderStep();
+      setTimeout(syncToolbarHeight, 50);
+    }
+
+    init();
+  </script>
+</body>
+</html>
