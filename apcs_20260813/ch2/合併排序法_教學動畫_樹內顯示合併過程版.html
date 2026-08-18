@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合併排序法－完整樹狀動畫</title>
+<style>
+:root{
+  --toolbar-h:132px;
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --border:#d7e0ec;
+  --text:#1e2b3a;
+  --muted:#5f7085;
+  --blue:#2478df;
+  --blue-soft:#eaf3ff;
+  --green:#24965a;
+  --green-soft:#eaf8f0;
+  --purple:#8b49cf;
+  --purple-soft:#f3eaff;
+  --orange:#e88624;
+  --orange-soft:#fff1df;
+  --gray:#8b9bb0;
+  --gray-soft:#eef2f7;
+  --red:#d64545;
+  --shadow:0 8px 22px rgba(28,43,61,.08);
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+body{font-size:16px;line-height:1.55}
+button,select{font:inherit}
+.toolbar{
+  position:fixed;left:0;right:0;top:0;z-index:1000;
+  background:#fff;border-bottom:1px solid var(--border);
+  box-shadow:0 3px 14px rgba(0,0,0,.07)
+}
+.toolbar-inner{max-width:1720px;margin:0 auto;padding:12px 16px}
+.title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:9px}
+.title{font-size:27px;font-weight:900;line-height:1.25}
+.subtitle{font-size:16px;color:var(--muted);margin-top:3px}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+button{border:0;border-radius:9px;padding:9px 13px;font-weight:800;color:#fff;background:var(--blue);cursor:pointer}
+button.secondary{background:#607187}
+button.success{background:var(--green)}
+button.warning{background:var(--orange)}
+button.danger{background:var(--red)}
+button:disabled{background:#aeb9c8;cursor:not-allowed}
+select{border:1px solid var(--border);border-radius:9px;padding:8px 10px;background:#fff}
+.step-chip{margin-left:auto;border-radius:999px;padding:7px 12px;background:var(--blue-soft);color:#14509b;font-weight:900;white-space:nowrap}
+.workspace{
+  height:calc(100vh - var(--toolbar-h));
+  margin-top:var(--toolbar-h);
+  padding:12px 14px 14px;
+  display:grid;
+  grid-template-columns:minmax(760px,1.36fr) minmax(430px,.64fr);
+  gap:14px;
+  max-width:1720px;
+  margin-left:auto;margin-right:auto;
+  overflow:hidden
+}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow);min-height:0}
+.left-panel{display:flex;flex-direction:column;overflow:hidden;padding:13px}
+.right-panel{display:flex;flex-direction:column;overflow:hidden;padding:13px}
+.panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.panel-title{font-size:22px;font-weight:900;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:7px;font-size:13px;color:#45586e;font-weight:800}
+.legend span{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid var(--border);border-radius:999px;background:#f8fafc}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.action-strip{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);
+  gap:9px;
+  padding:10px 11px;
+  margin-bottom:8px;
+  border:1px solid #cdddef;
+  border-radius:12px;
+  background:#f7faff
+}
+.action-title{font-size:19px;font-weight:900;color:#173c67;line-height:1.35}
+.action-desc{font-size:16px;color:#30465f;margin-top:3px;line-height:1.5}
+.judge-box{border-left:4px solid var(--blue);background:#fff;border-radius:9px;padding:8px 10px;min-width:0}
+.judge-label{font-size:13px;font-weight:900;color:#4b6078}
+.judge-text{font-size:17px;font-weight:900;line-height:1.45;margin-top:2px;word-break:break-word}
+.result-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;color:#4a5f77;font-size:14px;font-weight:800}
+.result-row b{color:#173c67;font-family:Consolas,"Courier New",monospace}
+.tree-wrap{
+  flex:1;min-height:0;position:relative;overflow:hidden;
+  border:1px dashed #bfccdc;border-radius:13px;
+  background:
+    linear-gradient(rgba(36,120,223,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(36,120,223,.03) 1px,transparent 1px),
+    #fbfdff;
+  background-size:24px 24px
+}
+.tree-stage{position:absolute;left:0;top:0;width:1240px;height:590px;transform-origin:top left}
+.tree-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:1;pointer-events:none}
+.tree-edge{fill:none;stroke:#9cacbf;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:.56;transition:stroke .18s,stroke-width .18s,opacity .18s}
+.tree-edge.done{stroke:#59a77b;opacity:.8}
+.tree-edge.active-down{stroke:var(--blue);stroke-width:6;opacity:1}
+.tree-edge.merge-up{stroke:var(--purple);stroke-width:6;opacity:1}
+.edge-label{font-size:16px;font-weight:900;text-anchor:middle;dominant-baseline:middle;paint-order:stroke fill;stroke:#fff;stroke-width:8;opacity:0;transition:opacity .18s}
+.edge-label.show{opacity:1}
+.edge-label.left{fill:#1764b8}.edge-label.right{fill:#bd6815}.edge-label.merge{fill:#7832ba}
+.tree-node{
+  position:absolute;transform:translateX(-50%);z-index:2;
+  min-height:72px;padding:7px 8px 8px;
+  border:3px solid #b7c5d6;border-radius:13px;background:#fff;
+  box-shadow:0 5px 13px rgba(34,49,68,.11);
+  transition:border-color .18s,background .18s,box-shadow .18s,opacity .18s
+}
+.tree-node.pending{opacity:.72}
+.tree-node.active{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 0 0 5px rgba(36,120,223,.16),0 7px 16px rgba(36,120,223,.18);opacity:1}
+.tree-node.done{border-color:var(--green);background:var(--green-soft);opacity:1}
+.tree-node.merging{border-color:var(--purple);background:var(--purple-soft);box-shadow:0 0 0 5px rgba(139,73,207,.14),0 7px 17px rgba(139,73,207,.17);opacity:1}
+.tree-node.next{border-color:var(--orange);background:var(--orange-soft);box-shadow:0 0 0 4px rgba(232,134,36,.14);opacity:1}
+.tree-node.base{border-style:dashed}
+.node-caption{font-size:13px;font-weight:900;text-align:center;color:#53677f;line-height:1.2;margin-bottom:5px;white-space:nowrap}
+.tree-node.active .node-caption{color:#14509b}
+.tree-node.done .node-caption{color:#197544}
+.tree-node.merging .node-caption{color:#6d299f}
+.tree-node.next .node-caption{color:#a55408}
+.node-values{display:flex;justify-content:center;align-items:center;gap:4px;white-space:nowrap}
+.value-cell{
+  width:40px;height:40px;border:1.8px solid #9cafc4;border-radius:8px;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;color:#22344a;position:relative
+}
+.value-cell.placeholder{color:#98a7b8;border-style:dashed;background:#f5f7fa}
+.value-cell.consumed{color:#9ba7b5;background:#e7ebf0;border-color:#c4ced9;text-decoration:line-through;opacity:.75}
+.value-cell.head{border-color:var(--orange);background:var(--orange-soft);box-shadow:0 0 0 3px rgba(232,134,36,.16)}
+.value-cell.moved{border-color:var(--purple);background:#eadbfb;color:#6f2aa5;text-decoration:none;opacity:1}
+.value-cell.output{border-color:#7d53b1;background:#fff}
+.value-cell.new-output{border-color:var(--purple);background:#e9d9fb;box-shadow:0 0 0 3px rgba(139,73,207,.16)}
+.cell-tag{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;background:var(--orange);color:#fff;border-radius:999px;padding:1px 5px;white-space:nowrap;text-decoration:none}
+.tree-note{flex:0 0 auto;margin-top:7px;padding:7px 9px;border-radius:9px;background:#f5f7fa;color:#53677d;font-size:14px;font-weight:800;text-align:center}
+.code-head{flex:0 0 auto;margin-bottom:8px}
+.code-head .panel-title{margin-bottom:2px}
+.code-note{font-size:14px;color:var(--muted)}
+.code-wrap{flex:1;min-height:0;overflow:auto;background:#101923;border:1px solid #223244;border-radius:12px;padding:11px 9px;font-family:Consolas,"Courier New",monospace;font-size:15px;line-height:1.72;color:#e9eff7;scroll-behavior:auto;overscroll-behavior:contain}
+.code-line{display:grid;grid-template-columns:42px minmax(0,1fr);gap:9px;padding:2px 6px;border-radius:7px;white-space:pre}
+.code-line.active{background:rgba(36,120,223,.27)}
+.code-line.primary{box-shadow:inset 4px 0 0 #71b1ff;background:rgba(36,120,223,.34)}
+.line-no{text-align:right;color:#7f93aa;user-select:none}
+.code-line.active .line-no{color:#d3e8ff;font-weight:900}
+.code-text{overflow:visible}
+@media(max-width:1180px){
+  html,body{overflow:auto;height:auto}
+  .toolbar{position:sticky}
+  .workspace{height:auto;margin-top:0;grid-template-columns:1fr;overflow:visible}
+  .left-panel{height:720px}.right-panel{height:720px}
+}
+</style>
+</head>
+<body>
+<header class="toolbar" id="toolbar">
+  <div class="toolbar-inner">
+    <div class="title-row">
+      <div>
+        <div class="title">合併排序法：切割樹＋合併排序動畫</div>
+        <div class="subtitle">左側樹與右側程式碼採一行一動作同步；遞迴呼叫、進入函式與回傳均分開呈現。</div>
+      </div>
+      <div class="step-chip" id="stepChip">步驟 1 / 1</div>
+    </div>
+    <div class="controls">
+      <button class="secondary" id="prevBtn">上一步</button>
+      <button id="nextBtn">下一步</button>
+      <button class="success" id="playBtn">播放</button>
+      <button class="warning" id="pauseBtn">暫停</button>
+      <button class="danger" id="resetBtn">重設</button>
+      <label for="speedSel" style="font-weight:900;color:#40536a">速度</label>
+      <select id="speedSel">
+        <option value="1800">慢</option>
+        <option value="1200" selected>中</option>
+        <option value="700">快</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main class="workspace">
+  <section class="panel left-panel">
+    <div class="panel-title-row">
+      <h2 class="panel-title">完整合併排序樹</h2>
+      <div class="legend">
+        <span><i class="dot" style="background:#2478df"></i>目前執行</span>
+        <span><i class="dot" style="background:#24965a"></i>排序完成</span>
+        <span><i class="dot" style="background:#8b49cf"></i>正在合併</span>
+        <span><i class="dot" style="background:#e7ebf0"></i>已被取走</span>
+      </div>
+    </div>
+
+    <div class="action-strip">
+      <div>
+        <div class="action-title" id="actionTitle">準備開始</div>
+        <div class="action-desc" id="actionDesc">按「下一步」觀察資料先向下切割，再由下往上合併排序。</div>
+        <div class="result-row">
+          <span>目前節點：<b id="currentNodeText">[6, 1, 5, 7, 3, 9, 4]</b></span>
+          <span>最終結果：<b id="finalResultText">尚未完成</b></span>
+        </div>
+      </div>
+      <div class="judge-box">
+        <div class="judge-label">本步判斷／資料變化</div>
+        <div class="judge-text" id="judgeText">尚未進入判斷。</div>
+      </div>
+    </div>
+
+    <div class="tree-wrap" id="treeWrap"></div>
+    <div class="tree-note">切割時藍色箭頭向下；合併時紫色箭頭由左右子節點指回父節點。父節點直接顯示逐步成長的 output。</div>
+  </section>
+
+  <section class="panel right-panel">
+    <div class="code-head">
+      <h2 class="panel-title">Python 程式碼</h2>
+      <div class="code-note">每一步只反白一個真正的程式位置；左側顯示該行執行前後的對應狀態。</div>
+    </div>
+    <div class="code-wrap" id="codeWrap"></div>
+  </section>
+</main>
+
+<script>
+const sourceLines = [
+  'def merge(left, right): # 兩串列合併',
+  '    output = []                         # 合併串列',
+  '    while left and right:               # 左右串列均有資料',
+  '        if left[0] <= right[0]:         # 左邊較小',
+  '            output.append(left.pop(0))  # 左邊加入合併串列',
+  '        else:                           # 右邊較小',
+  '            output.append(right.pop(0)) # 右邊加入合併串列',
+  '                                        # 左右串列其一為空',
+  '    if left:                            # 右邊沒資料',
+  '        output += left                  # 左邊加入合併串列',
+  '    if right:                           # 左邊沒資料',
+  '        output += right                 # 右邊加入合併串列',
+  '    return output                       # 傳回合併結果',
+  '',
+  'def mergeSort(lst):  # 合併排序',
+  '    if len(lst) <= 1:           # 遞迴終止條件：只剩 0 或 1 筆',
+  '        return lst',
+  '                                # 遞迴切割(divide)串列',
+  '    mid = len(lst) // 2         # 取中間索引',
+  '    left = lst[:mid]            # 左邊串列',
+  '    right = lst[mid:]           # 右邊串列',
+  '    left = mergeSort(left)      # 左邊排序',
+  '    right = mergeSort(right)    # 右邊排序',
+  '                                # 執行合併串列',
+  '    return merge(left, right)   # 傳回合併',
+  '',
+  'data = [6, 1, 5, 7, 3, 9, 4]',
+  'print("原始串列 : ", data)',
+  'print("排序結果 : ", mergeSort(data))'
+];
+
+const originalData = [6,1,5,7,3,9,4];
+let nodes = [];
+let steps = [];
+let finalSorted = [];
+let currentStep = 0;
+let timer = null;
+
+function arrStr(a){ return '[' + a.join(', ') + ']'; }
+function cloneArray(a){ return Array.isArray(a) ? [...a] : a; }
+function makeNode(arr,parentId=null,side=null){
+  const node={id:'n'+nodes.length,original:[...arr],parentId,side,leftId:null,rightId:null};
+  nodes.push(node);return node;
+}
+function getNode(id){ return nodes.find(n=>n.id===id) || null; }
+function snapshotCompleted(completed){
+  const out={};
+  for(const [id,values] of completed.entries()) out[id]=[...values];
+  return out;
+}
+function pushStep(completed, step){
+  steps.push(Object.assign({
+    type:'',phase:'',title:'',desc:'',judge:'',activeNodeId:null,
+    codeLines:[],primaryLine:null,splitNodeId:null,merge:null,
+    completedMap:snapshotCompleted(completed),finalResult:null
+  },step));
+}
+
+function simulate(){
+  nodes=[];steps=[];finalSorted=[];
+  const completed=new Map();
+  const root=makeNode(originalData);
+
+  pushStep(completed,{
+    type:'data-init',phase:'建立原始串列',activeNodeId:null,codeLines:[27],primaryLine:27,
+    title:'建立原始串列 data',
+    desc:'這一步只把原始數字存入 data，還沒有呼叫合併排序。',
+    judge:'data = [6, 1, 5, 7, 3, 9, 4]'
+  });
+  pushStep(completed,{
+    type:'print-original',phase:'輸出原始串列',activeNodeId:null,codeLines:[28],primaryLine:28,
+    title:'輸出原始串列',
+    desc:'先顯示排序前的資料。',
+    judge:'print → [6, 1, 5, 7, 3, 9, 4]'
+  });
+  pushStep(completed,{
+    type:'call-root',phase:'呼叫最外層 mergeSort',activeNodeId:root.id,codeLines:[29],primaryLine:29,
+    title:'呼叫 mergeSort(data)',
+    desc:'第 29 行開始呼叫合併排序，接著程式才會跳進 mergeSort 函式。',
+    judge:'mergeSort([6, 1, 5, 7, 3, 9, 4])'
+  });
+
+  function rec(arr,node){
+    pushStep(completed,{
+      type:'enter-mergesort',phase:'進入 mergeSort',activeNodeId:node.id,codeLines:[15],primaryLine:15,
+      title:`進入 mergeSort(${arrStr(arr)})`,
+      desc:'現在才正式進入這個子節點所對應的 mergeSort 函式。',
+      judge:`目前 lst = ${arrStr(arr)}`
+    });
+
+    pushStep(completed,{
+      type:'base-check',phase:'檢查終止條件',activeNodeId:node.id,codeLines:[16],primaryLine:16,
+      title:'檢查 len(lst) <= 1',
+      desc:arr.length<=1?'只剩一個元素，本身已經有序。':'元素超過一個，必須繼續切割。',
+      judge:`${arr.length} <= 1 → ${arr.length<=1?'True':'False'}`
+    });
+
+    if(arr.length<=1){
+      completed.set(node.id,[...arr]);
+      pushStep(completed,{
+        type:'base-return',phase:'單一元素回傳',activeNodeId:node.id,codeLines:[17],primaryLine:17,
+        title:`回傳 ${arrStr(arr)}`,
+        desc:'一個數字不需要比較，直接當作已排序串列回傳。',
+        judge:`return ${arrStr(arr)}`
+      });
+      return [...arr];
+    }
+
+    const mid=Math.floor(arr.length/2);
+    const leftPart=arr.slice(0,mid);
+    const rightPart=arr.slice(mid);
+    const leftNode=makeNode(leftPart,node.id,'left');
+    const rightNode=makeNode(rightPart,node.id,'right');
+    node.leftId=leftNode.id;node.rightId=rightNode.id;
+
+    pushStep(completed,{
+      type:'calc-mid',phase:'計算中間位置',activeNodeId:node.id,codeLines:[19],primaryLine:19,
+      title:`計算 ${arrStr(arr)} 的中間位置`,
+      desc:'先算出 mid，還沒有建立 left 或 right。',
+      judge:`mid = ${arr.length} // 2 = ${mid}`
+    });
+    pushStep(completed,{
+      type:'make-left',phase:'建立左半邊',activeNodeId:node.id,targetNodeId:leftNode.id,
+      codeLines:[20],primaryLine:20,
+      title:`建立 left = ${arrStr(leftPart)}`,
+      desc:'第 20 行只切出左半邊，父節點仍是目前執行位置。',
+      judge:`left = lst[:${mid}] = ${arrStr(leftPart)}`,
+      edgeFocus:{parentId:node.id,childId:leftNode.id,label:'split'}
+    });
+    pushStep(completed,{
+      type:'make-right',phase:'建立右半邊',activeNodeId:node.id,targetNodeId:rightNode.id,
+      codeLines:[21],primaryLine:21,
+      title:`建立 right = ${arrStr(rightPart)}`,
+      desc:'第 21 行切出右半邊，仍然停在父節點內。',
+      judge:`right = lst[${mid}:] = ${arrStr(rightPart)}`,
+      edgeFocus:{parentId:node.id,childId:rightNode.id,label:'split'}
+    });
+
+    pushStep(completed,{
+      type:'call-left',phase:'呼叫左邊遞迴',activeNodeId:node.id,targetNodeId:leftNode.id,
+      codeLines:[22],primaryLine:22,
+      title:`父節點呼叫 mergeSort(${arrStr(leftPart)})`,
+      desc:'第 22 行仍在父節點內發出呼叫；下一步進入第 15 行時，才切換到左子節點。',
+      judge:`left = mergeSort(${arrStr(leftPart)})`,
+      edgeFocus:{parentId:node.id,childId:leftNode.id,label:'call'}
+    });
+    const sortedLeft=rec(leftPart,leftNode);
+    pushStep(completed,{
+      type:'left-returned',phase:'左邊回傳完成',activeNodeId:node.id,codeLines:[22],primaryLine:22,
+      title:`左邊回傳 ${arrStr(sortedLeft)}`,
+      desc:'遞迴返回父節點，第 22 行的指定動作完成。',
+      judge:`left = ${arrStr(sortedLeft)}`
+    });
+
+    pushStep(completed,{
+      type:'call-right',phase:'呼叫右邊遞迴',activeNodeId:node.id,targetNodeId:rightNode.id,
+      codeLines:[23],primaryLine:23,
+      title:`父節點呼叫 mergeSort(${arrStr(rightPart)})`,
+      desc:'第 23 行仍在父節點內發出呼叫；下一步進入第 15 行時，才切換到右子節點。',
+      judge:`right = mergeSort(${arrStr(rightPart)})`,
+      edgeFocus:{parentId:node.id,childId:rightNode.id,label:'call'}
+    });
+    const sortedRight=rec(rightPart,rightNode);
+    pushStep(completed,{
+      type:'right-returned',phase:'右邊回傳完成',activeNodeId:node.id,codeLines:[23],primaryLine:23,
+      title:`右邊回傳 ${arrStr(sortedRight)}`,
+      desc:'遞迴返回父節點，第 23 行的指定動作完成。',
+      judge:`right = ${arrStr(sortedRight)}`
+    });
+
+    let L=[...sortedLeft], R=[...sortedRight], O=[];
+    const mergeBase={
+      nodeId:node.id,leftNodeId:leftNode.id,rightNodeId:rightNode.id,
+      leftSource:[...sortedLeft],rightSource:[...sortedRight]
+    };
+
+    pushStep(completed,{
+      type:'call-merge',phase:'呼叫 merge',activeNodeId:node.id,codeLines:[25],primaryLine:25,
+      title:`呼叫 merge(${arrStr(sortedLeft)}, ${arrStr(sortedRight)})`,
+      desc:'第 25 行先呼叫 merge；下一步才會跳進 merge 函式第 1 行。',
+      judge:'return merge(left, right)',
+      merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'call'}
+    });
+    pushStep(completed,{
+      type:'enter-merge',phase:'進入 merge',activeNodeId:node.id,codeLines:[1],primaryLine:1,
+      title:'進入 merge(left, right)',
+      desc:'現在才正式進入 merge 函式，左右子節點提供兩個已排序串列。',
+      judge:`left = ${arrStr(L)}｜right = ${arrStr(R)}`,
+      merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'enter'}
+    });
+    pushStep(completed,{
+      type:'init-output',phase:'建立 output',activeNodeId:node.id,codeLines:[2],primaryLine:2,
+      title:'建立空的 output',
+      desc:'父節點先準備一個空串列，用來逐步收集較小的數字。',
+      judge:'output = []',
+      merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'init'}
+    });
+
+    while(true){
+      const canContinue=L.length>0 && R.length>0;
+      pushStep(completed,{
+        type:'while-check',phase:'檢查 while',activeNodeId:node.id,codeLines:[3],primaryLine:3,
+        title:'檢查左右串列是否都有資料',
+        desc:canContinue?'左右都還有資料，進入 while 比較。':'至少一邊已空，離開 while。',
+        judge:`left：${L.length>0?'True':'False'}｜right：${R.length>0?'True':'False'}｜and → ${canContinue?'True':'False'}`,
+        merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:canContinue?'while-true':'while-false'}
+      });
+      if(!canContinue)break;
+
+      const lv=L[0],rv=R[0],chooseLeft=lv<=rv;
+      pushStep(completed,{
+        type:'compare',phase:'比較最前面',activeNodeId:node.id,codeLines:[4],primaryLine:4,
+        title:`比較 left[0] = ${lv} 與 right[0] = ${rv}`,
+        desc:chooseLeft?`${lv} <= ${rv} 成立，下一步執行第 5 行。`:`${lv} <= ${rv} 不成立，下一步進入第 6 行 else。`,
+        judge:`${lv} <= ${rv} → ${chooseLeft?'True':'False'}`,
+        merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'compare',compareLeft:lv,compareRight:rv,chooseLeft}
+      });
+
+      if(chooseLeft){
+        const value=L.shift();const before=O.length;O.push(value);
+        pushStep(completed,{
+          type:'take-left',phase:'執行第 5 行',activeNodeId:node.id,codeLines:[5],primaryLine:5,
+          title:`已執行：left.pop(0) 取出 ${value}`,
+          desc:'左子節點把最前面的數字交給父節點，父節點 output 增加一格。',
+          judge:`left = ${arrStr(L)}｜output = ${arrStr(O)}`,
+          merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'take-left',movedSide:'left',movedValue:value,newOutputFrom:before}
+        });
+      }else{
+        pushStep(completed,{
+          type:'else-route',phase:'進入 else',activeNodeId:node.id,codeLines:[6],primaryLine:6,
+          title:'if 為 False，進入 else',
+          desc:'這一步只決定改走右邊，尚未執行 pop(0)。',
+          judge:`準備取出 right[0] = ${rv}`,
+          merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'else',compareLeft:lv,compareRight:rv,chooseLeft:false}
+        });
+        const value=R.shift();const before=O.length;O.push(value);
+        pushStep(completed,{
+          type:'take-right',phase:'執行第 7 行',activeNodeId:node.id,codeLines:[7],primaryLine:7,
+          title:`已執行：right.pop(0) 取出 ${value}`,
+          desc:'右子節點把最前面的數字交給父節點，父節點 output 增加一格。',
+          judge:`right = ${arrStr(R)}｜output = ${arrStr(O)}`,
+          merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:'take-right',movedSide:'right',movedValue:value,newOutputFrom:before}
+        });
+      }
+    }
+
+    pushStep(completed,{
+      type:'check-left-rest',phase:'檢查 left 剩餘',activeNodeId:node.id,codeLines:[9],primaryLine:9,
+      title:'檢查 left 是否還有資料',
+      desc:L.length?`left 還有 ${arrStr(L)}，下一步執行第 10 行。`:'left 已空，不執行第 10 行。',
+      judge:`if left → ${L.length?'True':'False'}`,
+      merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:L.length?'if-left':'if-left-false'}
+    });
+    if(L.length){
+      const appended=[...L],before=O.length;O=O.concat(L);L=[];
+      pushStep(completed,{
+        type:'append-left-rest',phase:'執行第 10 行',activeNodeId:node.id,codeLines:[10],primaryLine:10,
+        title:`已執行：output += ${arrStr(appended)}`,
+        desc:'left 已經排好，剩下的數字可整段接到 output。',
+        judge:`output = ${arrStr(O)}`,
+        merge:{...mergeBase,leftRemaining:[],rightRemaining:[...R],output:[...O],stage:'append-left-rest',bulkSide:'left',bulkValues:appended,newOutputFrom:before}
+      });
+    }
+
+    pushStep(completed,{
+      type:'check-right-rest',phase:'檢查 right 剩餘',activeNodeId:node.id,codeLines:[11],primaryLine:11,
+      title:'檢查 right 是否還有資料',
+      desc:R.length?`right 還有 ${arrStr(R)}，下一步執行第 12 行。`:'right 已空，不執行第 12 行。',
+      judge:`if right → ${R.length?'True':'False'}`,
+      merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[...R],output:[...O],stage:R.length?'if-right':'if-right-false'}
+    });
+    if(R.length){
+      const appended=[...R],before=O.length;O=O.concat(R);R=[];
+      pushStep(completed,{
+        type:'append-right-rest',phase:'執行第 12 行',activeNodeId:node.id,codeLines:[12],primaryLine:12,
+        title:`已執行：output += ${arrStr(appended)}`,
+        desc:'right 已經排好，剩下的數字可整段接到 output。',
+        judge:`output = ${arrStr(O)}`,
+        merge:{...mergeBase,leftRemaining:[...L],rightRemaining:[],output:[...O],stage:'append-right-rest',bulkSide:'right',bulkValues:appended,newOutputFrom:before}
+      });
+    }
+
+    completed.set(node.id,[...O]);
+    pushStep(completed,{
+      type:'return-output',phase:'merge 回傳',activeNodeId:node.id,codeLines:[13],primaryLine:13,
+      title:`merge 回傳 ${arrStr(O)}`,
+      desc:'第 13 行將完整 output 回傳給呼叫它的 mergeSort。',
+      judge:`return ${arrStr(O)}`,
+      merge:{...mergeBase,leftRemaining:[],rightRemaining:[],output:[...O],stage:'return'}
+    });
+    pushStep(completed,{
+      type:'return-mergesort',phase:'mergeSort 回傳',activeNodeId:node.id,codeLines:[25],primaryLine:25,
+      title:`mergeSort 回傳 ${arrStr(O)}`,
+      desc:'回到第 25 行，這個 mergeSort 呼叫完成，結果再交回上一層。',
+      judge:`return merge(...) → ${arrStr(O)}`
+    });
+    return [...O];
+  }
+
+  finalSorted=rec(originalData,root);
+  pushStep(completed,{
+    type:'print-result',phase:'輸出排序結果',activeNodeId:root.id,codeLines:[29],primaryLine:29,
+    title:'輸出最終排序結果',
+    desc:`第 29 行中的 mergeSort(data) 已回傳，現在 print 輸出 ${arrStr(finalSorted)}。`,
+    judge:`print → ${arrStr(finalSorted)}`,finalResult:[...finalSorted]
+  });
+}
+
+function buildCodeOnce(){
+  const wrap=document.getElementById('codeWrap');
+  wrap.innerHTML='';
+  sourceLines.forEach((line,index)=>{
+    const row=document.createElement('div');row.className='code-line';row.id='code-line-'+(index+1);
+    const no=document.createElement('div');no.className='line-no';no.textContent=index+1;
+    const text=document.createElement('div');text.className='code-text';text.textContent=line||' ';
+    row.append(no,text);wrap.appendChild(row);
+  });
+}
+function updateCode(lines,primary){
+  document.querySelectorAll('.code-line.active,.code-line.primary').forEach(el=>el.classList.remove('active','primary'));
+  (lines||[]).forEach(n=>{const el=document.getElementById('code-line-'+n);if(el)el.classList.add('active')});
+  const target=document.getElementById('code-line-'+(primary||(lines&&lines[0])));
+  if(!target)return;
+  target.classList.add('primary');
+  const wrap=document.getElementById('codeWrap');
+  const wrapRect=wrap.getBoundingClientRect();
+  const targetRect=target.getBoundingClientRect();
+  const desired=wrap.scrollTop+(targetRect.top-wrapRect.top)-((wrap.clientHeight-targetRect.height)/2);
+  const maxTop=Math.max(0,wrap.scrollHeight-wrap.clientHeight);
+  wrap.scrollTo({top:Math.max(0,Math.min(maxTop,desired)),behavior:'auto'});
+}
+
+function computeLayout(){
+  const leafGap=162, stageWidth=1240, yByDepth=[24,166,318,474];
+  const positions={};let leafIndex=0;
+  function place(id,depth){
+    const node=getNode(id);
+    if(!node.leftId&&!node.rightId){
+      positions[id]={x:82+leafIndex*leafGap,y:yByDepth[depth]};leafIndex++;return positions[id].x;
+    }
+    const lx=node.leftId?place(node.leftId,depth+1):0;
+    const rx=node.rightId?place(node.rightId,depth+1):lx;
+    positions[id]={x:(lx+rx)/2,y:yByDepth[depth]};return positions[id].x;
+  }
+  place(nodes[0].id,0);
+  const rootShift=stageWidth/2-positions[nodes[0].id].x;
+  Object.values(positions).forEach(p=>p.x+=rootShift);
+  return {positions,width:stageWidth,height:590};
+}
+function edgePath(p,c){
+  const py=p.y+72,cy=c.y,mid=Math.round((py+cy)/2);
+  return `M ${p.x} ${py} V ${mid} H ${c.x} V ${cy}`;
+}
+function buildTreeOnce(){
+  const wrap=document.getElementById('treeWrap');
+  const {positions,width,height}=computeLayout();
+  const svg=[];const divs=[];
+  nodes.forEach(parent=>{
+    [['leftId','left'],['rightId','right']].forEach(([key,side])=>{
+      const cid=parent[key];if(!cid)return;
+      const p=positions[parent.id],c=positions[cid];
+      const lx=p.x+(c.x-p.x)*.67;const ly=(p.y+72+c.y)/2-10;
+      svg.push(`<path id="edge-${parent.id}-${cid}" class="tree-edge" d="${edgePath(p,c)}"></path>`);
+      svg.push(`<text id="label-${parent.id}-${cid}" class="edge-label ${side}" x="${lx}" y="${ly}">${side==='left'?'left 左半邊':'right 右半邊'}</text>`);
+    });
+  });
+  nodes.forEach(node=>{
+    const p=positions[node.id];
+    divs.push(`<div class="tree-node pending${node.original.length===1?' base':''}" id="node-${node.id}" style="left:${p.x}px;top:${p.y}px"><div class="node-caption">待處理</div><div class="node-values"></div></div>`);
+  });
+  wrap.innerHTML=`<div class="tree-stage" id="treeStage" data-w="${width}" data-h="${height}" style="width:${width}px;height:${height}px"><svg class="tree-svg" viewBox="0 0 ${width} ${height}"><defs><marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2478df"></path></marker><marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b49cf"></path></marker></defs>${svg.join('')}</svg>${divs.join('')}</div>`;
+  requestAnimationFrame(fitTree);
+}
+function fitTree(){
+  const wrap=document.getElementById('treeWrap'),stage=document.getElementById('treeStage');if(!wrap||!stage)return;
+  const w=Number(stage.dataset.w),h=Number(stage.dataset.h),pad=12;
+  const scale=Math.min((wrap.clientWidth-pad*2)/w,(wrap.clientHeight-pad*2)/h);
+  const left=Math.max(pad,(wrap.clientWidth-w*scale)/2);
+  const top=Math.max(pad,(wrap.clientHeight-h*scale)/2);
+  stage.style.transform=`scale(${scale})`;stage.style.left=left+'px';stage.style.top=top+'px';
+}
+
+function nodePath(id){
+  const out=[];let n=getNode(id);while(n){out.unshift(n);n=n.parentId?getNode(n.parentId):null}return out;
+}
+function setEdge(parentId,childId,state,labelMode='none'){
+  const edge=document.getElementById(`edge-${parentId}-${childId}`);if(!edge)return;
+  edge.className.baseVal='tree-edge'+(state?' '+state:'');
+  edge.removeAttribute('marker-start');edge.removeAttribute('marker-end');
+  if(state==='active-down')edge.setAttribute('marker-end','url(#arrowDown)');
+  if(state==='merge-up')edge.setAttribute('marker-start','url(#arrowUp)');
+  const label=document.getElementById(`label-${parentId}-${childId}`);
+  if(label){
+    label.classList.remove('show','merge');
+    if(labelMode!=='none'){label.classList.add('show');if(labelMode==='merge')label.classList.add('merge')}
+  }
+}
+function renderCells(container,values,options={}){
+  container.innerHTML='';
+  const total=options.total??values.length;
+  for(let i=0;i<total;i++){
+    const cell=document.createElement('div');cell.className='value-cell';
+    const has=i<values.length;
+    cell.textContent=has?values[i]:'·';
+    if(!has)cell.classList.add('placeholder');
+    if(options.output)cell.classList.add('output');
+    if(options.consumedCount && i<options.consumedCount)cell.classList.add('consumed');
+    if(options.headIndex===i){cell.classList.add('head');const tag=document.createElement('span');tag.className='cell-tag';tag.textContent=options.headTag||'最前面';cell.appendChild(tag)}
+    if(options.movedIndex===i)cell.classList.add('moved');
+    if(options.newOutputIndex===i)cell.classList.add('new-output');
+    if(options.newOutputFrom!==undefined && i>=options.newOutputFrom && i<values.length)cell.classList.add('new-output');
+    container.appendChild(cell);
+  }
+}
+function updateTree(step){
+  nodes.forEach(node=>{
+    const el=document.getElementById('node-'+node.id);if(!el)return;
+    const caption=el.querySelector('.node-caption');const valuesEl=el.querySelector('.node-values');
+    el.classList.remove('pending','active','done','merging','next');
+    const completed=step.completedMap[node.id];
+    let values=completed?[...completed]:[...node.original];
+    let options={total:node.original.length};
+    let label=completed?(node.original.length===1?'單一元素':'排序完成'):'待處理';
+    let state=completed?'done':'pending';
+
+    const m=step.merge;
+    if(m && node.id===m.nodeId){
+      values=[...m.output];options={total:node.original.length,output:true};
+      if(m.newOutputFrom!==undefined)options.newOutputFrom=m.newOutputFrom;
+      label=m.stage==='return'?'排序完成':'output 合併中';
+      state=m.stage==='return'?'done':'merging';
+    }else if(m && node.id===m.leftNodeId){
+      values=[...m.leftSource];
+      const consumed=m.leftSource.length-m.leftRemaining.length;
+      options={total:values.length,consumedCount:consumed};
+      const showHead=['while-true','compare','else','if-left','if-right'].includes(m.stage)&&m.leftRemaining.length>0;
+      if(showHead){options.headIndex=consumed;options.headTag='left[0]'}
+      if(m.stage==='take-left'&&consumed>0)options.movedIndex=consumed-1;
+      label='left 已排序';state='done';
+    }else if(m && node.id===m.rightNodeId){
+      values=[...m.rightSource];
+      const consumed=m.rightSource.length-m.rightRemaining.length;
+      options={total:values.length,consumedCount:consumed};
+      const showHead=['while-true','compare','else','if-left','if-right'].includes(m.stage)&&m.rightRemaining.length>0;
+      if(showHead){options.headIndex=consumed;options.headTag='right[0]'}
+      if(m.stage==='take-right'&&consumed>0)options.movedIndex=consumed-1;
+      label='right 已排序';state='done';
+    }else if(node.id===step.activeNodeId){
+      state='active';label=step.phase||'目前處理';
+    }else if(node.id===step.targetNodeId){
+      state='next';label='下一步進入';
+    }
+    el.classList.add(state);caption.textContent=label;renderCells(valuesEl,values,options);
+  });
+
+  nodes.forEach(n=>{
+    if(n.leftId)setEdge(n.id,n.leftId,step.completedMap[n.leftId]?'done':'');
+    if(n.rightId)setEdge(n.id,n.rightId,step.completedMap[n.rightId]?'done':'');
+  });
+
+  const path=nodePath(step.activeNodeId);
+  for(let i=1;i<path.length;i++)setEdge(path[i-1].id,path[i].id,'active-down');
+
+  if(step.edgeFocus){
+    setEdge(step.edgeFocus.parentId,step.edgeFocus.childId,'active-down',step.edgeFocus.label||'split');
+  }
+  if(step.merge){
+    const n=getNode(step.merge.nodeId);
+    if(n.leftId)setEdge(n.id,n.leftId,'merge-up','merge');
+    if(n.rightId)setEdge(n.id,n.rightId,'merge-up','merge');
+  }
+}
+
+function update(index){
+  const step=steps[index];
+  document.getElementById('stepChip').textContent=`步驟 ${index+1} / ${steps.length}`;
+  document.getElementById('actionTitle').textContent=step.title;
+  document.getElementById('actionDesc').textContent=step.desc;
+  document.getElementById('judgeText').textContent=step.judge||'—';
+  const active=getNode(step.activeNodeId);
+  document.getElementById('currentNodeText').textContent=active?arrStr(active.original):'—';
+  document.getElementById('finalResultText').textContent=step.finalResult?arrStr(step.finalResult):'尚未完成';
+  updateCode(step.codeLines,step.primaryLine);
+  updateTree(step);
+  document.getElementById('prevBtn').disabled=index===0;
+  document.getElementById('nextBtn').disabled=index===steps.length-1;
+}
+function next(){if(currentStep<steps.length-1){currentStep++;update(currentStep)}else stop()}
+function prev(){if(currentStep>0){currentStep--;update(currentStep)}}
+function play(){stop();const ms=Number(document.getElementById('speedSel').value);timer=setInterval(next,ms)}
+function stop(){if(timer){clearInterval(timer);timer=null}}
+function reset(){stop();currentStep=0;update(0);document.getElementById('codeWrap').scrollTop=0}
+
+document.getElementById('nextBtn').addEventListener('click',next);
+document.getElementById('prevBtn').addEventListener('click',prev);
+document.getElementById('playBtn').addEventListener('click',play);
+document.getElementById('pauseBtn').addEventListener('click',stop);
+document.getElementById('resetBtn').addEventListener('click',reset);
+document.getElementById('speedSel').addEventListener('change',()=>{if(timer)play()});
+
+const toolbar=document.getElementById('toolbar');
+new ResizeObserver(entries=>{
+  const h=Math.ceil(entries[0].contentRect.height);
+  document.documentElement.style.setProperty('--toolbar-h',h+'px');
+  requestAnimationFrame(fitTree);
+}).observe(toolbar);
+new ResizeObserver(()=>requestAnimationFrame(fitTree)).observe(document.getElementById('treeWrap'));
+
+simulate();
+buildCodeOnce();
+buildTreeOnce();
+update(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>差分陣列 Difference Array｜19步・原始資料對照清楚版</title>
+<style>
+:root{
+  --bg:#f4f7fb;--card:#fff;--text:#1f2937;--muted:#64748b;--line:#d8e1ec;
+  --blue:#2563eb;--blue2:#dbeafe;--cyan:#0e7490;--cyan2:#ecfeff;
+  --green:#047857;--green2:#d1fae5;--red:#b91c1c;--red2:#fee2e2;
+  --yellow:#a16207;--yellow2:#fef3c7;--purple:#6d28d9;--purple2:#ede9fe;
+  --orange:#c2410c;--orange2:#ffedd5;--shadow:0 8px 24px rgba(15,23,42,.08)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif;
+  font-size:18px;line-height:1.65
+}
+header{
+  position:fixed;z-index:1000;top:0;left:0;right:0;background:#fff;
+  border-bottom:1px solid var(--line);box-shadow:0 4px 16px rgba(15,23,42,.08)
+}
+.bar{
+  max-width:1480px;min-height:106px;margin:auto;padding:12px 18px;
+  display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:nowrap
+}
+.bar > div:first-child{min-width:0;flex:1 1 auto}
+h1{margin:0;font-size:28px;color:#0f172a;line-height:1.25}
+.sub{margin:3px 0 0;color:var(--muted);font-size:16px}
+.tools{
+  display:grid;
+  grid-template-columns:96px 96px 96px 96px 96px 118px 158px;
+  gap:8px;
+  align-items:center;
+  flex:0 0 auto
+}
+.tools button{
+  width:96px;
+  height:42px;
+  padding:0 8px;
+}
+button{
+  border:0;border-radius:10px;padding:10px 15px;font-size:16px;font-weight:900;
+  color:#fff;background:var(--blue);cursor:pointer
+}
+button.gray{background:#475569}button.green{background:var(--green)}
+button.yellow{background:var(--yellow)}button.light{background:#e2e8f0;color:#1e293b}
+button.answer{background:var(--purple)}button:disabled{opacity:.45;cursor:not-allowed}
+.badge,.phase{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:42px;
+  padding:0 10px;
+  border-radius:999px;
+  font-size:15px;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-variant-numeric:tabular-nums
+}
+.badge{width:118px;background:#eff6ff;color:#1d4ed8}
+.phase{width:158px}
+.phase.build{background:var(--cyan2);color:var(--cyan)}
+.phase.task{background:#ecfdf5;color:#047857}
+.phase.boundary{background:var(--yellow2);color:#92400e}
+.phase.modify{background:var(--purple2);color:var(--purple)}
+.phase.restore{background:var(--green2);color:var(--green)}
+.phase.done{background:#f1f5f9;color:#334155}
+
+main{
+  max-width:1480px;margin:auto;padding:134px 18px 48px;
+  display:flex;flex-direction:column;gap:18px
+}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:22px;box-shadow:var(--shadow);position:relative;flex-shrink:0
+}
+h2{margin:0 0 12px;font-size:25px;color:#0f172a}
+h3{margin:0 0 9px;font-size:21px;color:#1e3a8a}
+p{margin:8px 0}
+.taskbox{
+  padding:17px;border:3px solid #16a34a;border-radius:14px;background:#ecfdf5
+}
+.taskbox strong{display:block;color:#065f46;font-size:22px}
+.taskbox div{margin-top:6px;font-size:20px;font-weight:800}
+.note,.good,.warn,.purple-note,.blue-note{
+  margin-top:14px;padding:14px 16px;border-radius:12px
+}
+.note{background:var(--yellow2);border-left:6px solid #f59e0b}
+.good{background:var(--green2);border-left:6px solid #10b981}
+.warn{background:var(--red2);border-left:6px solid #ef4444}
+.purple-note{background:var(--purple2);border-left:6px solid #8b5cf6}
+.blue-note{background:var(--blue2);border-left:6px solid #3b82f6}
+
+.flow{
+  display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;
+  align-items:center;gap:10px;margin-top:15px
+}
+.flowbox{
+  padding:15px 10px;border:2px solid #cbd5e1;border-radius:12px;
+  text-align:center;font-weight:900;background:#fff
+}
+.flowbox.raw{background:#eff6ff;border-color:#93c5fd}
+.flowbox.diff{background:#ecfeff;border-color:#67e8f9}
+.flowbox.mod{background:#f5f3ff;border-color:#c4b5fd}
+.flowbox.result{background:#ecfdf5;border-color:#86efac}
+.arrow{font-size:28px;font-weight:900;color:#64748b}
+
+.animhead{
+  margin-top:14px;padding:17px;border:2px dashed #94a3b8;border-radius:14px;background:#f8fafc
+}
+.animhead .title{font-size:20px;font-weight:900;color:#1d4ed8}
+.animhead .main{margin:7px 0;font-size:25px;font-weight:900}
+.animhead .detail{color:#334155}
+.phase-note{
+  margin-top:12px;padding:11px 14px;border:1px solid var(--line);
+  border-radius:11px;background:#f8fafc;font-weight:800
+}
+.phase-note strong{color:#1d4ed8}
+
+.wrap{width:100%;overflow:auto;margin-top:14px}
+table.array{
+  width:100%;min-width:940px;border-collapse:separate;border-spacing:8px;table-layout:fixed
+}
+.array th,.array td{
+  min-width:106px;padding:12px 8px;text-align:center;border:2px solid #cbd5e1;
+  border-radius:11px;background:#fff;transition:.25s;vertical-align:middle
+}
+.array th{width:190px;min-width:190px;background:#eaf1fb;font-weight:900}
+.idx{background:#f8fafc!important;color:#475569;font-size:16px}
+.rawdata{font-size:25px;font-weight:900}
+.diffdata{background:var(--cyan2)!important;color:var(--cyan);font-size:25px;font-weight:900}
+.calc{background:#fff7ed!important;color:#9a3412;font-size:17px;font-weight:900;line-height:1.4}
+.effect{background:#faf5ff!important;color:var(--purple);font-size:22px;font-weight:900}
+.resultdata{background:#eff6ff!important;color:#1d4ed8;font-size:25px;font-weight:900}
+.q{color:#94a3b8;font-size:24px;font-weight:900;background:#f8fafc!important}
+.blank{background:#f8fafc!important;color:#94a3b8!important}
+.hidden{display:none}
+
+.active-cur{border-color:var(--blue)!important;background:var(--blue2)!important;color:#1e3a8a!important;transform:translateY(-4px)}
+.active-prev{border-color:#f59e0b!important;background:var(--yellow2)!important;color:#92400e!important}
+.active-res{border-color:#10b981!important;background:var(--green2)!important;color:#065f46!important;transform:translateY(-4px)}
+.active-change{border-color:#8b5cf6!important;background:var(--purple2)!important;color:#5b21b6!important}
+.keep{border-color:#10b981!important;background:var(--green2)!important;color:#065f46!important}
+.dim{opacity:.28}
+
+.boundary-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px
+}
+.boundary-card{
+  border:2px solid var(--line);border-radius:14px;padding:17px;background:#fbfdff
+}
+.boundary-card.left{border-color:#93c5fd;background:#f8fbff}
+.boundary-card.right{border-color:#fdba74;background:#fffaf5}
+.big-result{
+  margin-top:12px;text-align:center;font-size:24px;font-weight:900
+}
+.left .big-result{color:#1d4ed8}.right .big-result{color:#c2410c}
+
+.compare{
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px
+}
+.comparebox{padding:18px;border-radius:14px;border:2px solid var(--line)}
+.comparebox.direct{background:#fff7ed;border-color:#fdba74}
+.comparebox.diff{background:#f5f3ff;border-color:#c4b5fd}
+.big{text-align:center;font-size:28px;font-weight:900;margin-top:12px}
+.direct .big{color:#c2410c}.diff .big{color:#6d28d9}
+
+.summary{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px
+}
+.summarybox{padding:15px;border-radius:12px;border:1px solid var(--line);background:#fbfdff;text-align:center}
+.summarybox strong{display:block;color:#1e3a8a;font-size:19px;margin-bottom:5px}
+
+.practice{
+  margin-top:15px;padding:18px;border:2px solid #c4b5fd;border-radius:14px;background:#fdfbff
+}
+.answerbox{display:none;margin-top:14px;padding:14px;border-radius:11px;background:#ecfdf5;border:1px solid #86efac}
+.answerbox.show{display:block}
+footer{text-align:center;color:var(--muted);font-size:15px}
+
+@media(max-width:1180px){
+  .bar{flex-wrap:wrap}
+  .tools{
+    width:100%;
+    grid-template-columns:repeat(5,96px) 118px 158px;
+    justify-content:start
+  }
+  .flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}
+  .compare,.boundary-grid{grid-template-columns:1fr}
+  .summary{grid-template-columns:1fr 1fr}
+  main{padding-top:190px}
+}
+@media(max-width:760px){
+  body{font-size:17px}
+  main{padding:300px 10px 36px}
+  .card{padding:15px}
+  .tools{
+    grid-template-columns:repeat(2,96px) 118px;
+    justify-content:start
+  }
+  .phase{grid-column:1 / -1;width:310px}
+  .summary{grid-template-columns:1fr}
+  h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="bar">
+  <div>
+    <h1>差分陣列（Difference Array）｜19 步完整流程版</h1>
+    <p class="sub">控制鍵固定不跳動；最後一步直接比較「差分累加」和「直接 +2」</p>
+  </div>
+  <div class="tools">
+    <button id="prev" class="gray">上一步</button>
+    <button id="next">下一步</button>
+    <button id="play" class="green">播放</button>
+    <button id="pause" class="yellow">暫停</button>
+    <button id="reset" class="light">重設</button>
+    <span class="badge" id="badge"></span>
+    <span class="phase build" id="phase"></span>
+  </div>
+</div>
+</header>
+
+<main>
+
+<section class="card">
+<h2>一、完整流程先看一次</h2>
+
+<div class="flow">
+  <div class="flowbox raw">原始資料<br>先知道目前有哪些數字</div>
+  <div class="arrow">→</div>
+  <div class="flowbox diff">差分資料<br>記錄和前一格差多少</div>
+  <div class="arrow">→</div>
+  <div class="flowbox mod">修改差分資料<br>只改區間的兩個邊界</div>
+  <div class="arrow">→</div>
+  <div class="flowbox result">從左到右累加<br>得到更新後資料</div>
+</div>
+
+<div class="good">
+<strong>最重要：</strong>「邊界 +2、−2」只是修改差分資料，並不是最後答案。<br>
+修改完成後，還要把差分資料<strong>從左到右累加</strong>，才會得到真正的更新後資料。
+</div>
+</section>
+
+<section class="card">
+<h2>二、互動動畫：從原始資料一路做到更新後資料</h2>
+
+<div class="animhead">
+  <div class="title" id="title"></div>
+  <div class="main" id="mainText"></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<div class="phase-note" id="phaseNote"></div>
+
+<div class="wrap">
+<table class="array" id="animTable">
+  <tr>
+    <th>資料位置</th>
+    <td class="idx ix" data-i="0">0</td><td class="idx ix" data-i="1">1</td>
+    <td class="idx ix" data-i="2">2</td><td class="idx ix" data-i="3">3</td>
+    <td class="idx ix" data-i="4">4</td><td class="idx ix" data-i="5">5</td>
+  </tr>
+
+  <!-- 1. 建立差分資料 -->
+  <tr id="rowRaw">
+    <th>原始資料</th>
+    <td class="rawdata raw-cell" data-i="0">3</td><td class="rawdata raw-cell" data-i="1">8</td>
+    <td class="rawdata raw-cell" data-i="2">5</td><td class="rawdata raw-cell" data-i="3">11</td>
+    <td class="rawdata raw-cell" data-i="4">7</td><td class="rawdata raw-cell" data-i="5">14</td>
+  </tr>
+  <tr id="rowDiffCalc">
+    <th>和前一格差多少</th>
+    <td class="calc diff-calc" data-i="0">?</td><td class="calc diff-calc" data-i="1">?</td>
+    <td class="calc diff-calc" data-i="2">?</td><td class="calc diff-calc" data-i="3">?</td>
+    <td class="calc diff-calc" data-i="4">?</td><td class="calc diff-calc" data-i="5">?</td>
+  </tr>
+  <tr id="rowDiff">
+    <th>差分資料</th>
+    <td class="q diff-cell" data-i="0">?</td><td class="q diff-cell" data-i="1">?</td>
+    <td class="q diff-cell" data-i="2">?</td><td class="q diff-cell" data-i="3">?</td>
+    <td class="q diff-cell" data-i="4">?</td><td class="q diff-cell" data-i="5">?</td>
+  </tr>
+
+  <!-- 2. 題目 -->
+  <tr id="rowTaskRaw" class="hidden">
+    <th>原始資料</th>
+    <td class="rawdata task-raw" data-i="0">3</td><td class="rawdata task-raw" data-i="1">8</td>
+    <td class="rawdata task-raw" data-i="2">5</td><td class="rawdata task-raw" data-i="3">11</td>
+    <td class="rawdata task-raw" data-i="4">7</td><td class="rawdata task-raw" data-i="5">14</td>
+  </tr>
+  <tr id="rowTaskAdd" class="hidden">
+    <th>這次要增加</th>
+    <td class="effect task-add" data-i="0">0</td><td class="effect task-add" data-i="1">+2</td>
+    <td class="effect task-add" data-i="2">+2</td><td class="effect task-add" data-i="3">+2</td>
+    <td class="effect task-add" data-i="4">+2</td><td class="effect task-add" data-i="5">0</td>
+  </tr>
+
+  <!-- 3. 左邊界推導 -->
+  <tr id="rowBoundaryBefore" class="hidden">
+    <th>更新前資料</th>
+    <td class="rawdata boundary-before" data-i="0">3</td><td class="rawdata boundary-before" data-i="1">8</td>
+    <td class="blank boundary-before" data-i="2">…</td><td class="blank boundary-before" data-i="3">…</td>
+    <td class="blank boundary-before" data-i="4">…</td><td class="blank boundary-before" data-i="5">…</td>
+  </tr>
+  <tr id="rowBoundaryAdd" class="hidden">
+    <th>這次增加</th>
+    <td class="effect boundary-add" data-i="0">0</td><td class="effect boundary-add" data-i="1">+2</td>
+    <td class="blank boundary-add" data-i="2">…</td><td class="blank boundary-add" data-i="3">…</td>
+    <td class="blank boundary-add" data-i="4">…</td><td class="blank boundary-add" data-i="5">…</td>
+  </tr>
+  <tr id="rowBoundaryAfter" class="hidden">
+    <th>更新後的邊界兩格</th>
+    <td class="resultdata boundary-after" data-i="0">3</td><td class="resultdata boundary-after" data-i="1">10</td>
+    <td class="blank boundary-after" data-i="2">…</td><td class="blank boundary-after" data-i="3">…</td>
+    <td class="blank boundary-after" data-i="4">…</td><td class="blank boundary-after" data-i="5">…</td>
+  </tr>
+  <tr id="rowBoundaryOldDiff" class="hidden">
+    <th>更新前兩格的差</th>
+    <td class="blank boundary-old" data-i="0">—</td><td class="calc boundary-old" data-i="1">8 − 3 = 5</td>
+    <td class="blank boundary-old" data-i="2">…</td><td class="blank boundary-old" data-i="3">…</td>
+    <td class="blank boundary-old" data-i="4">…</td><td class="blank boundary-old" data-i="5">…</td>
+  </tr>
+  <tr id="rowBoundaryNewDiff" class="hidden">
+    <th>更新後兩格的差</th>
+    <td class="blank boundary-new" data-i="0">—</td><td class="calc boundary-new" data-i="1">10 − 3 = 7</td>
+    <td class="blank boundary-new" data-i="2">…</td><td class="blank boundary-new" data-i="3">…</td>
+    <td class="blank boundary-new" data-i="4">…</td><td class="blank boundary-new" data-i="5">…</td>
+  </tr>
+  <tr id="rowBoundaryChange" class="hidden">
+    <th>所以差分要改</th>
+    <td class="blank boundary-change" data-i="0">—</td><td class="effect boundary-change" data-i="1">5 → 7<br>也就是 +2</td>
+    <td class="blank boundary-change" data-i="2">…</td><td class="blank boundary-change" data-i="3">…</td>
+    <td class="blank boundary-change" data-i="4">…</td><td class="blank boundary-change" data-i="5">…</td>
+  </tr>
+
+  <!-- 4. 真正修改差分資料 -->
+  <tr id="rowModifyBefore" class="hidden">
+    <th>修改前差分資料</th>
+    <td class="diffdata modify-before" data-i="0">3</td><td class="diffdata modify-before" data-i="1">5</td>
+    <td class="diffdata modify-before" data-i="2">−3</td><td class="diffdata modify-before" data-i="3">6</td>
+    <td class="diffdata modify-before" data-i="4">−4</td><td class="diffdata modify-before" data-i="5">7</td>
+  </tr>
+  <tr id="rowModifyAmount" class="hidden">
+    <th>只改這兩個位置</th>
+    <td class="effect modify-amount" data-i="0">0</td><td class="effect modify-amount" data-i="1">+2</td>
+    <td class="effect modify-amount" data-i="2">0</td><td class="effect modify-amount" data-i="3">0</td>
+    <td class="effect modify-amount" data-i="4">0</td><td class="effect modify-amount" data-i="5">−2</td>
+  </tr>
+  <tr id="rowModifyCalc" class="hidden">
+    <th>差分怎麼改</th>
+    <td class="calc modify-calc" data-i="0">原樣 3</td><td class="calc modify-calc" data-i="1">5 + 2 = 7</td>
+    <td class="calc modify-calc" data-i="2">原樣 −3</td><td class="calc modify-calc" data-i="3">原樣 6</td>
+    <td class="calc modify-calc" data-i="4">原樣 −4</td><td class="calc modify-calc" data-i="5">7 − 2 = 5</td>
+  </tr>
+  <tr id="rowModifyAfter" class="hidden">
+    <th>修改後差分資料</th>
+    <td class="diffdata modify-after" data-i="0">3</td><td class="diffdata modify-after" data-i="1">7</td>
+    <td class="diffdata modify-after" data-i="2">−3</td><td class="diffdata modify-after" data-i="3">6</td>
+    <td class="diffdata modify-after" data-i="4">−4</td><td class="diffdata modify-after" data-i="5">5</td>
+  </tr>
+
+  <!-- 5. 準備累加 -->
+  <tr id="rowReady" class="hidden">
+    <th>修改後差分資料</th>
+    <td class="diffdata ready-cell" data-i="0">3</td><td class="diffdata ready-cell" data-i="1">7</td>
+    <td class="diffdata ready-cell" data-i="2">−3</td><td class="diffdata ready-cell" data-i="3">6</td>
+    <td class="diffdata ready-cell" data-i="4">−4</td><td class="diffdata ready-cell" data-i="5">5</td>
+  </tr>
+  <tr id="rowReadyMessage" class="hidden">
+    <th>下一步</th>
+    <td class="calc" colspan="6">這還不是答案 → 現在要從左到右累加</td>
+  </tr>
+
+  <!-- 6. 累加 -->
+  <tr id="rowRestoreDiff" class="hidden">
+    <th>差分資料</th>
+    <td class="diffdata restore-diff" data-i="0">3</td><td class="diffdata restore-diff" data-i="1">7</td>
+    <td class="diffdata restore-diff" data-i="2">−3</td><td class="diffdata restore-diff" data-i="3">6</td>
+    <td class="diffdata restore-diff" data-i="4">−4</td><td class="diffdata restore-diff" data-i="5">5</td>
+  </tr>
+  <tr id="rowRestoreCalc" class="hidden">
+    <th>累加計算</th>
+    <td class="calc restore-calc" data-i="0">?</td><td class="calc restore-calc" data-i="1">?</td>
+    <td class="calc restore-calc" data-i="2">?</td><td class="calc restore-calc" data-i="3">?</td>
+    <td class="calc restore-calc" data-i="4">?</td><td class="calc restore-calc" data-i="5">?</td>
+  </tr>
+  <tr id="rowUpdated" class="hidden">
+    <th>差分累加算出的結果</th>
+    <td class="q updated-cell" data-i="0">?</td><td class="q updated-cell" data-i="1">?</td>
+    <td class="q updated-cell" data-i="2">?</td><td class="q updated-cell" data-i="3">?</td>
+    <td class="q updated-cell" data-i="4">?</td><td class="q updated-cell" data-i="5">?</td>
+  </tr>
+
+  <tr id="rowOriginalCompare" class="hidden">
+    <th>原始資料</th>
+    <td class="rawdata original-compare" data-i="0">3</td>
+    <td class="rawdata original-compare" data-i="1">8</td>
+    <td class="rawdata original-compare" data-i="2">5</td>
+    <td class="rawdata original-compare" data-i="3">11</td>
+    <td class="rawdata original-compare" data-i="4">7</td>
+    <td class="rawdata original-compare" data-i="5">14</td>
+  </tr>
+
+  <tr id="rowDirectResult" class="hidden">
+    <th>直接把位置 1～4 加 2</th>
+    <td class="resultdata direct-result" data-i="0">3</td>
+    <td class="resultdata direct-result" data-i="1">10</td>
+    <td class="resultdata direct-result" data-i="2">7</td>
+    <td class="resultdata direct-result" data-i="3">13</td>
+    <td class="resultdata direct-result" data-i="4">9</td>
+    <td class="resultdata direct-result" data-i="5">14</td>
+  </tr>
+
+  <tr id="rowDirectExplain" class="hidden">
+    <th>原始資料 +2</th>
+    <td class="calc direct-explain" data-i="0">位置 0 不動</td>
+    <td class="calc direct-explain" data-i="1">8 + 2 = 10</td>
+    <td class="calc direct-explain" data-i="2">5 + 2 = 7</td>
+    <td class="calc direct-explain" data-i="3">11 + 2 = 13</td>
+    <td class="calc direct-explain" data-i="4">7 + 2 = 9</td>
+    <td class="calc direct-explain" data-i="5">位置 5 不動</td>
+  </tr>
+
+  <tr id="rowSameResult" class="hidden">
+    <th>結果是否相同</th>
+    <td class="effect same-result" data-i="0">✓</td>
+    <td class="effect same-result" data-i="1">✓</td>
+    <td class="effect same-result" data-i="2">✓</td>
+    <td class="effect same-result" data-i="3">✓</td>
+    <td class="effect same-result" data-i="4">✓</td>
+    <td class="effect same-result" data-i="5">✓</td>
+  </tr>
+
+  <!-- 7. 驗證 -->
+  <tr id="rowBefore" class="hidden">
+    <th>更新前資料</th>
+    <td class="rawdata before-cell" data-i="0">3</td><td class="rawdata before-cell" data-i="1">8</td>
+    <td class="rawdata before-cell" data-i="2">5</td><td class="rawdata before-cell" data-i="3">11</td>
+    <td class="rawdata before-cell" data-i="4">7</td><td class="rawdata before-cell" data-i="5">14</td>
+  </tr>
+  <tr id="rowAfter" class="hidden">
+    <th>更新後資料</th>
+    <td class="resultdata after-cell" data-i="0">3</td><td class="resultdata after-cell" data-i="1">10</td>
+    <td class="resultdata after-cell" data-i="2">7</td><td class="resultdata after-cell" data-i="3">13</td>
+    <td class="resultdata after-cell" data-i="4">9</td><td class="resultdata after-cell" data-i="5">14</td>
+  </tr>
+  <tr id="rowChanged" class="hidden">
+    <th>增加多少</th>
+    <td class="effect changed-cell" data-i="0">0</td><td class="effect changed-cell" data-i="1">+2</td>
+    <td class="effect changed-cell" data-i="2">+2</td><td class="effect changed-cell" data-i="3">+2</td>
+    <td class="effect changed-cell" data-i="4">+2</td><td class="effect changed-cell" data-i="5">0</td>
+  </tr>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h2>三、為什麼只改兩個差分位置？先看兩個邊界</h2>
+
+<div class="taskbox">
+  <strong>任務：資料位置 1 到 4 全部加 2</strong>
+  <div>位置 1 是「開始的位置」，位置 5 是「區間後面的第一格」。</div>
+</div>
+
+<div class="boundary-grid">
+  <div class="boundary-card left">
+    <h3>左邊界：位置 0、1</h3>
+    <div class="wrap">
+      <table class="array">
+        <tr><th>資料位置</th><td class="idx">0</td><td class="idx">1</td></tr>
+        <tr><th>更新前資料</th><td class="rawdata">3</td><td class="rawdata">8</td></tr>
+        <tr><th>這次增加</th><td class="effect">0</td><td class="effect">+2</td></tr>
+        <tr><th>更新後邊界</th><td class="resultdata">3</td><td class="resultdata">10</td></tr>
+        <tr><th>更新前的差</th><td class="blank">—</td><td class="calc">8 − 3 = 5</td></tr>
+        <tr><th>更新後的差</th><td class="blank">—</td><td class="calc">10 − 3 = 7</td></tr>
+      </table>
+    </div>
+    <div class="big-result">差分從 5 變 7 → 增加 2</div>
+  </div>
+
+  <div class="boundary-card right">
+    <h3>右邊界：位置 4、5</h3>
+    <div class="wrap">
+      <table class="array">
+        <tr><th>資料位置</th><td class="idx">4</td><td class="idx">5</td></tr>
+        <tr><th>更新前資料</th><td class="rawdata">7</td><td class="rawdata">14</td></tr>
+        <tr><th>這次增加</th><td class="effect">+2</td><td class="effect">0</td></tr>
+        <tr><th>更新後邊界</th><td class="resultdata">9</td><td class="resultdata">14</td></tr>
+        <tr><th>更新前的差</th><td class="blank">—</td><td class="calc">14 − 7 = 7</td></tr>
+        <tr><th>更新後的差</th><td class="blank">—</td><td class="calc">14 − 9 = 5</td></tr>
+      </table>
+    </div>
+    <div class="big-result">差分從 7 變 5 → 減少 2</div>
+  </div>
+</div>
+
+<div class="good">
+現在才可以整理成捷徑：<br>
+<strong>開始的位置，差分增加 2；區間後面的第一格，差分減少 2。</strong><br>
+因為上面已經用真正的資料算過，所以這不是硬背規則。
+</div>
+</section>
+
+<section class="card">
+<h2>四、真正執行差分修改：只改兩個位置</h2>
+
+<div class="wrap">
+<table class="array">
+  <tr>
+    <th>資料位置</th>
+    <td class="idx">0</td><td class="idx active-change">1</td><td class="idx">2</td>
+    <td class="idx">3</td><td class="idx">4</td><td class="idx active-change">5</td>
+  </tr>
+  <tr>
+    <th>修改前差分資料</th>
+    <td class="diffdata">3</td><td class="diffdata">5</td><td class="diffdata">−3</td>
+    <td class="diffdata">6</td><td class="diffdata">−4</td><td class="diffdata">7</td>
+  </tr>
+  <tr>
+    <th>只改這兩格</th>
+    <td class="effect">0</td><td class="effect active-change">+2</td><td class="effect">0</td>
+    <td class="effect">0</td><td class="effect">0</td><td class="effect active-change">−2</td>
+  </tr>
+  <tr>
+    <th>計算</th>
+    <td class="calc">原樣 3</td><td class="calc">5 + 2 = 7</td><td class="calc">原樣 −3</td>
+    <td class="calc">原樣 6</td><td class="calc">原樣 −4</td><td class="calc">7 − 2 = 5</td>
+  </tr>
+  <tr>
+    <th>修改後差分資料</th>
+    <td class="diffdata">3</td><td class="diffdata keep">7</td><td class="diffdata">−3</td>
+    <td class="diffdata">6</td><td class="diffdata">−4</td><td class="diffdata keep">5</td>
+  </tr>
+</table>
+</div>
+
+<div class="warn">
+<strong>到這裡還不是最後答案。</strong><br>
+目前只完成「修改差分資料」。下一步一定要從左到右累加。
+</div>
+</section>
+
+<section class="card">
+<h2>五、從左到右累加，才得到真正的更新後資料</h2>
+
+<div class="wrap">
+<table class="array">
+  <tr>
+    <th>資料位置</th>
+    <td class="idx">0</td><td class="idx">1</td><td class="idx">2</td>
+    <td class="idx">3</td><td class="idx">4</td><td class="idx">5</td>
+  </tr>
+  <tr>
+    <th>差分資料</th>
+    <td class="diffdata">3</td><td class="diffdata">7</td><td class="diffdata">−3</td>
+    <td class="diffdata">6</td><td class="diffdata">−4</td><td class="diffdata">5</td>
+  </tr>
+  <tr>
+    <th>累加計算</th>
+    <td class="calc">直接放 3</td>
+    <td class="calc">3 + 7 = 10</td>
+    <td class="calc">10 + (−3) = 7</td>
+    <td class="calc">7 + 6 = 13</td>
+    <td class="calc">13 + (−4) = 9</td>
+    <td class="calc">9 + 5 = 14</td>
+  </tr>
+  <tr>
+    <th>更新後資料</th>
+    <td class="resultdata">3</td><td class="resultdata">10</td><td class="resultdata">7</td>
+    <td class="resultdata">13</td><td class="resultdata">9</td><td class="resultdata">14</td>
+  </tr>
+</table>
+</div>
+
+<div class="blue-note">
+例如資料位置 2：<br>
+前一格已經算出的更新後資料是 <strong>10</strong>，目前差分資料是 <strong>−3</strong>，所以
+<strong>10 + (−3) = 7</strong>。<br>
+算式裡的兩個數字，都能直接在同一張表找到。
+</div>
+</section>
+
+<section class="card">
+<h2>六、最後比較：差分累加和直接 +2，答案完全一樣</h2>
+
+<div class="wrap">
+<table class="array">
+  <tr>
+    <th>資料位置</th>
+    <td class="idx">0</td><td class="idx">1</td><td class="idx">2</td>
+    <td class="idx">3</td><td class="idx">4</td><td class="idx">5</td>
+  </tr>
+  <tr>
+    <th>差分累加算出的結果</th>
+    <td class="resultdata keep">3</td><td class="resultdata keep">10</td><td class="resultdata keep">7</td>
+    <td class="resultdata keep">13</td><td class="resultdata keep">9</td><td class="resultdata keep">14</td>
+  </tr>
+  <tr>
+    <th>原始資料</th>
+    <td class="rawdata">3</td><td class="rawdata">8</td><td class="rawdata">5</td>
+    <td class="rawdata">11</td><td class="rawdata">7</td><td class="rawdata">14</td>
+  </tr>
+  <tr>
+    <th>直接把位置 1～4 加 2</th>
+    <td class="resultdata keep">3</td><td class="resultdata keep">10</td><td class="resultdata keep">7</td>
+    <td class="resultdata keep">13</td><td class="resultdata keep">9</td><td class="resultdata keep">14</td>
+  </tr>
+  <tr>
+    <th>原始資料 +2</th>
+    <td class="calc">位置 0 不動</td><td class="calc">8 + 2 = 10</td><td class="calc">5 + 2 = 7</td>
+    <td class="calc">11 + 2 = 13</td><td class="calc">7 + 2 = 9</td><td class="calc">位置 5 不動</td>
+  </tr>
+  <tr>
+    <th>結果是否相同</th>
+    <td class="effect keep">✓</td><td class="effect keep">✓</td><td class="effect keep">✓</td>
+    <td class="effect keep">✓</td><td class="effect keep">✓</td><td class="effect keep">✓</td>
+  </tr>
+</table>
+</div>
+
+<div class="good">
+<strong>兩種方法算出的結果完全相同。</strong><br>
+這個小例子直接修改四格也很簡單；差分的優勢是在「區間很長、而且有很多次區間修改」時，不必每一次都逐格修改整段資料。
+</div>
+</section>
+
+<section class="card">
+<h2>七、整題只記四步</h2>
+<div class="summary">
+  <div class="summarybox"><strong>1. 建立差分資料</strong>目前格 − 前一格</div>
+  <div class="summarybox"><strong>2. 看懂兩個邊界</strong>為什麼一邊 +2、另一邊 −2</div>
+  <div class="summarybox"><strong>3. 修改差分資料</strong>真正只改兩個位置</div>
+  <div class="summarybox"><strong>4. 從左到右累加</strong>得到結果，並和直接 +2 比較</div>
+</div>
+</section>
+
+<section class="card">
+<h2>八、手動練習：先練建立差分資料</h2>
+
+<div class="practice">
+  <div class="wrap">
+    <table class="array">
+      <tr><th>資料位置</th><td class="idx">0</td><td class="idx">1</td><td class="idx">2</td><td class="idx">3</td><td class="idx">4</td></tr>
+      <tr><th>原始資料</th><td class="rawdata">4</td><td class="rawdata">9</td><td class="rawdata">6</td><td class="rawdata">12</td><td class="rawdata">7</td></tr>
+      <tr><th>和前一格差多少</th><td class="calc">直接放 4</td><td class="calc">9−4</td><td class="calc">6−9</td><td class="calc">12−6</td><td class="calc">7−12</td></tr>
+      <tr><th>差分資料</th><td class="q">?</td><td class="q">?</td><td class="q">?</td><td class="q">?</td><td class="q">?</td></tr>
+    </table>
+  </div>
+
+  <button class="answer" data-target="ans1">顯示答案</button>
+  <div class="answerbox" id="ans1">
+    <div class="wrap">
+      <table class="array">
+        <tr><th>差分資料</th><td class="diffdata">4</td><td class="diffdata">5</td><td class="diffdata">−3</td><td class="diffdata">6</td><td class="diffdata">−5</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer>差分陣列 Difference Array｜19步・原始資料對照清楚版</footer>
+</main>
+
+<script>
+const ORIGINAL=[3,8,5,11,7,14];
+const DIFF=[3,5,-3,6,-4,7];
+const MODIFIED_DIFF=[3,7,-3,6,-4,5];
+const UPDATED=[3,10,7,13,9,14];
+
+const buildCalcs=[
+  '直接放 3','8 − 3 = 5','5 − 8 = −3',
+  '11 − 5 = 6','7 − 11 = −4','14 − 7 = 7'
+];
+
+const restoreCalcs=[
+  '直接放 3','3 + 7 = 10','10 + (−3) = 7',
+  '7 + 6 = 13','13 + (−4) = 9','9 + 5 = 14'
+];
+
+const steps=[
+  {p:'build',t:'準備建立差分資料',m:'差分資料一開始全部是 ?',d:'接下來一格一格比較「目前格」和「前一格」。',count:0},
+  {p:'build',t:'算出資料位置 0 的差分',m:'目前位置：0',d:'第一格沒有前一格，所以直接放 3。',count:1,cur:0},
+  {p:'build',t:'算出資料位置 1 的差分',m:'目前位置：1',d:'8 和 3 都直接在原始資料那一排看得到。',count:2,cur:1,prev:0},
+  {p:'build',t:'算出資料位置 2 的差分',m:'目前位置：2',d:'5 − 8 = −3。',count:3,cur:2,prev:1},
+  {p:'build',t:'算出資料位置 3 的差分',m:'目前位置：3',d:'11 − 5 = 6。',count:4,cur:3,prev:2},
+  {p:'build',t:'算出資料位置 4 的差分',m:'目前位置：4',d:'7 − 11 = −4。',count:5,cur:4,prev:3},
+  {p:'build',t:'算出資料位置 5 的差分',m:'目前位置：5',d:'14 − 7 = 7。差分資料建立完成。',count:6,cur:5,prev:4},
+
+  {p:'task',t:'現在開始做區間更新',m:'資料位置 1～4 全部加 2',d:'先把題目畫出來：位置 1、2、3、4 要 +2；位置 0、5 不動。'},
+
+  {p:'boundary-left',t:'先看左邊界：為什麼差分要 +2？',m:'只看資料位置 0、1',d:'位置 1 從 8 變 10；位置 0 仍是 3。先看更新前後兩格的差。'},
+  {p:'boundary-right',t:'再看右邊界：為什麼差分要 −2？',m:'只看資料位置 4、5',d:'位置 4 從 7 變 9；位置 5 不在範圍內，仍是 14。再看更新前後兩格的差。'},
+
+  {p:'modify',t:'現在才真正修改差分資料',m:'只改資料位置 1 和 5',d:'前面已經算清楚來源，所以現在只做 5 + 2 = 7、7 − 2 = 5。'},
+
+  {p:'ready',t:'差分資料修改完成',m:'3、7、−3、6、−4、5',d:'注意：這還不是更新後資料。下一步一定要從左到右累加。'},
+
+  {p:'restore',t:'開始累加差分資料',m:'更新後資料一開始全部是 ?',d:'每一格的算式都直接放在同一欄。',count:0},
+  {p:'restore',t:'算出更新後資料位置 0',m:'目前位置：0',d:'第一格直接放 3。',count:1,cur:0},
+  {p:'restore',t:'算出更新後資料位置 1',m:'目前位置：1',d:'前一格結果 3 + 目前差分 7 = 10。',count:2,cur:1,prev:0},
+  {p:'restore',t:'算出更新後資料位置 2',m:'目前位置：2',d:'前一格結果 10 + 目前差分 −3 = 7。',count:3,cur:2,prev:1},
+  {p:'restore',t:'算出更新後資料位置 3',m:'目前位置：3',d:'7 + 6 = 13。',count:4,cur:3,prev:2},
+  {p:'restore',t:'算出更新後資料位置 4',m:'目前位置：4',d:'13 + (−4) = 9。',count:5,cur:4,prev:3},
+  {p:'restore',t:'最後一格累加完成，直接比較兩種方法',m:'9 + 5 = 14，差分累加結果完成',d:'先看原始資料，再看原始資料的位置 1～4 各加 2：8+2=10、5+2=7、11+2=13、7+2=9；結果和差分累加完全一樣。',count:6,cur:5,prev:4,finalCompare:true}
+];
+
+let stepIndex=0;
+let timer=null;
+const $=id=>document.getElementById(id);
+
+const groups={
+  build:['rowRaw','rowDiffCalc','rowDiff'],
+  task:['rowTaskRaw','rowTaskAdd'],
+  boundary:['rowBoundaryBefore','rowBoundaryAdd','rowBoundaryAfter','rowBoundaryOldDiff','rowBoundaryNewDiff','rowBoundaryChange'],
+  modify:['rowModifyBefore','rowModifyAmount','rowModifyCalc','rowModifyAfter'],
+  ready:['rowReady','rowReadyMessage'],
+  restore:['rowRestoreDiff','rowRestoreCalc','rowUpdated']
+};
+const allRows=[...new Set([...Object.values(groups).flat(),'rowOriginalCompare','rowDirectResult','rowDirectExplain','rowSameResult','rowBefore','rowAfter','rowChanged'])];
+
+const positions=[...document.querySelectorAll('.ix')];
+const rawCells=[...document.querySelectorAll('.raw-cell')];
+const diffCalcCells=[...document.querySelectorAll('.diff-calc')];
+const diffCells=[...document.querySelectorAll('.diff-cell')];
+
+const taskRaw=[...document.querySelectorAll('.task-raw')];
+const taskAdd=[...document.querySelectorAll('.task-add')];
+
+const bBefore=[...document.querySelectorAll('.boundary-before')];
+const bAdd=[...document.querySelectorAll('.boundary-add')];
+const bAfter=[...document.querySelectorAll('.boundary-after')];
+const bOld=[...document.querySelectorAll('.boundary-old')];
+const bNew=[...document.querySelectorAll('.boundary-new')];
+const bChange=[...document.querySelectorAll('.boundary-change')];
+
+const modBefore=[...document.querySelectorAll('.modify-before')];
+const modAmount=[...document.querySelectorAll('.modify-amount')];
+const modCalc=[...document.querySelectorAll('.modify-calc')];
+const modAfter=[...document.querySelectorAll('.modify-after')];
+
+const restoreDiff=[...document.querySelectorAll('.restore-diff')];
+const restoreCalc=[...document.querySelectorAll('.restore-calc')];
+const updatedCells=[...document.querySelectorAll('.updated-cell')];
+const originalCompare=[...document.querySelectorAll('.original-compare')];
+const directResult=[...document.querySelectorAll('.direct-result')];
+const directExplain=[...document.querySelectorAll('.direct-explain')];
+const sameResult=[...document.querySelectorAll('.same-result')];
+
+
+function stop(){
+  if(timer){clearInterval(timer);timer=null}
+}
+function show(group){
+  allRows.forEach(id=>$(id).classList.add('hidden'));
+  groups[group].forEach(id=>$(id).classList.remove('hidden'));
+}
+function clearHL(){
+  document.querySelectorAll('#animTable td').forEach(c=>{
+    c.classList.remove('active-cur','active-prev','active-res','active-change','keep','dim');
+  });
+}
+function setBuild(count){
+  diffCalcCells.forEach((c,i)=>c.textContent=i<count?buildCalcs[i]:'?');
+  diffCells.forEach((c,i)=>{
+    if(i<count){
+      c.textContent=String(DIFF[i]).replace('-','−');
+      c.className='diffdata diff-cell';
+    }else{
+      c.textContent='?';
+      c.className='q diff-cell';
+    }
+  });
+}
+function setBoundary(side){
+  if(side==='left'){
+    const before=['3','8','…','…','…','…'];
+    const add=['0','+2','…','…','…','…'];
+    const after=['3','10','…','…','…','…'];
+    const old=['—','8 − 3 = 5','…','…','…','…'];
+    const newer=['—','10 − 3 = 7','…','…','…','…'];
+    const change=['—','5 → 7\\n也就是 +2','…','…','…','…'];
+
+    [bBefore,bAdd,bAfter,bOld,bNew,bChange].forEach((arr)=>{
+      arr.forEach((c,i)=>c.classList.toggle('blank',i>=2));
+    });
+
+    bBefore.forEach((c,i)=>c.textContent=before[i]);
+    bAdd.forEach((c,i)=>c.textContent=add[i]);
+    bAfter.forEach((c,i)=>c.textContent=after[i]);
+    bOld.forEach((c,i)=>c.textContent=old[i]);
+    bNew.forEach((c,i)=>c.textContent=newer[i]);
+    bChange.forEach((c,i)=>c.innerHTML=change[i].replace('\\n','<br>'));
+
+    [2,3,4,5].forEach(i=>{
+      positions[i].classList.add('dim');
+      bBefore[i].classList.add('dim');bAdd[i].classList.add('dim');bAfter[i].classList.add('dim');
+      bOld[i].classList.add('dim');bNew[i].classList.add('dim');bChange[i].classList.add('dim');
+    });
+
+    positions[0].classList.add('active-prev');
+    positions[1].classList.add('active-cur');
+    bBefore[0].classList.add('active-prev');bBefore[1].classList.add('active-cur');
+    bAdd[1].classList.add('active-change');
+    bAfter[1].classList.add('active-res');
+    bOld[1].classList.add('active-prev');
+    bNew[1].classList.add('active-res');
+    bChange[1].classList.add('active-change');
+  }else{
+    const before=['…','…','…','…','7','14'];
+    const add=['…','…','…','…','+2','0'];
+    const after=['…','…','…','…','9','14'];
+    const old=['…','…','…','…','—','14 − 7 = 7'];
+    const newer=['…','…','…','…','—','14 − 9 = 5'];
+    const change=['…','…','…','…','—','7 → 5\\n也就是 −2'];
+
+    [bBefore,bAdd,bAfter,bOld,bNew,bChange].forEach((arr)=>{
+      arr.forEach((c,i)=>c.classList.toggle('blank',i<=3));
+    });
+
+    bBefore.forEach((c,i)=>c.textContent=before[i]);
+    bAdd.forEach((c,i)=>c.textContent=add[i]);
+    bAfter.forEach((c,i)=>c.textContent=after[i]);
+    bOld.forEach((c,i)=>c.textContent=old[i]);
+    bNew.forEach((c,i)=>c.textContent=newer[i]);
+    bChange.forEach((c,i)=>c.innerHTML=change[i].replace('\\n','<br>'));
+
+    [0,1,2,3].forEach(i=>{
+      positions[i].classList.add('dim');
+      bBefore[i].classList.add('dim');bAdd[i].classList.add('dim');bAfter[i].classList.add('dim');
+      bOld[i].classList.add('dim');bNew[i].classList.add('dim');bChange[i].classList.add('dim');
+    });
+
+    positions[4].classList.add('active-prev');
+    positions[5].classList.add('active-cur');
+    bBefore[4].classList.add('active-prev');bBefore[5].classList.add('active-cur');
+    bAdd[4].classList.add('active-change');
+    bAfter[4].classList.add('active-res');
+    bOld[5].classList.add('active-prev');
+    bNew[5].classList.add('active-res');
+    bChange[5].classList.add('active-change');
+  }
+}
+function setRestore(count){
+  restoreCalc.forEach((c,i)=>c.textContent=i<count?restoreCalcs[i]:'?');
+  updatedCells.forEach((c,i)=>{
+    if(i<count){
+      c.textContent=UPDATED[i];
+      c.className='resultdata updated-cell';
+    }else{
+      c.textContent='?';
+      c.className='q updated-cell';
+    }
+  });
+}
+function setPhase(s){
+  const p=$('phase');
+  p.className='phase '+(
+    s.p==='boundary-left'||s.p==='boundary-right'?'boundary':s.p
+  );
+
+  if(s.p==='build'){
+    p.textContent='建立差分資料';
+    $('phaseNote').innerHTML='<strong>現在只看：</strong>原始資料 → 和前一格差多少 → 差分資料';
+  }
+  if(s.p==='task'){
+    p.textContent='題目';
+    $('phaseNote').innerHTML='<strong>現在只看：</strong>哪些位置要 +2，哪些位置不動';
+  }
+  if(s.p==='boundary-left'){
+    p.textContent='左邊界來源';
+    $('phaseNote').innerHTML='<strong>現在只看位置 0、1：</strong>先看到 3、8、+2 的來源，再算 8−3 與 10−3';
+  }
+  if(s.p==='boundary-right'){
+    p.textContent='右邊界來源';
+    $('phaseNote').innerHTML='<strong>現在只看位置 4、5：</strong>先看到 7、14、+2、0 的來源，再算 14−7 與 14−9';
+  }
+  if(s.p==='modify'){
+    p.textContent='真正修改差分';
+    $('phaseNote').innerHTML='<strong>現在只做：</strong>位置 1 加 2、位置 5 減 2';
+  }
+  if(s.p==='ready'){
+    p.textContent='準備累加';
+    $('phaseNote').innerHTML='<strong>重要：</strong>差分資料改完還不是答案，下一步一定要累加';
+  }
+  if(s.p==='restore'){
+    if(s.finalCompare){
+      p.className='phase done';
+      p.textContent='累加完成';
+      $('phaseNote').innerHTML='<strong>最後比較：</strong>差分累加算出的結果 = 直接把位置 1～4 加 2 的結果';
+    }else{
+      p.textContent='累加差分資料';
+      $('phaseNote').innerHTML='<strong>現在只看：</strong>差分資料 → 累加計算 → 更新後資料';
+    }
+  }
+}
+function render(){
+  clearHL();
+  const s=steps[stepIndex];
+
+  $('title').textContent=s.t;
+  $('mainText').textContent=s.m;
+  $('detail').textContent=s.d;
+  $('badge').textContent=`步驟 ${stepIndex+1} / ${steps.length}`;
+  setPhase(s);
+
+  if(s.p==='build'){
+    show('build');
+    setBuild(s.count);
+    if(Number.isInteger(s.cur)){
+      positions[s.cur].classList.add('active-cur');
+      rawCells[s.cur].classList.add('active-cur');
+      diffCalcCells[s.cur].classList.add('active-res');
+      diffCells[s.cur].classList.add('active-res');
+    }
+    if(Number.isInteger(s.prev)) rawCells[s.prev].classList.add('active-prev');
+  }
+
+  if(s.p==='task'){
+    show('task');
+    [1,2,3,4].forEach(i=>{
+      positions[i].classList.add('keep');
+      taskRaw[i].classList.add('keep');
+      taskAdd[i].classList.add('active-change');
+    });
+  }
+
+  if(s.p==='boundary-left'){
+    show('boundary');
+    setBoundary('left');
+  }
+
+  if(s.p==='boundary-right'){
+    show('boundary');
+    setBoundary('right');
+  }
+
+  if(s.p==='modify'){
+    show('modify');
+    [1,5].forEach(i=>{
+      positions[i].classList.add('active-change');
+      modBefore[i].classList.add('active-prev');
+      modAmount[i].classList.add('active-change');
+      modCalc[i].classList.add('active-res');
+      modAfter[i].classList.add('active-res');
+    });
+  }
+
+  if(s.p==='ready'){
+    show('ready');
+    document.querySelectorAll('.ready-cell').forEach(c=>c.classList.add('active-res'));
+  }
+
+  if(s.p==='restore'){
+    show('restore');
+    setRestore(s.count);
+
+    if(s.finalCompare){
+      $('rowOriginalCompare').classList.remove('hidden');
+      $('rowDirectResult').classList.remove('hidden');
+      $('rowDirectExplain').classList.remove('hidden');
+      $('rowSameResult').classList.remove('hidden');
+
+      updatedCells.forEach(c=>c.classList.add('keep'));
+      originalCompare.forEach(c=>c.classList.add('active-prev'));
+      directResult.forEach(c=>c.classList.add('keep'));
+      directExplain.forEach((c,i)=>{
+        if(i>=1 && i<=4) c.classList.add('active-res');
+      });
+      sameResult.forEach(c=>c.classList.add('keep'));
+    }
+
+    if(Number.isInteger(s.cur)){
+      positions[s.cur].classList.add('active-cur');
+      restoreDiff[s.cur].classList.add('active-cur');
+      restoreCalc[s.cur].classList.add('active-res');
+      updatedCells[s.cur].classList.add('active-res');
+    }
+
+    if(Number.isInteger(s.prev)) updatedCells[s.prev].classList.add('active-prev');
+  }
+
+  $('prev').disabled=stepIndex===0;
+  $('next').disabled=stepIndex===steps.length-1;
+}
+
+$('prev').onclick=()=>{
+  stop();
+  if(stepIndex>0){stepIndex--;render()}
+};
+$('next').onclick=()=>{
+  stop();
+  if(stepIndex<steps.length-1){stepIndex++;render()}
+};
+$('play').onclick=()=>{
+  stop();
+  if(stepIndex===steps.length-1){stepIndex=0;render()}
+  timer=setInterval(()=>{
+    if(stepIndex<steps.length-1){stepIndex++;render()}
+    else stop();
+  },2600);
+};
+$('pause').onclick=stop;
+$('reset').onclick=()=>{
+  stop();stepIndex=0;render();
+  document.querySelectorAll('.answerbox').forEach(x=>x.classList.remove('show'));
+  document.querySelectorAll('button.answer').forEach(x=>x.textContent='顯示答案');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+document.querySelectorAll('button.answer').forEach(btn=>{
+  btn.onclick=()=>{
+    const box=$(btn.dataset.target);
+    box.classList.toggle('show');
+    btn.textContent=box.classList.contains('show')?'隱藏答案':'顯示答案';
+  };
+});
+
+render();
+</script>
+</body>
+</html>

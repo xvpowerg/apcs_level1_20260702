@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快速排序法｜雙指標 partition 流程高亮版</title>
+<style>
+:root{
+  --bg:#f3f6fb; --card:#fff; --line:#d7e0ec; --text:#203247; --muted:#60758b;
+  --blue:#2563eb; --blueSoft:#eaf1ff; --orange:#e88400; --orangeSoft:#fff1d9;
+  --purple:#7c3aed; --purpleSoft:#f0e9ff; --green:#07885f; --greenSoft:#e6faf2;
+  --red:#dc2626; --redSoft:#ffe8e8; --cyan:#087ea4; --cyanSoft:#e4f7fd;
+  --pink:#c0267e; --pinkSoft:#fde8f4; --graySoft:#f1f4f8; --dark:#0f172a;
+  --toolbarH:122px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif;background:var(--bg);color:var(--text);line-height:1.58}
+button,select{font:inherit}
+.toolbar{position:fixed;inset:0 0 auto 0;z-index:30;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 4px 18px #17203318;padding:10px 16px}
+.toolbar-inner{max-width:1680px;margin:auto}
+.toolbar-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.title h1{margin:0;font-size:27px;line-height:1.25}.title p{margin:3px 0 0;color:var(--muted);font-size:16px}
+.controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+button,select{border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--text);padding:9px 12px;cursor:pointer}
+button:hover{background:#f5f8fd}.primary{background:var(--blue);border-color:var(--blue);color:#fff}.dark{background:var(--dark);border-color:var(--dark);color:#fff}
+.status{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.pill{padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:#f3f6fa;color:var(--muted)}
+.app{max-width:1680px;margin:auto;padding:calc(var(--toolbarH) + 18px) 14px 26px}
+.main{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(420px,1fr);gap:14px}
+.left-pane{display:flex;flex-direction:column;gap:12px;min-width:0}.right-pane{min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 8px 24px #17203310;position:relative;flex-shrink:0;width:100%}
+.card h2{margin:0 0 9px;font-size:22px}.card h3{margin:12px 0 7px;font-size:18px}.card p{margin:7px 0;font-size:17px}
+.lead{background:linear-gradient(180deg,#fff,#f8fbff)}.big{font-size:24px;font-weight:800;color:#18324b}
+.role-grid{display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:9px}.role{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff}.role b{font-size:19px}.role small{display:block;color:var(--muted);margin-top:3px;font-size:15px}
+.legend{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.legend span{border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:#fff;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff}.mini small{display:block;color:var(--muted)}.mini strong{display:block;margin-top:3px;font-size:20px}
+.animation-card{padding-bottom:18px}.call-banner{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin-bottom:12px}.call-box,.range-box{border:1px solid var(--line);border-radius:13px;padding:11px;background:#f9fbfe}.call-box small,.range-box small{display:block;color:var(--muted)}.call-box strong,.range-box strong{font-size:20px;display:block;margin-top:3px}
+.array-scroll{overflow:auto;padding:5px 0 7px}.array{display:grid;grid-template-columns:repeat(var(--n),minmax(91px,1fr));gap:8px;min-width:max-content}
+.cell{border:2px solid #cbd6e4;border-radius:14px;overflow:hidden;background:#fff;min-height:143px;transition:.25s transform,.25s box-shadow,.25s opacity}.cell.out{opacity:.38;background:#f4f6f8}.cell.range{background:#edf4ff;border-color:#b9cef5}.cell.pivot{background:var(--purpleSoft);border-color:var(--purple)}.cell.fixed{background:var(--greenSoft);border-color:var(--green)}.cell.i{box-shadow:inset 0 0 0 3px var(--orange)}.cell.j{outline:3px solid var(--blue);outline-offset:-3px}.cell.swap{box-shadow:inset 0 0 0 4px var(--red);transform:translateY(-3px)}.cell.old-pointer{box-shadow:inset 0 0 0 3px #94a3b8}
+.tags{min-height:52px;display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-content:flex-start;padding:5px;border-bottom:1px solid var(--line);background:#fbfdff}
+.tag{font-size:12px;font-weight:800;border:1px solid var(--line);border-radius:999px;padding:2px 6px;background:#fff;white-space:nowrap}.tag.tag-left{color:#0e7490;border-color:#22a5c7;background:var(--cyanSoft)}.tag.tag-right{color:#9d174d;border-color:#e879ad;background:var(--pinkSoft)}.tag.pivot{color:#5b21b6;border-color:var(--purple);background:var(--purpleSoft)}.tag.i{color:#92400e;border-color:var(--orange);background:var(--orangeSoft)}.tag.j{color:#1d4ed8;border-color:var(--blue);background:var(--blueSoft)}.tag.p{color:#9f1239;border-color:#fb7185;background:#fff1f2}.tag.fixed{color:#047857;border-color:var(--green);background:var(--greenSoft)}.tag.swap{color:#b91c1c;border-color:var(--red);background:var(--redSoft)}.tag.old{color:#475569;border-color:#94a3b8;background:#eef2f7}
+.value{font-size:29px;font-weight:800;text-align:center;padding:14px 6px}.idx{text-align:center;color:var(--muted);border-top:1px solid var(--line);padding:6px;background:#fbfdff;font-size:14px}
+.section-title{font-size:18px;font-weight:800;margin:14px 0 7px}.live-vars{display:grid;grid-template-columns:repeat(3,minmax(210px,1fr));gap:9px}.var-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff;min-height:112px}.var-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.var-name{font-weight:800;font-size:18px}.var-value{font-weight:900;font-size:24px}.var-desc{color:var(--muted);font-size:15px;margin-top:4px}.var-target{margin-top:5px;font-weight:700;font-size:15px}.var-card.changed{border-color:#f59e0b;background:#fffaf0;box-shadow:0 0 0 3px #f59e0b20}
+
+.pointer-mission{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 12px}.mission{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}.mission.i-mission{border-left:6px solid var(--orange);background:var(--orangeSoft)}.mission.j-mission{border-left:6px solid var(--blue);background:var(--blueSoft)}.mission b{display:block;font-size:18px}.mission span{display:block;margin-top:4px;font-size:16px}.index-warning{margin:8px 0 12px;border:1px solid #f3c56d;border-radius:13px;padding:10px 12px;background:#fff9e9;font-size:16px;font-weight:700}
+.decision-panel{border:2px solid #b9c8dd;border-radius:16px;padding:14px;background:linear-gradient(180deg,#fff,#f7faff);margin-top:10px}.decision-panel.i-mode{border-color:#f2b34f;background:linear-gradient(180deg,#fffdf8,#fff6e7)}.decision-panel.j-mode{border-color:#78a8f4;background:linear-gradient(180deg,#fbfdff,#ebf3ff)}.decision-panel.stop-mode{border-color:#ef7777;background:linear-gradient(180deg,#fffafa,#ffeded)}.decision-panel.move-mode{border-color:#57c69c;background:linear-gradient(180deg,#fbfffd,#e9faf3)}.decision-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.decision-head strong{font-size:21px}.decision-badge{font-size:16px;font-weight:900;border-radius:999px;padding:5px 10px;background:#fff;border:1px solid currentColor}.decision-body{display:grid;grid-template-columns:1.05fr 1fr;gap:10px;margin-top:10px}.decision-block{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff}.decision-block h4{margin:0 0 6px;font-size:17px}.decision-line{font-size:16px;margin:4px 0}.decision-formula{font:700 17px/1.55 Consolas,monospace;background:#f3f6fb;border-radius:9px;padding:8px;margin-top:6px;white-space:pre-wrap}.decision-reason{margin-top:10px;border-radius:13px;padding:12px;font-size:18px;font-weight:800;background:#fff;border:1px solid var(--line)}.decision-note{display:block;margin-top:5px;color:var(--muted);font-size:15px;font-weight:500}.decision-arrow{font-size:24px;font-weight:900}.value-role{color:#374b61;font-size:15px;margin-top:4px}.value-role b{color:#172b42}
+.condition-panel{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#f9fbfe}.condition-title{font-size:19px;font-weight:800}.condition-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}.condition-item{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;min-height:108px}.condition-item small{display:block;color:var(--muted)}.condition-formula{font-weight:800;font-size:18px;margin-top:3px}.condition-sub{font-size:15px;color:#4f6478;margin-top:3px}.result{font-weight:900;margin-top:4px}.true{color:var(--green)}.false{color:var(--red)}.skip{color:#64748b}.active-condition{border-color:#60a5fa;box-shadow:0 0 0 3px #60a5fa22}
+.change-panel{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}.change-title{font-weight:800;font-size:19px}.change-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:8px}.change-side{border:1px solid var(--line);border-radius:12px;padding:10px;background:#f9fbfe}.change-side small{display:block;color:var(--muted)}.change-side strong{font-size:22px}.arrow{font-size:28px;font-weight:900;color:var(--orange)}.change-formula{margin-top:8px;font-size:16px;font-weight:700}.no-change{color:var(--muted);font-size:16px}
+.stack{display:flex;gap:6px;flex-wrap:wrap}.stack span{border:1px solid var(--line);border-radius:999px;padding:4px 8px;background:#fff}.tree,.tree ul{list-style:none;margin:0;padding-left:18px}.tree li{margin:7px 0}.node{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:175px}.node.processing{background:#fff3df;border-color:#f2bd65}.node.partitioning{background:var(--purpleSoft);border-color:#b59cf3}.node.done{background:var(--greenSoft);border-color:#77d6b6}.node.base{background:#f0f3f7}.node.current{box-shadow:0 0 0 3px #2563eb22}.node b{display:block}.node small{color:var(--muted)}
+.history{margin:0;padding-left:22px}.history li{margin:4px 0;font-size:16px}
+.code-card{background:var(--dark);color:#e5edf7;border-color:#111b31;position:sticky;top:calc(var(--toolbarH) + 18px)}.code-card h2{color:#fff}.code-desc{color:#c3d1e2}.code-box{max-height:calc(100vh - var(--toolbarH) - 195px);overflow:auto;border:1px solid #ffffff18;border-radius:12px;background:#ffffff05}.line{display:grid;grid-template-columns:48px 1fr;font:15px/1.65 Consolas,monospace}.line.active{background:#2563eb35}.no{text-align:right;padding:1px 8px;color:#91a3ba;border-right:1px solid #ffffff12;user-select:none}.src{white-space:pre;padding:1px 10px}.note{margin-top:10px;border:1px solid #ffffff18;border-radius:12px;padding:11px;background:#ffffff08}.note b{color:#fff}.substitution{margin-top:9px;padding:9px;border-radius:10px;background:#0b2346;color:#d9eaff;font-family:Consolas,monospace;white-space:pre-wrap}
+dialog{width:min(760px,92vw);border:1px solid var(--line);border-radius:16px;padding:0;box-shadow:0 20px 55px #0004}dialog::backdrop{background:#0f172a88}.modal{max-height:70vh;overflow:auto;padding:17px}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal-head h2{margin:0}
+@media(max-width:1180px){:root{--toolbarH:174px}.main{grid-template-columns:1fr}.code-card{position:relative;top:auto}.code-box{max-height:none}}
+@media(max-width:820px){:root{--toolbarH:230px}.title h1{font-size:21px}.role-grid,.live-vars,.condition-grid,.call-banner,.pointer-mission,.decision-body{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.change-grid{grid-template-columns:1fr}.arrow{text-align:center;transform:rotate(90deg)}}
+
+/* 單頁整合版：主畫面直接呈現陣列、即時變數與當前判斷 */
+:root{--toolbarH:106px}
+.app{max-width:1600px;padding:calc(var(--toolbarH) + 12px) 12px 22px}
+.main{grid-template-columns:minmax(0,1.52fr) minmax(380px,.82fr);gap:12px;align-items:start}
+.left-pane{gap:10px}.card{padding:13px}.animation-card{padding:12px 13px}
+.step-compact{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr);gap:9px;padding:9px 11px;margin-bottom:8px;border:1px solid var(--line);border-radius:13px;background:#f8fbff}
+.step-compact small{display:block;color:var(--muted);font-size:13px}.step-compact strong{display:block;font-size:20px;line-height:1.25;margin-top:2px}.step-compact p{font-size:15px;line-height:1.45;margin:4px 0 0}
+.step-points{display:grid;grid-template-columns:1fr 1fr;gap:7px}.step-points span{border:1px solid var(--line);border-radius:10px;padding:7px 8px;background:#fff}.step-points b{display:block;font-size:15px;line-height:1.35;margin-top:2px}
+.call-banner{grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}.call-box,.range-box{padding:7px 9px}.call-box strong,.range-box strong{font-size:16px;margin-top:1px}.call-box small,.range-box small{font-size:12px}
+.array-scroll{overflow-x:auto;overflow-y:hidden;padding:2px 0 5px}.array{grid-template-columns:repeat(var(--n),minmax(62px,1fr));gap:5px;min-width:0;width:100%}
+.cell{min-height:105px;border-radius:11px}.tags{min-height:36px;padding:3px 2px;gap:2px}.tag{font-size:10px;padding:1px 4px}.value{font-size:24px;padding:7px 3px}.idx{font-size:12px;padding:3px}
+.live-vars{display:grid;grid-template-columns:repeat(6,minmax(95px,1fr));gap:6px;margin-top:7px}.var-chip{border:1px solid var(--line);border-radius:10px;padding:7px 8px;background:#fff;min-width:0}.var-chip.changed{border-color:#f59e0b;background:#fff8e8;box-shadow:0 0 0 2px #f59e0b22}.var-chip b{display:block;font-size:16px;line-height:1.2}.var-chip span{display:block;margin-top:2px;color:#465d73;font-size:13px;line-height:1.3;white-space:normal}
+.decision-panel{margin-top:7px;padding:10px;border-radius:13px}.decision-head strong{font-size:18px}.decision-badge{font-size:14px;padding:3px 8px}.decision-inline{display:grid;grid-template-columns:minmax(180px,.75fr) 1fr 1fr;gap:7px;margin-top:7px}.decision-mini{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}.decision-mini small{display:block;color:var(--muted);font-size:12px}.decision-mini b{display:block;font-size:15px;line-height:1.35;margin-top:2px}.decision-mini .calc{font:700 15px/1.4 Consolas,monospace;margin-top:3px}.decision-reason{margin-top:7px;padding:8px 10px;font-size:16px;line-height:1.4}.decision-arrow{font-size:19px}.hidden-support{display:none!important}
+.right-pane .code-card{top:calc(var(--toolbarH) + 12px)}.code-box{max-height:calc(100vh - var(--toolbarH) - 185px)}
+@media(max-width:1320px){.main{grid-template-columns:minmax(0,1.42fr) minmax(350px,.78fr)}.array{grid-template-columns:repeat(var(--n),minmax(58px,1fr))}.live-vars{grid-template-columns:repeat(3,minmax(120px,1fr))}}
+@media(max-width:1180px){:root{--toolbarH:174px}.main{grid-template-columns:1fr}.code-card{position:relative;top:auto}.code-box{max-height:none}.step-compact{grid-template-columns:1fr}.decision-inline{grid-template-columns:1fr 1fr}.decision-inline .decision-mini:first-child{grid-column:1/-1}}
+@media(max-width:760px){:root{--toolbarH:230px}.step-points,.call-banner,.decision-inline{grid-template-columns:1fr}.decision-inline .decision-mini:first-child{grid-column:auto}.live-vars{grid-template-columns:repeat(2,minmax(115px,1fr))}.array{min-width:670px}}
+
+
+
+/* =========================================================
+   免捲動教學舞台版：第一畫面固定顯示陣列、完整判斷與程式碼
+   ========================================================= */
+:root{--toolbarH:118px}
+html{scroll-behavior:smooth}
+body{overflow-x:hidden}
+.toolbar{height:var(--toolbarH);padding:8px 14px;overflow:hidden}
+.toolbar-inner{height:100%;display:flex;flex-direction:column;justify-content:center}
+.toolbar-top{flex-wrap:nowrap;gap:10px}
+.title{min-width:0;flex:1}
+.title h1{font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title p{font-size:14px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.controls{flex-wrap:nowrap;gap:5px;flex-shrink:0}
+button,select{padding:7px 9px;border-radius:9px;font-size:14px}
+.status{margin-top:6px;gap:6px}.pill{padding:3px 8px;font-size:13px}
+
+.app{max-width:none;padding:calc(var(--toolbarH) + 10px) 12px 24px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:12px;align-items:start}
+.left-pane,.right-pane{min-width:0}
+.animation-card,.code-card{height:calc(100vh - var(--toolbarH) - 22px);min-height:540px}
+.animation-card{display:flex;flex-direction:column;overflow:hidden;padding:11px 12px}
+.animation-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.animation-head h2{margin:0;font-size:20px;white-space:nowrap}
+.run-meta{display:flex;justify-content:flex-end;gap:7px;min-width:0;flex-wrap:wrap}
+.run-meta span{border:1px solid var(--line);border-radius:999px;background:#f7f9fc;padding:3px 8px;color:#4d6278;font-size:13px;line-height:1.35}
+.flow-strip{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:nowrap;margin:7px 0 6px;padding:5px 8px;border:1px solid var(--line);border-radius:10px;background:#f8fbff;font-size:13px;white-space:nowrap;flex-shrink:0}
+.flow-strip span{font-weight:700}.flow-strip b{color:#8ca0b5}
+
+.array-scroll{flex:0 0 auto;overflow:hidden;padding:2px 0 6px}
+.array{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px;min-width:0;width:100%}
+.cell{min-width:0;min-height:100px;border-radius:10px}
+.tags{min-height:34px;padding:3px 1px;gap:1px;overflow:hidden}
+.tag{font-size:10px;padding:1px 3px}
+.value{font-size:24px;padding:6px 2px}
+.idx{font-size:11px;padding:3px 1px}
+
+.decision-panel{flex:1;min-height:0;margin-top:2px;padding:10px 11px;overflow:auto;border-radius:13px}
+.decision-head{flex-wrap:nowrap;align-items:center}
+.decision-head strong{font-size:18px;line-height:1.3;min-width:0}
+.decision-badge{font-size:14px;padding:4px 8px;white-space:nowrap;flex-shrink:0}
+.decision-inline{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.decision-mini{padding:7px 9px;min-height:0}
+.decision-mini small{font-size:12px}
+.decision-mini b{font-size:15px;line-height:1.35}
+.decision-mini .calc{font-size:15px;line-height:1.42}
+.current-values,.direct-result{grid-column:1/-1}
+.decision-reason{margin-top:7px;padding:8px 10px;font-size:16px;line-height:1.42}
+
+.right-pane{height:calc(100vh - var(--toolbarH) - 22px);position:sticky;top:calc(var(--toolbarH) + 10px)}
+.code-card{position:relative;top:auto;display:flex;flex-direction:column;overflow:hidden;padding:11px}
+.code-card h2{font-size:20px;margin-bottom:3px;flex-shrink:0}
+.code-desc{font-size:14px!important;line-height:1.4;margin:2px 0 7px!important;flex-shrink:0}
+.code-box{flex:1;min-height:0;max-height:none;overflow:auto;scroll-behavior:smooth}
+.line{grid-template-columns:42px 1fr;font-size:14px;line-height:1.55}
+.note{flex:0 0 auto;max-height:154px;overflow:auto;margin-top:7px;padding:8px;font-size:14px;line-height:1.4}
+.substitution{margin-top:6px;padding:7px;font-size:13px;line-height:1.4;max-height:76px;overflow:auto}
+
+/* 第一張卡占滿第一畫面；補充內容留在下方，需要時才捲動查看 */
+.left-pane>section:not(.animation-card){margin-top:0}
+
+@media(max-width:1050px){
+  :root{--toolbarH:154px}
+  .toolbar{height:var(--toolbarH)}
+  .toolbar-top{flex-wrap:wrap}
+  .title{flex-basis:100%}
+  .title h1,.title p{white-space:normal}
+  .controls{flex-wrap:wrap}
+  .main{grid-template-columns:minmax(0,1fr) 345px}
+  .animation-card,.code-card,.right-pane{height:calc(100vh - var(--toolbarH) - 20px)}
+  .flow-strip{font-size:12px;gap:4px}
+}
+@media(max-width:860px){
+  :root{--toolbarH:214px}
+  .main{grid-template-columns:1fr}
+  .animation-card{height:auto;min-height:calc(100vh - var(--toolbarH) - 18px)}
+  .right-pane{position:relative;top:auto;height:auto}
+  .code-card{height:620px;min-height:0}
+  .flow-strip{overflow-x:auto;justify-content:flex-start}
+  .array-scroll{overflow-x:auto}
+  .array{min-width:660px}
+}
+
+
+/* 最終尺寸校正：每格固定分成「標籤／數字／索引」三列 */
+.array-scroll{
+  height:132px;
+  flex:0 0 132px;
+  min-height:132px;
+  max-height:132px;
+  overflow:hidden;
+  padding:2px 0 5px;
+}
+.array{
+  height:100%;
+  grid-auto-rows:100%;
+  align-items:stretch;
+}
+.cell{
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-rows:38px minmax(50px,1fr) 27px;
+  overflow:hidden;
+}
+.tags{
+  height:38px;
+  min-height:38px;
+  padding:2px;
+  gap:2px;
+  display:flex;
+  align-items:center;
+  align-content:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  overflow:hidden;
+}
+.tag{
+  font-size:10px;
+  line-height:1.15;
+  padding:1px 4px;
+  max-width:100%;
+}
+.value{
+  min-height:0;
+  padding:0 2px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+.idx{
+  height:27px;
+  min-height:27px;
+  padding:0 2px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.right-pane .code-card{top:auto}
+
+
+/* 角色標籤只採用自身尺寸，禁止繼承版面欄位的定位或高度 */
+.tags .tag{
+  position:static;
+  width:auto;
+  height:auto;
+  min-width:0;
+  min-height:0;
+  flex:0 0 auto;
+  top:auto;
+  right:auto;
+  bottom:auto;
+  left:auto;
+}
+
+
+/* 流程文字修正版：完整描述五個步驟，保持單頁顯示 */
+.flow-strip{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1.08fr) auto minmax(0,1fr) auto minmax(0,1.12fr);
+  align-items:stretch;
+  gap:4px;
+  white-space:normal;
+  overflow:visible;
+  padding:5px 6px;
+}
+.flow-strip span{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  line-height:1.25;
+  padding:4px 5px;
+  border:1px solid #d7e0ec;
+  border-radius:8px;
+  background:#fff;
+  font-size:12px;
+}
+.flow-strip b{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 1px;
+}
+@media(max-width:1320px){
+  .flow-strip span{font-size:11px;padding:4px 3px}
+  .flow-strip{gap:2px}
+}
+@media(max-width:980px){
+  .flow-strip{
+    display:flex;
+    overflow-x:auto;
+    justify-content:flex-start;
+    white-space:nowrap;
+  }
+  .flow-strip span{flex:0 0 auto;font-size:12px}
+}
+
+
+/* 流程高亮：只改顏色與邊框，不改尺寸，避免文字跳動或遮擋 */
+.flow-step{
+  position:relative;
+  border-width:2px!important;
+  border-style:solid!important;
+  border-color:#d7e0ec!important;
+  background:#fff!important;
+  color:#31465b;
+  font-weight:700;
+  box-shadow:none;
+  transition:background-color .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease;
+}
+.flow-step.flow-active{
+  font-weight:900;
+  color:#172b42;
+  box-shadow:0 0 0 2px var(--flow-ring,rgba(37,99,235,.14));
+}
+.flow-step[data-flow-step="1"].flow-active{
+  background:#fff1d9!important;
+  border-color:#e88400!important;
+  --flow-ring:rgba(232,132,0,.16);
+}
+.flow-step[data-flow-step="2"].flow-active{
+  background:#eaf1ff!important;
+  border-color:#2563eb!important;
+  --flow-ring:rgba(37,99,235,.15);
+}
+.flow-step[data-flow-step="3"].flow-active{
+  background:#ffe8e8!important;
+  border-color:#dc2626!important;
+  --flow-ring:rgba(220,38,38,.14);
+}
+.flow-step[data-flow-step="4"].flow-active{
+  background:#f0e9ff!important;
+  border-color:#7c3aed!important;
+  --flow-ring:rgba(124,58,237,.15);
+}
+.flow-step[data-flow-step="5"].flow-active{
+  background:#e6faf2!important;
+  border-color:#07885f!important;
+  --flow-ring:rgba(7,136,95,.15);
+}
+.flow-step:not(.flow-active){opacity:.72}
+.flow-strip b{color:#8ca0b5;flex-shrink:0}
+@media(prefers-reduced-motion:reduce){.flow-step{transition:none}}
+
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div class="toolbar-inner">
+    <div class="toolbar-top">
+      <div class="title">
+        <h1>快速排序法 Quick Sort｜雙指標 partition 流程高亮版</h1>
+        <p>左指標 i 往右找第一個比樞紐大的數，右指標 j 往左找第一個比樞紐小的數；找到後交換，直到指標交錯，再把樞紐放到正確位置。</p>
+      </div>
+      <div class="controls">
+        <select id="sample">
+          <option value="a">一般資料</option>
+          <option value="b">已排序資料</option>
+          <option value="c">重複數字</option>
+        </select>
+        <button id="help">角色說明</button>
+        <button id="prev">上一步</button>
+        <button id="next" class="primary">下一步</button>
+        <button id="play" class="dark">播放</button>
+        <button id="reset">重設</button>
+        <select id="speed">
+          <option value="1800">很慢</option>
+          <option value="1250" selected>正常</option>
+          <option value="650">快</option>
+        </select>
+      </div>
+    </div>
+    <div class="status">
+      <span class="pill">步驟：<b id="counter">1 / 1</b></span>
+      <span class="pill">函式：<b id="func">-</b></span>
+      <span class="pill">動作：<b id="action">-</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="app">
+  <div class="main">
+    <div class="left-pane">
+<section class="card animation-card">
+        <div class="animation-head">
+          <h2>陣列排序動畫與即時判斷</h2>
+          <div class="run-meta">
+            <span id="callText">-</span>
+            <span id="rangeText">-</span>
+          </div>
+        </div>
+
+        <div class="flow-strip" aria-label="partition 操作流程">
+          <span class="flow-step" data-flow-step="1">① i 往右找比 S 大的數</span><b>→</b>
+          <span class="flow-step" data-flow-step="2">② j 往左找比 S 小的數</span><b>→</b>
+          <span class="flow-step" data-flow-step="3">③ 交換站錯邊的兩個數</span><b>→</b>
+          <span class="flow-step" data-flow-step="4">④ i、j 交錯，S 定位</span><b>→</b>
+          <span class="flow-step" data-flow-step="5">⑤ 以 S 為界，遞迴排左右</span>
+        </div>
+
+        <div class="array-scroll"><div id="array" class="array"></div></div>
+        <div id="decisionPanel" class="decision-panel"></div>
+
+        <!-- 保留程式需要的節點，但不占用第一畫面的教學空間 -->
+        <div class="hidden-support">
+          <span id="stepTitle"></span><span id="explain"></span>
+          <span id="summary"></span><span id="meaning"></span>
+          <div id="liveVars"></div>
+          <div id="conditionPanel"></div>
+          <div id="changePanel"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>遞迴樹</h2>
+        <h3>目前呼叫路徑</h3>
+        <div id="stack" class="stack"></div>
+        <h3>樹狀圖</h3>
+        <div id="tree"></div>
+      </section>
+
+      <section class="card">
+        <h2>最近做了什麼？</h2>
+        <ol id="history" class="history"></ol>
+      </section>
+
+      <section class="card">
+        <h2>一定要記住</h2>
+        <p>1. <b>left、right</b> 裝的是索引，決定本次只處理陣列哪一段。</p>
+        <p>2. <b>S</b> 裝的是數字，S = a[left]。</p>
+        <p>3. <b>i、j</b> 裝的是索引，所以一定要同時看 i 與 a[i]、j 與 a[j]。</p>
+        <p>4. <b>p</b> 是 partition 完成後，樞紐最後固定的位置。</p>
+        <p>5. <b>i</b> 遇到小於等於 S 的數會繼續走，遇到大於 S 的數會停下。</p>
+        <p>6. <b>j</b> 遇到大於等於 S 的數會繼續走，遇到小於 S 的數會停下。</p>
+      </section>
+    </div>
+
+    <aside class="right-pane">
+      <section class="card code-card">
+        <h2>Python 程式碼</h2>
+        <p class="code-desc">反白哪一行，左邊就展示該行的變數、陣列位置與代入結果。</p>
+        <div id="code" class="code-box"></div>
+        <div class="note">
+          <b>白話翻譯：</b><div id="codeNote">載入中</div>
+          <div id="substitution" class="substitution">目前沒有代入計算。</div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<dialog id="dialog">
+  <div class="modal">
+    <div class="modal-head"><h2>角色與顏色說明</h2><button id="close">關閉</button></div>
+    <p><b>left：</b>本次範圍最左邊的索引。</p>
+    <p><b>right：</b>本次範圍最右邊的索引。</p>
+    <p><b>S：</b>樞紐數字，等於 a[left]。</p>
+    <p><b>i：</b>左指標索引，找左邊太大的數。</p>
+    <p><b>j：</b>右指標索引，找右邊太小的數。</p>
+    <p><b>p：</b>樞紐最後固定的索引，partition 結束後才有。</p>
+    <p><b>灰色「原本」：</b>變數移動前的位置。</p>
+  </div>
+</dialog>
+
+<script>
+(()=>{
+const source=[
+'def partition(a, left, right):',
+'    S = a[left]',
+'    i, j = left + 1, right',
+'',
+'    while True:',
+'        while i <= right and a[i] <= S:',
+'            i += 1',
+'        while j >= left + 1 and a[j] >= S:',
+'            j -= 1',
+'        if i < j:',
+'            a[i], a[j] = a[j], a[i]',
+'        else:',
+'            break',
+'    a[left], a[j] = a[j], a[left]',
+'    return j',
+'',
+'def quicksort(a, left, right):',
+'    if left >= right:',
+'        return',
+'    p = partition(a, left, right)',
+'    quicksort(a, left, p - 1)',
+'    quicksort(a, p + 1, right)',
+'',
+'arr = [30, 24, 27, 16, 29, 33, 25, 18, 32, 35]',
+'quicksort(arr, 0, len(arr) - 1)',
+'print(arr)'
+];
+const codeNotes={
+1:'開始 partition，left 與 right 決定這次只處理哪一段。',
+2:'拿 a[left] 的數字存進 S，S 是本輪樞紐。',
+3:'i 從 left+1 開始；j 從 right 開始。',
+5:'持續掃描，直到 i 和 j 碰面或交錯。',
+6:'先檢查 i 有沒有超出 right，再比較 a[i] 和 S。',
+7:'i = i + 1，左指標往右一格。',
+8:'先檢查 j 有沒有越過 left+1，再比較 a[j] 和 S。',
+9:'j = j - 1，右指標往左一格。',
+10:'判斷 i 是否還在 j 左邊。',
+11:'交換兩個站錯邊的數字。',
+12:'如果 i、j 已交錯，就進入 else。',
+13:'跳出 while True。',
+14:'把樞紐 S 與 a[j] 交換。',
+15:'回傳 j；呼叫端會把 j 存進 p。',
+17:'開始 quicksort。',
+18:'如果範圍沒有數字或只剩一個數字，就不用排。',
+19:'結束這次 quicksort。',
+20:'呼叫 partition，回傳的樞紐索引存進 p。',
+21:'把 right 改成 p-1，遞迴處理左半邊。',
+22:'把 left 改成 p+1，遞迴處理右半邊。',
+24:'建立測試陣列。',
+25:'從索引 0 到最後索引開始排序。',
+26:'輸出最後排序結果。'
+};
+const samples={
+ a:[30,24,27,16,29,33,25,18,32,35],
+ b:[10,20,30,40,50],
+ c:[5,3,5,2,5,7,5]
+};
+const $=id=>document.getElementById(id);
+let steps=[],at=0,timer=null;
+
+function codeRender(){
+ $('code').innerHTML='';
+ source.forEach((text,index)=>{
+   const row=document.createElement('div');
+   row.className='line'; row.dataset.line=index+1;
+   row.innerHTML=`<div class="no">${index+1}</div><div class="src"></div>`;
+   row.querySelector('.src').textContent=text;
+   $('code').appendChild(row);
+ });
+}
+function clone(value){return JSON.parse(JSON.stringify(value));}
+function resultText(value){return value===true?'True（成立）':value===false?'False（不成立）':'尚未判斷';}
+function resultClass(value){return value===true?'true':value===false?'false':'skip';}
+
+function build(input){
+ let a=input.slice();
+ const fixed=new Set(), roots=[], nodeMap=new Map(), stack=[], history=[], out=[];
+ let nodeSeq=0;
+ const stackPath=()=>stack.map(id=>{const n=nodeMap.get(id);return `q(${n.l}, ${n.r})`;});
+ const snapshot=()=>clone(roots);
+ function record(data){
+   history.push(data.title);
+   out.push({
+     array:a.slice(), fixed:[...fixed], tree:snapshot(), stack:stackPath(), history:history.slice(-9),
+     current:stack.at(-1)||null, p:null, oldPointer:null, condition:null, change:null, substitution:'',
+     ...data
+   });
+ }
+ function addNode(l,r,parent){
+   const node={id:++nodeSeq,l,r,status:'等待',p:null,children:[]};
+   nodeMap.set(node.id,node);
+   if(parent===null) roots.push(node); else nodeMap.get(parent).children.push(node);
+   return node;
+ }
+ function variableContext(l,r,S,pivot,i,j,p){return {l,r,S,pivot,i,j,p};}
+
+ function partition(l,r,ownerId){
+   const owner=nodeMap.get(ownerId); owner.status='分割中';
+   let S=a[l], i=l+1, j=r, pivot=l, p=null;
+
+   record({
+     title:`進入 partition(a, ${l}, ${r})`,
+     explain:`left=${l} 是左邊界，right=${r} 是右邊界。這一輪只看索引 ${l} 到 ${r}。`,
+     summary:'先決定處理範圍', meaning:`只處理索引 ${l}～${r}`,
+     lines:[1],func:'partition',action:'進入函式',call:`partition(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,null,null,null,null,null),
+     substitution:`left = ${l}\nright = ${r}\n本次範圍 = 索引 ${l} ～ ${r}`
+   });
+
+   record({
+     title:`設定樞紐 S = a[left]`,
+     explain:`left=${l}，所以 a[left] = a[${l}] = ${S}。S 裝的是數字 ${S}，不是索引。`,
+     summary:'拿最左邊當樞紐', meaning:`S = ${S}`,
+     lines:[2],func:'partition',action:'設定 S',call:`partition(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,S,pivot,null,null,null),
+     change:{name:'S',before:'尚未設定',after:S,beforeTarget:'沒有指向數字',afterTarget:`S = a[${l}] = ${S}`,formula:`S = a[left] = a[${l}] = ${S}`},
+     substitution:`S = a[left]\nS = a[${l}]\nS = ${S}`
+   });
+
+   record({
+     title:'設定 i 與 j',
+     explain:`i = left + 1 = ${l}+1 = ${i}；j = right = ${r}。i 指向 a[${i}]，j 指向 a[${j}]。`,
+     summary:'兩個指標準備出發', meaning:`i=${i}，j=${j}`,
+     lines:[3],func:'partition',action:'初始化 i、j',call:`partition(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,S,pivot,i,j,null),
+     change:{name:'i、j',before:'尚未設定',after:`i=${i}，j=${j}`,beforeTarget:'沒有位置',afterTarget:`i→a[${i}]=${a[i]}；j→a[${j}]=${a[j]}`,formula:`i = left + 1 = ${l}+1 = ${i}\nj = right = ${r}`},
+     substitution:`i, j = left + 1, right\ni = ${l} + 1 = ${i}\nj = ${r}`
+   });
+
+   while(true){
+     while(true){
+       const boundary=i<=r;
+       record({
+         title:'左指標第一關：檢查邊界',
+         explain:boundary?`i=${i} 還沒有超過 right=${r}，所以可以安全讀取 a[i]。`:`i=${i} 已經超過 right=${r}，不能再讀 a[i]，左掃描停止。`,
+         summary:boundary?'i 還在範圍內':'i 已超出範圍', meaning:boundary?'可以繼續第二關':'短路判斷，停止掃描',
+         lines:[6],func:'partition',action:'i 邊界檢查',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while i <= right and a[i] <= S',active:1,items:[
+           {label:'第一關：邊界',formula:`i <= right`,sub:`${i} <= ${r}`,result:boundary},
+           {label:'第二關：數字',formula:'a[i] <= S',sub:boundary?'下一步才檢查':'不執行，避免超出陣列',result:null,skipped:!boundary},
+           {label:'and 最後結果',formula:'第一關 and 第二關',sub:boundary?'等待第二關':'False and 不執行',result:boundary?null:false}
+         ]},
+         substitution:`i <= right\n${i} <= ${r}\n結果：${resultText(boundary)}${boundary?'\n可以安全讀取 a[i]。':'\nPython 短路判斷，不再讀取 a[i]。'}`
+       });
+       if(!boundary) break;
+
+       const valueOk=a[i]<=S;
+       record({
+         title:`左指標第二關：檢查 a[${i}]`,
+         explain:valueOk?`a[i]=a[${i}]=${a[i]}，${a[i]} <= ${S} 成立，這個數留在左邊沒問題。`:`a[i]=a[${i}]=${a[i]}，${a[i]} <= ${S} 不成立，這個數太大，i 停在這裡。`,
+         summary:valueOk?'目前數字可以留左邊':'找到左邊太大的數', meaning:valueOk?'第二關成立':'第二關不成立',
+         lines:[6],func:'partition',action:'i 數字檢查',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while i <= right and a[i] <= S',active:2,items:[
+           {label:'第一關：邊界',formula:'i <= right',sub:`${i} <= ${r}`,result:true},
+           {label:'第二關：數字',formula:'a[i] <= S',sub:`a[${i}] = ${a[i]}；${a[i]} <= ${S}`,result:valueOk},
+           {label:'and 最後結果',formula:'True and 第二關',sub:`True and ${valueOk?'True':'False'}`,result:valueOk}
+         ]},
+         substitution:`a[i] <= S\na[${i}] <= ${S}\n${a[i]} <= ${S}\n結果：${resultText(valueOk)}`
+       });
+
+       record({
+         title:'左指標 while 的最後結果',
+         explain:valueOk?'兩關都成立，所以會執行 i += 1。':'第二關不成立，所以不執行 i += 1，i 停在目前位置。',
+         summary:valueOk?'True and True = True':'True and False = False', meaning:valueOk?'準備讓 i 往右':'i 停下',
+         lines:[6],func:'partition',action:'i 條件合併',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while i <= right and a[i] <= S',active:3,items:[
+           {label:'第一關：邊界',formula:'i <= right',sub:`${i} <= ${r}`,result:true},
+           {label:'第二關：數字',formula:'a[i] <= S',sub:`${a[i]} <= ${S}`,result:valueOk},
+           {label:'and 最後結果',formula:'第一關 and 第二關',sub:`True and ${valueOk?'True':'False'}`,result:valueOk}
+         ]},
+         substitution:`(${i} <= ${r}) and (${a[i]} <= ${S})\nTrue and ${valueOk?'True':'False'}\n最後結果：${resultText(valueOk)}`
+       });
+       if(!valueOk) break;
+
+       const before=i; i++;
+       record({
+         title:'執行 i += 1',
+         explain:`剛才 a[${before}]=${a[before]} <= S=${S}，表示 ${a[before]} 已經站對左邊，所以 i 不必停下。i 原本是索引 ${before}，執行 i=i+1 後變成索引 ${i}。`,
+         summary:`i：${before} → ${i}`, meaning:'左指標往右一格',
+         lines:[7],func:'partition',action:'i 移動',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p), oldPointer:{name:'i',before,after:i},
+         change:{name:'i',before,after:i,beforeTarget:`a[${before}] = ${a[before]}`,afterTarget:i<a.length?`a[${i}] = ${a[i]}`:`索引 ${i} 已在陣列外`,formula:`i += 1\ni = ${before} + 1\ni = ${i}`},
+         substitution:`i += 1\ni = i + 1\ni = ${before} + 1\ni = ${i}`
+       });
+     }
+
+     while(true){
+       const minIndex=l+1;
+       const boundary=j>=minIndex;
+       record({
+         title:'右指標第一關：檢查邊界',
+         explain:boundary?`left=${l}，所以 left+1=${minIndex}。j=${j} 還沒有越過 ${minIndex}，可以安全讀取 a[j]。`:`j=${j} 已越過 left+1=${minIndex}，不能再讀 a[j]，右掃描停止。`,
+         summary:boundary?'j 還在可掃描範圍':'j 已超出可掃描範圍', meaning:boundary?'可以繼續第二關':'短路判斷，停止掃描',
+         lines:[8],func:'partition',action:'j 邊界檢查',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while j >= left + 1 and a[j] >= S',active:1,items:[
+           {label:'第一關：邊界',formula:'j >= left + 1',sub:`${j} >= ${l}+1 = ${minIndex}`,result:boundary},
+           {label:'第二關：數字',formula:'a[j] >= S',sub:boundary?'下一步才檢查':'不執行，避免超出陣列',result:null,skipped:!boundary},
+           {label:'and 最後結果',formula:'第一關 and 第二關',sub:boundary?'等待第二關':'False and 不執行',result:boundary?null:false}
+         ]},
+         substitution:`j >= left + 1\n${j} >= ${l} + 1\n${j} >= ${minIndex}\n結果：${resultText(boundary)}${boundary?'':'\nPython 短路判斷，不再讀取 a[j]。'}`
+       });
+       if(!boundary) break;
+
+       const valueOk=a[j]>=S;
+       record({
+         title:`右指標第二關：檢查 a[${j}]`,
+         explain:valueOk?`a[j]=a[${j}]=${a[j]}，${a[j]} >= ${S} 成立，這個數留在右邊沒問題。`:`a[j]=a[${j}]=${a[j]}，${a[j]} >= ${S} 不成立，這個數太小，j 停在這裡。`,
+         summary:valueOk?'目前數字可以留右邊':'找到右邊太小的數', meaning:valueOk?'第二關成立':'第二關不成立',
+         lines:[8],func:'partition',action:'j 數字檢查',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while j >= left + 1 and a[j] >= S',active:2,items:[
+           {label:'第一關：邊界',formula:'j >= left + 1',sub:`${j} >= ${minIndex}`,result:true},
+           {label:'第二關：數字',formula:'a[j] >= S',sub:`a[${j}] = ${a[j]}；${a[j]} >= ${S}`,result:valueOk},
+           {label:'and 最後結果',formula:'True and 第二關',sub:`True and ${valueOk?'True':'False'}`,result:valueOk}
+         ]},
+         substitution:`a[j] >= S\na[${j}] >= ${S}\n${a[j]} >= ${S}\n結果：${resultText(valueOk)}`
+       });
+
+       record({
+         title:'右指標 while 的最後結果',
+         explain:valueOk?'兩關都成立，所以會執行 j -= 1。':'第二關不成立，所以不執行 j -= 1，j 停在目前位置。',
+         summary:valueOk?'True and True = True':'True and False = False', meaning:valueOk?'準備讓 j 往左':'j 停下',
+         lines:[8],func:'partition',action:'j 條件合併',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         condition:{title:'while j >= left + 1 and a[j] >= S',active:3,items:[
+           {label:'第一關：邊界',formula:'j >= left + 1',sub:`${j} >= ${minIndex}`,result:true},
+           {label:'第二關：數字',formula:'a[j] >= S',sub:`${a[j]} >= ${S}`,result:valueOk},
+           {label:'and 最後結果',formula:'第一關 and 第二關',sub:`True and ${valueOk?'True':'False'}`,result:valueOk}
+         ]},
+         substitution:`(${j} >= ${minIndex}) and (${a[j]} >= ${S})\nTrue and ${valueOk?'True':'False'}\n最後結果：${resultText(valueOk)}`
+       });
+       if(!valueOk) break;
+
+       const before=j; j--;
+       record({
+         title:'執行 j -= 1',
+         explain:`剛才 a[${before}]=${a[before]} >= S=${S}，表示 ${a[before]} 已經站對右邊，所以 j 不必停下。j 原本是索引 ${before}，執行 j=j-1 後變成索引 ${j}。`,
+         summary:`j：${before} → ${j}`, meaning:'右指標往左一格',
+         lines:[9],func:'partition',action:'j 移動',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p), oldPointer:{name:'j',before,after:j},
+         change:{name:'j',before,after:j,beforeTarget:`a[${before}] = ${a[before]}`,afterTarget:j>=0?`a[${j}] = ${a[j]}`:`索引 ${j} 已在陣列外`,formula:`j -= 1\nj = ${before} - 1\nj = ${j}`},
+         substitution:`j -= 1\nj = j - 1\nj = ${before} - 1\nj = ${j}`
+       });
+     }
+
+     const crossOk=i<j;
+     record({
+       title:'判斷 i < j',
+       explain:crossOk?`i=${i} 還在 j=${j} 左邊，代表左右各找到一個站錯邊的數，可以交換。`:`i=${i} 已經碰到或越過 j=${j}，這輪掃描完成。`,
+       summary:crossOk?'還能交換':'掃描結束', meaning:crossOk?'交換 a[i] 與 a[j]':'準備放置樞紐',
+       lines:[10,12],func:'partition',action:'檢查 i、j',call:`partition(a, left=${l}, right=${r})`,
+       ...variableContext(l,r,S,pivot,i,j,p),
+       condition:{title:'if i < j',active:3,items:[
+         {label:'i 的索引',formula:'i',sub:`i = ${i}`,result:null},
+         {label:'j 的索引',formula:'j',sub:`j = ${j}`,result:null},
+         {label:'比較結果',formula:'i < j',sub:`${i} < ${j}`,result:crossOk}
+       ]},
+       substitution:`i < j\n${i} < ${j}\n結果：${resultText(crossOk)}`
+     });
+
+     if(crossOk){
+       const x=a[i],y=a[j];
+       record({
+         title:`準備交換 a[${i}] 與 a[${j}]`,
+         explain:`a[i]=${x} 太大卻在左邊；a[j]=${y} 太小卻在右邊，所以兩個數交換。`,
+         summary:`${x} ↔ ${y}`, meaning:'大數往右，小數往左',
+         lines:[11],func:'partition',action:'準備交換',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),swap:[i,j],
+         change:{name:'陣列交換',before:`a[${i}]=${x}，a[${j}]=${y}`,after:`a[${i}]=${y}，a[${j}]=${x}`,beforeTarget:'兩個數站錯邊',afterTarget:'兩個數換到較適合的位置',formula:`a[i], a[j] = a[j], a[i]`},
+         substitution:`a[${i}], a[${j}] = a[${j}], a[${i}]\n${x}, ${y} = ${y}, ${x}`
+       });
+       [a[i],a[j]]=[a[j],a[i]];
+       record({
+         title:'交換完成',
+         explain:`現在 a[${i}]=${a[i]}，a[${j}]=${a[j]}。下一輪會重新檢查 i 與 j。`,
+         summary:'交換完成', meaning:'左右位置已修正',
+         lines:[11],func:'partition',action:'完成交換',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),swap:[i,j],
+         substitution:`交換後：\na[${i}] = ${a[i]}\na[${j}] = ${a[j]}`
+       });
+     }else{
+       record({
+         title:'執行 break',
+         explain:'因為 i、j 已碰面或交錯，所以跳出 while True，接下來把樞紐放到正確位置。',
+         summary:'離開掃描迴圈', meaning:'準備交換 S 與 a[j]',
+         lines:[12,13],func:'partition',action:'break',call:`partition(a, left=${l}, right=${r})`,
+         ...variableContext(l,r,S,pivot,i,j,p),
+         substitution:`i < j 為 False\n進入 else\n執行 break`
+       });
+       break;
+     }
+   }
+
+   record({
+     title:`準備交換 S 與 a[${j}]`,
+     explain:`S 目前在 left=${l}，數字是 ${S}。j=${j} 是最後一個適合放在 S 左邊的位置。`,
+     summary:`a[${l}] ↔ a[${j}]`, meaning:'樞紐要到最後位置',
+     lines:[14],func:'partition',action:'準備放樞紐',call:`partition(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,S,pivot,i,j,p),swap:[l,j],
+     change:{name:'樞紐交換',before:`S 在索引 ${l}`,after:`S 將移到索引 ${j}`,beforeTarget:`a[${l}] = ${a[l]}`,afterTarget:`與 a[${j}] = ${a[j]} 交換`,formula:`a[left], a[j] = a[j], a[left]`},
+     substitution:`a[left], a[j] = a[j], a[left]\na[${l}], a[${j}] = a[${j}], a[${l}]\n${a[l]}, ${a[j]} = ${a[j]}, ${a[l]}`
+   });
+   [a[l],a[j]]=[a[j],a[l]]; pivot=j; p=j; fixed.add(j); owner.p=j;
+   record({
+     title:`樞紐 ${S} 定位完成，p = ${p}`,
+     explain:`S=${S} 現在位於索引 ${p}。partition 回傳 j=${j}，quicksort 會把它存進 p。`,
+     summary:`p = ${p}`, meaning:`索引 ${p} 不用再動`,
+     lines:[14,15],func:'partition',action:'樞紐定位',call:`partition(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,S,pivot,i,j,p),
+     change:{name:'p',before:'尚未產生',after:p,beforeTarget:'partition 尚未結束',afterTarget:`p 指向 a[${p}] = ${a[p]}`,formula:`return j\np = j = ${p}`},
+     substitution:`return j\nreturn ${j}\n呼叫端得到 p = ${p}`
+   });
+   return p;
+ }
+
+ function quicksort(l,r,parent=null){
+   const node=addNode(l,r,parent); stack.push(node.id); node.status='處理中';
+   record({
+     title:`呼叫 quicksort(a, ${l}, ${r})`,
+     explain:`left=${l}，right=${r}。這次只處理索引 ${l} 到 ${r}。`,
+     summary:'進入新的遞迴範圍', meaning:`範圍 ${l}～${r}`,
+     lines:[17],func:'quicksort',action:'呼叫函式',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,null,null,null,null,null),
+     change:{name:'left、right',before:'上一層範圍',after:`left=${l}，right=${r}`,beforeTarget:'依呼叫來源而定',afterTarget:`現在只看索引 ${l}～${r}`,formula:`quicksort(a, ${l}, ${r})`},
+     substitution:`left = ${l}\nright = ${r}\n本次範圍 = 索引 ${l} ～ ${r}`
+   });
+   const stop=l>=r;
+   record({
+     title:'檢查終止條件 left >= right',
+     explain:stop?`left=${l} >= right=${r} 成立。這段沒有數字或只剩一個數字，不用再排。`:`left=${l} >= right=${r} 不成立。這段還有至少兩個位置，要繼續。`,
+     summary:stop?'直接 return':'繼續 partition', meaning:stop?'這段已經排好':'這段還需要排序',
+     lines:[18,19],func:'quicksort',action:'檢查終止',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,null,null,null,null,null),
+     condition:{title:'if left >= right',active:3,items:[
+       {label:'left',formula:'left',sub:`left = ${l}`,result:null},
+       {label:'right',formula:'right',sub:`right = ${r}`,result:null},
+       {label:'比較結果',formula:'left >= right',sub:`${l} >= ${r}`,result:stop}
+     ]},
+     substitution:`left >= right\n${l} >= ${r}\n結果：${resultText(stop)}`
+   });
+   if(stop){
+     node.status='結束';
+     record({
+       title:`quicksort(a, ${l}, ${r}) 結束`, explain:'不需要交換，直接回到上一層。',
+       summary:'到達終止條件',meaning:'return',lines:[19],func:'quicksort',action:'return',call:`quicksort(a, left=${l}, right=${r})`,
+       ...variableContext(l,r,null,null,null,null,null),substitution:'執行 return'
+     });
+     stack.pop(); return;
+   }
+
+   node.status='分割中';
+   record({
+     title:`呼叫 partition(a, ${l}, ${r})`, explain:'先在這個範圍中找一個樞紐的正確位置。',
+     summary:'先分左右',meaning:'準備取得 p',lines:[20],func:'quicksort',action:'呼叫 partition',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,null,null,null,null,null),substitution:`p = partition(a, left, right)\np = partition(a, ${l}, ${r})`
+   });
+   const p=partition(l,r,node.id); node.status='處理中';
+   record({
+     title:`partition 回傳 p = ${p}`, explain:`樞紐 a[${p}]=${a[p]} 已定位。下一步把範圍切成左邊與右邊。`,
+     summary:`p=${p}`,meaning:'樞紐不再參加排序',lines:[20],func:'quicksort',action:'取得 p',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,a[p],p,null,null,p),
+     change:{name:'p',before:'等待 partition 回傳',after:p,beforeTarget:'尚未知道樞紐位置',afterTarget:`a[${p}] = ${a[p]} 已定位`,formula:`p = partition(...) = ${p}`},
+     substitution:`p = partition(a, ${l}, ${r})\np = ${p}`
+   });
+
+   const leftR=p-1;
+   record({
+     title:`準備左半邊 quicksort(a, ${l}, ${leftR})`,
+     explain:`原本 left=${l} 保持不變；新的 right = p-1 = ${p}-1 = ${leftR}。`,
+     summary:`right：${r} → ${leftR}`,meaning:`左半邊範圍 ${l}～${leftR}`,
+     lines:[21],func:'quicksort',action:'設定左半邊',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,a[p],p,null,null,p),
+     change:{name:'下一次遞迴的 right',before:r,after:leftR,beforeTarget:`原範圍右界 ${r}`,afterTarget:`左半邊右界 p-1=${leftR}`,formula:`quicksort(a, left, p - 1)\nright = ${p} - 1 = ${leftR}`},
+     substitution:`quicksort(a, left, p - 1)\nquicksort(a, ${l}, ${p} - 1)\nquicksort(a, ${l}, ${leftR})`
+   });
+   quicksort(l,leftR,node.id);
+
+   node.status='處理中';
+   const rightL=p+1;
+   record({
+     title:`準備右半邊 quicksort(a, ${rightL}, ${r})`,
+     explain:`新的 left = p+1 = ${p}+1 = ${rightL}；原本 right=${r} 保持不變。`,
+     summary:`left：${l} → ${rightL}`,meaning:`右半邊範圍 ${rightL}～${r}`,
+     lines:[22],func:'quicksort',action:'設定右半邊',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,a[p],p,null,null,p),
+     change:{name:'下一次遞迴的 left',before:l,after:rightL,beforeTarget:`原範圍左界 ${l}`,afterTarget:`右半邊左界 p+1=${rightL}`,formula:`quicksort(a, p + 1, right)\nleft = ${p} + 1 = ${rightL}`},
+     substitution:`quicksort(a, p + 1, right)\nquicksort(a, ${p} + 1, ${r})\nquicksort(a, ${rightL}, ${r})`
+   });
+   quicksort(rightL,r,node.id);
+
+   node.status='完成';
+   record({
+     title:`quicksort(a, ${l}, ${r}) 完成`,explain:`索引 ${l} 到 ${r} 這一段已全部排好，回到上一層。`,
+     summary:'這一段完成',meaning:'返回上一層',lines:[21,22],func:'quicksort',action:'完成',call:`quicksort(a, left=${l}, right=${r})`,
+     ...variableContext(l,r,null,null,null,null,null),substitution:`範圍 ${l}～${r} 排序完成`
+   });
+   stack.pop();
+ }
+
+ record({
+   title:'建立測試陣列',explain:`原始資料：${a.join('、')}`,summary:'準備數字',meaning:'尚未排序',
+   lines:[24],func:'main',action:'建立 arr',call:'主程式',...variableContext(0,a.length-1,null,null,null,null,null),
+   substitution:`arr = [${a.join(', ')}]`
+ });
+ record({
+   title:'從整個陣列開始 quicksort',explain:`第一層 left=0，right=len(arr)-1=${a.length}-1=${a.length-1}。`,
+   summary:'從全部資料開始',meaning:`範圍 0～${a.length-1}`,lines:[25],func:'main',action:'開始排序',call:'主程式',
+   ...variableContext(0,a.length-1,null,null,null,null,null),
+   change:{name:'left、right',before:'尚未呼叫',after:`left=0，right=${a.length-1}`,beforeTarget:'沒有處理範圍',afterTarget:`整個陣列索引 0～${a.length-1}`,formula:`right = len(arr)-1 = ${a.length}-1 = ${a.length-1}`},
+   substitution:`quicksort(arr, 0, len(arr) - 1)\nquicksort(arr, 0, ${a.length} - 1)\nquicksort(arr, 0, ${a.length-1})`
+ });
+ quicksort(0,a.length-1,null);
+ record({
+   title:'排序全部完成',explain:`最後答案：${a.join('、')}`,summary:'全部完成',meaning:'可以輸出答案',
+   lines:[26],func:'main',action:'print',call:'主程式',...variableContext(0,a.length-1,null,null,null,null,null),
+   substitution:`print(arr)\n[${a.join(', ')}]`
+ });
+ return out;
+}
+
+function getTargetText(name,value,s){
+ if(value===null||value===undefined) return '尚未設定';
+ if(name==='left') return value>=0&&value<s.array.length?`left = ${value}（索引），a[left] = a[${value}] = ${s.array[value]}`:`left = ${value}（索引），在陣列外`;
+ if(name==='right') return value>=0&&value<s.array.length?`right = ${value}（索引），a[right] = a[${value}] = ${s.array[value]}`:`right = ${value}（索引），在陣列外`;
+ if(name==='i') return value>=0&&value<s.array.length?`i = ${value}（索引），a[i] = a[${value}] = ${s.array[value]}`:`i = ${value}（索引），已在陣列外`;
+ if(name==='j') return value>=0&&value<s.array.length?`j = ${value}（索引），a[j] = a[${value}] = ${s.array[value]}`:`j = ${value}（索引），已在陣列外`;
+ if(name==='p') return value>=0&&value<s.array.length?`樞紐位於 a[${value}] = ${s.array[value]}`:'尚未產生';
+ if(name==='S') return `樞紐數字是 ${value}`;
+ return '';
+}
+function renderVars(s){
+ const items=[
+   {name:'left',value:s.l,target:s.l!==null&&s.l!==undefined&&safeArrayValue(s,s.l)!==null?`a[left]=${safeArrayValue(s,s.l)}`:'尚未設定'},
+   {name:'right',value:s.r,target:s.r!==null&&s.r!==undefined&&safeArrayValue(s,s.r)!==null?`a[right]=${safeArrayValue(s,s.r)}`:'尚未設定'},
+   {name:'S',value:s.S,target:s.S===null||s.S===undefined?'尚未設定':`樞紐=${s.S}`},
+   {name:'i',value:s.i,target:s.i!==null&&s.i!==undefined&&safeArrayValue(s,s.i)!==null?`a[i]=${safeArrayValue(s,s.i)}`:(s.i===null||s.i===undefined?'尚未設定':'已在範圍外')},
+   {name:'j',value:s.j,target:s.j!==null&&s.j!==undefined&&safeArrayValue(s,s.j)!==null?`a[j]=${safeArrayValue(s,s.j)}`:(s.j===null||s.j===undefined?'尚未設定':'已在範圍外')},
+   {name:'p',value:s.p,target:s.p===null||s.p===undefined?'尚未產生':`a[p]=${safeArrayValue(s,s.p)}`}
+ ];
+ $('liveVars').innerHTML=items.map(v=>{
+   const changed=s.change&&s.change.name&&(s.change.name===v.name||s.change.name.includes(v.name));
+   return `<div class="var-chip ${changed?'changed':''}"><b>${v.name} = ${v.value??'-'}</b><span>${v.target}</span></div>`;
+ }).join('');
+}
+function safeArrayValue(s,index){
+ if(index===null||index===undefined||index<0||index>=s.array.length) return null;
+ return s.array[index];
+}
+function boolWord(v){return v?'True（成立）':'False（不成立）';}
+function renderDecision(s){
+ const panel=$('decisionPanel');
+ const compactGeneric=()=>{
+   const values=[];
+   if(s.l!==null&&s.l!==undefined) values.push(`left=${s.l}`);
+   if(s.r!==null&&s.r!==undefined) values.push(`right=${s.r}`);
+   if(s.S!==null&&s.S!==undefined) values.push(`S=${s.S}`);
+   if(s.i!==null&&s.i!==undefined) values.push(`i=${s.i}${safeArrayValue(s,s.i)!==null?`，a[i]=${safeArrayValue(s,s.i)}`:''}`);
+   if(s.j!==null&&s.j!==undefined) values.push(`j=${s.j}${safeArrayValue(s,s.j)!==null?`，a[j]=${safeArrayValue(s,s.j)}`:''}`);
+   panel.className='decision-panel';
+   panel.innerHTML=`<div class="decision-head"><strong>${s.title||'目前步驟'}</strong><span class="decision-badge">${s.action||'執行中'}</span></div><div class="decision-inline"><div class="decision-mini current-values"><small>目前變數</small><b>${values.join(' ｜ ')||'尚未設定'}</b></div><div class="decision-mini direct-result"><small>直接看結果</small><b>${s.explain||'請觀察目前陣列與程式碼。'}</b></div></div>`;
+ };
+ if(s.func!=='partition'||s.S===null||s.S===undefined){compactGeneric();return;}
+
+ const action=s.action||'';
+ const isI=action.startsWith('i ');
+ const isJ=action.startsWith('j ');
+ if(!isI&&!isJ){compactGeneric();return;}
+
+ const pointer=isI?'i':'j';
+ const oldMove=s.oldPointer&&s.oldPointer.name===pointer;
+ const idx=oldMove?s.oldPointer.before:(isI?s.i:s.j);
+ const afterIdx=isI?s.i:s.j;
+ const currentValue=safeArrayValue(s,idx);
+ const boundaryLimit=isI?s.r:s.l+1;
+ const boundaryOk=isI?idx<=s.r:idx>=s.l+1;
+ const valueOk=boundaryOk&&currentValue!==null&&(isI?currentValue<=s.S:currentValue>=s.S);
+ const shouldMove=boundaryOk&&valueOk;
+ const isMove=action.includes('移動');
+
+ let verdict, reason, badgeClass, icon;
+ if(!boundaryOk){
+   verdict=`${pointer} 停止掃描`;
+   reason=isI?`i=${idx} 已經大於 right=${s.r}，超出本次範圍，所以 i 不再移動。`:`j=${idx} 已經小於 left+1=${boundaryLimit}，超出可掃描範圍，所以 j 不再移動。`;
+   badgeClass='stop-mode'; icon='🛑';
+ }else if(shouldMove){
+   verdict=isMove?`${pointer}：${idx} → ${afterIdx}`:(isI?'i 要往右移':'j 要往左移');
+   reason=isI?`${currentValue} <= ${s.S}，${currentValue} 放在 S=${s.S} 的左邊沒有問題，所以 i 繼續往右找。`:`${currentValue} >= ${s.S}，${currentValue} 放在 S=${s.S} 的右邊沒有問題，所以 j 繼續往左找。`;
+   badgeClass='move-mode'; icon='➡️';
+ }else{
+   verdict=isI?'i 不移動，停在這裡':'j 不移動，停在這裡';
+   reason=isI?`${currentValue} > ${s.S}，${currentValue} 太大卻站在左邊，所以 i 停下來等待交換。`:`${currentValue} < ${s.S}，${currentValue} 太小卻站在右邊，所以 j 停下來等待交換。`;
+   badgeClass='stop-mode'; icon='🛑';
+ }
+
+ const pointerValue=currentValue===null?'範圍外':currentValue;
+ const boundaryExpr=isI?`${idx} <= ${s.r}`:`${idx} >= ${s.l}+1 = ${boundaryLimit}`;
+ const valueExpr=currentValue===null?'不讀取陣列':isI?`${currentValue} <= ${s.S}`:`${currentValue} >= ${s.S}`;
+ const boundaryResult=boundaryOk?'✅ True':'❌ False';
+ const valueResult=!boundaryOk?'略過':valueOk?'✅ True':'❌ False';
+ const combined=!boundaryOk?'False（第一關失敗）':`${boundaryOk?'True':'False'} and ${valueOk?'True':'False'} = ${shouldMove?'True':'False'}`;
+
+ panel.className=`decision-panel ${isI?'i-mode':'j-mode'} ${badgeClass}`;
+ panel.innerHTML=`
+   <div class="decision-head">
+     <strong>${isI?'🟠 檢查 i':'🔵 檢查 j'}：${pointer}=${idx}，a[${pointer}]=${pointerValue}，S=${s.S}</strong>
+     <span class="decision-badge">${verdict}</span>
+   </div>
+   <div class="decision-inline">
+     <div class="decision-mini current-values"><small>目前直接使用的數值</small><b>${isI?`i=${idx} ｜ right=${s.r} ｜ a[i]=${pointerValue} ｜ S=${s.S}`:`j=${idx} ｜ left+1=${boundaryLimit} ｜ a[j]=${pointerValue} ｜ S=${s.S}`}</b></div>
+     <div class="decision-mini"><small>第一個條件</small><div class="calc">${isI?'i <= right':'j >= left + 1'}<br>${boundaryExpr}<br>${boundaryResult}</div></div>
+     <div class="decision-mini"><small>第二個條件</small><div class="calc">${isI?'a[i] <= S':'a[j] >= S'}<br>${valueExpr}<br>${valueResult}</div></div>
+   </div>
+   <div class="decision-reason"><span class="decision-arrow">${icon}</span> <b>${combined}</b>。${reason}</div>`;
+}
+function renderCondition(s){
+ if(!s.condition){
+   $('conditionPanel').innerHTML=`<div class="condition-title">目前沒有條件判斷</div><p class="no-change">執行設定、移動、交換或 return 時，這裡不需要判斷 True / False。</p>`;
+   return;
+ }
+ $('conditionPanel').innerHTML=`<div class="condition-title">${s.condition.title}</div><div class="condition-grid">${s.condition.items.map((item,index)=>{
+   const active=s.condition.active===index+1?'active-condition':'';
+   const cls=item.skipped?'skip':resultClass(item.result);
+   const text=item.skipped?'本步不執行':resultText(item.result);
+   return `<div class="condition-item ${active}"><small>${item.label}</small><div class="condition-formula">${item.formula}</div><div class="condition-sub">${item.sub}</div><div class="result ${cls}">${text}</div></div>`;
+ }).join('')}</div>`;
+}
+function renderChange(s){
+ if(!s.change){
+   $('changePanel').innerHTML=`<div class="change-title">這一步沒有改變變數</div><div class="no-change">目前只是在檢查條件、說明範圍，或顯示執行結果。</div>`;
+   return;
+ }
+ $('changePanel').innerHTML=`<div class="change-title">${s.change.name} 發生改變</div><div class="change-grid"><div class="change-side"><small>原本</small><strong>${s.change.before}</strong><div>${s.change.beforeTarget||''}</div></div><div class="arrow">→</div><div class="change-side"><small>現在</small><strong>${s.change.after}</strong><div>${s.change.afterTarget||''}</div></div></div><div class="change-formula">${(s.change.formula||'').replaceAll('\n','<br>')}</div>`;
+}
+function renderArray(s){
+ $('array').style.setProperty('--n',s.array.length); $('array').innerHTML='';
+ s.array.forEach((value,index)=>{
+   const cell=document.createElement('div');
+   const inRange=s.l!==null&&s.r!==null&&index>=s.l&&index<=s.r;
+   cell.className=`cell ${inRange?'range':'out'}`;
+   if(s.fixed.includes(index)) cell.classList.add('fixed');
+   if(s.pivot===index) cell.classList.add('pivot');
+   if(s.i===index) cell.classList.add('i');
+   if(s.j===index) cell.classList.add('j');
+   if((s.swap||[]).includes(index)) cell.classList.add('swap');
+   if(s.oldPointer&&s.oldPointer.before===index&&s.oldPointer.before!==s.oldPointer.after) cell.classList.add('old-pointer');
+   const tags=[];
+   if(s.l===index) tags.push(['left','tag-left']);
+   if(s.r===index) tags.push(['right','tag-right']);
+   if(s.pivot===index&&s.S!==null&&s.S!==undefined) tags.push(['S','pivot']);
+   if(s.i===index) tags.push(['i','i']);
+   if(s.j===index) tags.push(['j','j']);
+   if(s.p===index) tags.push(['p','p']);
+   if(s.fixed.includes(index)) tags.push(['已定位','fixed']);
+   if((s.swap||[]).includes(index)) tags.push(['交換','swap']);
+   if(s.oldPointer&&s.oldPointer.before===index&&s.oldPointer.before!==s.oldPointer.after) tags.push([`${s.oldPointer.name} 原本`,'old']);
+   cell.innerHTML=`<div class="tags">${tags.map(t=>`<span class="tag ${t[1]}">${t[0]}</span>`).join('')}</div><div class="value">${value}</div><div class="idx">索引 ${index}</div>`;
+   $('array').appendChild(cell);
+ });
+}
+function renderTreeNode(node,current){
+ const li=document.createElement('li');
+ const cls=node.status==='處理中'?'processing':node.status==='分割中'?'partitioning':node.status==='完成'?'done':node.status==='結束'?'base':'';
+ const box=document.createElement('div'); box.className=`node ${cls} ${node.id===current?'current':''}`;
+ box.innerHTML=`<b>q(${node.l}, ${node.r})</b><small>狀態：${node.status}${node.p!==null?`｜p=${node.p}`:''}</small>`;
+ li.appendChild(box);
+ if(node.children.length){const ul=document.createElement('ul');node.children.forEach(child=>ul.appendChild(renderTreeNode(child,current)));li.appendChild(ul);}
+ return li;
+}
+
+function getFlowStep(s){
+ const action=s.action||'';
+ const title=s.title||'';
+ const lines=s.lines||[];
+
+ // ① i 的 while：邊界、數值、合併結果、移動或停下。
+ if(action.startsWith('i ') || title.includes('左指標')) return 1;
+
+ // ② j 的 while：邊界、數值、合併結果、移動或停下。
+ if(action.startsWith('j ') || title.includes('右指標')) return 2;
+
+ // i < j 成立時，下一件事是交換站錯邊的兩個數；不成立則進入 S 定位。
+ if(action==='檢查 i、j'){
+   const items=s.condition&&s.condition.items;
+   const result=items&&items.length?items[items.length-1].result:null;
+   return result===true?3:4;
+ }
+
+ // ③ 交換 a[i] 與 a[j]。
+ if(action==='準備交換' || action==='完成交換' || lines.includes(11)) return 3;
+
+ // ④ 指標交錯後離開掃描，交換 S 與 a[j]，並取得 p。
+ if(action==='break' || action==='準備放樞紐' || action==='樞紐定位' || action==='取得 p' ||
+    title.includes('準備交換 S') || title.includes('樞紐') || lines.includes(14) || lines.includes(15)) return 4;
+
+ // ⑤ 依 p 切成左右範圍，執行左右遞迴。
+ if(action==='設定左半邊' || action==='設定右半邊' ||
+    title.includes('左半邊') || title.includes('右半邊') ||
+    lines.includes(21) || lines.includes(22)) return 5;
+
+ return 0;
+}
+function renderFlowHighlight(s){
+ const activeStep=getFlowStep(s);
+ document.querySelectorAll('.flow-step').forEach(step=>{
+   const active=Number(step.dataset.flowStep)===activeStep;
+   step.classList.toggle('flow-active',active);
+   if(active) step.setAttribute('aria-current','step');
+   else step.removeAttribute('aria-current');
+ });
+}
+
+function render(s){
+ $('counter').textContent=`${at+1} / ${steps.length}`; $('func').textContent=s.func; $('action').textContent=s.action;
+ $('stepTitle').textContent=s.title; $('explain').textContent=s.explain; $('summary').textContent=s.summary; $('meaning').textContent=s.meaning;
+ $('callText').textContent=s.call||s.func;
+ $('rangeText').textContent=s.l===null||s.r===null?'目前沒有範圍':`left=${s.l} ～ right=${s.r}（索引 ${s.l} 到 ${s.r}）`;
+ renderFlowHighlight(s); renderArray(s); renderDecision(s); renderVars(s); renderCondition(s); renderChange(s);
+ $('stack').innerHTML=s.stack.length?s.stack.map(x=>`<span>${x}</span>`).join(''):'<span>目前沒有遞迴呼叫</span>';
+ $('tree').innerHTML=''; const rootUl=document.createElement('ul'); rootUl.className='tree'; s.tree.forEach(n=>rootUl.appendChild(renderTreeNode(n,s.current))); $('tree').appendChild(rootUl);
+ $('history').innerHTML=s.history.map(x=>`<li>${x}</li>`).join('');
+ document.querySelectorAll('.line').forEach(x=>x.classList.remove('active')); let first=null;
+ (s.lines||[]).forEach(lineNo=>{const row=document.querySelector(`.line[data-line="${lineNo}"]`);if(row){row.classList.add('active');if(!first)first=row;}});
+ if(first){
+   const codeBox=$('code');
+   const targetTop=first.offsetTop-(codeBox.clientHeight/2)+(first.clientHeight/2);
+   codeBox.scrollTo({top:Math.max(0,targetTop),behavior:'smooth'});
+ }
+ $('codeNote').textContent=codeNotes[(s.lines||[])[0]]||'目前正在更新狀態或回到上一層。';
+ $('substitution').textContent=s.substitution||'目前沒有代入計算。';
+}
+function stop(){if(timer)clearInterval(timer);timer=null;$('play').textContent='播放';$('play').className='dark';}
+function start(){stop();$('play').textContent='暫停';$('play').className='primary';timer=setInterval(()=>{if(at>=steps.length-1){stop();return;}at++;render(steps[at]);},Number($('speed').value));}
+function load(key){stop();source[23]=`arr = [${samples[key].join(', ')}]`;codeRender();steps=build(samples[key]);at=0;render(steps[0]);}
+$('prev').onclick=()=>{stop();if(at>0){at--;render(steps[at]);}};
+$('next').onclick=()=>{stop();if(at<steps.length-1){at++;render(steps[at]);}};
+$('play').onclick=()=>timer?stop():start();
+$('reset').onclick=()=>{stop();at=0;render(steps[0]);};
+$('sample').onchange=e=>load(e.target.value);
+$('help').onclick=()=>$('dialog').showModal();
+$('close').onclick=()=>$('dialog').close();
+codeRender();load('a');
+})();
+</script>
+</body>
+</html>

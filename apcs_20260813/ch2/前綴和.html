@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>前綴和｜ps[0]=0 統一教學版</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#1f2937;--line:#d8e1ec;--blue:#2563eb;--bs:#dbeafe;--purple:#6d28d9;--ps:#ede9fe;--green:#047857;--gs:#d1fae5;--red:#b91c1c;--rs:#fee2e2;--yellow:#a16207;--ys:#fef3c7;--shadow:0 8px 24px #0f172a14}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:"Microsoft JhengHei",sans-serif;font-size:18px;line-height:1.65}header{position:fixed;z-index:50;top:0;left:0;right:0;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 4px 16px #0001}.bar{max-width:1480px;min-height:104px;margin:auto;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}h1{margin:0;font-size:27px}.sub{margin:2px 0 0;color:#64748b;font-size:16px}.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button{border:0;border-radius:10px;padding:10px 14px;background:var(--blue);color:#fff;font-size:16px;font-weight:900;cursor:pointer}button.gray{background:#475569}button.green{background:var(--green)}button.yellow{background:var(--yellow)}button.light{background:#e2e8f0;color:#1e293b}button.answer{background:var(--purple)}button:disabled{opacity:.45}.badge,.world{padding:8px 12px;border-radius:999px;font-size:15px;font-weight:900}.badge{background:#eff6ff;color:#1d4ed8}.world.a{background:var(--bs);color:#1d4ed8}.world.ps{background:var(--ps);color:var(--purple)}.world.mix{background:var(--gs);color:var(--green)}main{max-width:1480px;margin:auto;padding:132px 18px 48px;display:flex;flex-direction:column;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);position:relative;flex-shrink:0}h2{margin:0 0 12px;font-size:25px}h3{margin:0 0 10px;color:#1e3a8a}.task{padding:17px;border:3px solid #16a34a;border-radius:14px;background:#ecfdf5}.task strong{display:block;color:#065f46;font-size:22px}.task div{margin-top:6px;font-size:20px;font-weight:800}.note,.good,.warn,.purple-note,.blue-note{margin-top:13px;padding:14px 16px;border-radius:12px}.note{background:var(--ys);border-left:6px solid #f59e0b}.good{background:var(--gs);border-left:6px solid #10b981}.warn{background:var(--rs);border-left:6px solid #ef4444}.purple-note{background:var(--ps);border-left:6px solid #8b5cf6}.blue-note{background:var(--bs);border-left:6px solid #3b82f6}.formula{margin-top:12px;padding:15px;border-radius:12px;background:#0f172a;color:#f8fafc;white-space:pre-wrap;overflow:auto;font:19px/1.55 Consolas,monospace}.grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(450px,.88fr);gap:18px;align-items:start}.left,.right{display:flex;flex-direction:column;gap:13px;min-width:0}.action{min-height:170px;padding:17px;border:2px dashed #94a3b8;border-radius:14px;background:#f8fafc}.action .t{color:#1d4ed8;font-size:20px;font-weight:900}.action .m{margin:8px 0;font-size:24px;font-weight:900}.wrap{overflow:auto}.matrix{width:100%;min-width:820px;border-collapse:separate;border-spacing:8px;table-layout:fixed}.matrix th,.matrix td{min-width:92px;padding:11px 8px;text-align:center;border:2px solid #cbd5e1;border-radius:10px;background:#fff}.matrix th{width:155px;min-width:155px;background:#eaf1fb;font-weight:900}.aidx{background:#eff6ff!important;color:#1d4ed8;font-weight:900}.aval{font-size:25px;font-weight:900}.ppos{background:#f5f3ff!important;color:var(--purple);font-weight:900}.pval{background:#faf5ff!important;color:var(--purple);font-size:25px;font-weight:900}.active-a{background:var(--bs)!important;border-color:var(--blue)!important;transform:translateY(-3px)}.active-ps{background:var(--ps)!important;border-color:#8b5cf6!important;transform:translateY(-3px)}.prev-ps{background:#f3e8ff!important;border-color:#9333ea!important;color:#6b21a8!important}.new-ps{background:var(--gs)!important;border-color:#10b981!important;color:#065f46!important;transform:translateY(-3px)}.keep{background:var(--gs)!important;border-color:#10b981!important;color:#065f46!important}.remove{background:var(--rs)!important;border-color:#ef4444!important;color:#991b1b!important}.dim{opacity:.35}.stats{display:grid;grid-template-columns:repeat(5,minmax(125px,1fr));gap:9px}.stat{padding:12px;border:1px solid var(--line);border-radius:11px;background:#fbfdff;text-align:center}.lab{font-size:14px;color:#64748b;font-weight:800}.sv{font-size:22px;font-weight:900}.stat.a .sv{color:#1d4ed8}.stat.ps .sv{color:var(--purple)}.stat.ans .sv{color:var(--green)}.code{max-height:720px;overflow:auto;background:#111827;border-radius:14px;scroll-behavior:smooth}.cline{display:grid;grid-template-columns:46px 1fr;min-width:740px;padding:3px 12px 3px 0;border-left:5px solid transparent;color:#e5e7eb;font:16.5px/1.65 Consolas,monospace;white-space:pre}.ln{text-align:right;padding-right:9px;color:#64748b}.cline.active{background:#1e3a8a;border-left-color:#60a5fa;color:#fff}.cline.done{background:#05966918}.c{color:#fb7185}.boundary-wrap{overflow:auto;padding:14px 0}.track{min-width:980px;display:grid;grid-template-columns:repeat(13,minmax(56px,1fr));align-items:center}.b{text-align:center;color:var(--purple);font-size:15px;font-weight:900}.b .mark{width:4px;height:86px;margin:4px auto;background:#8b5cf6;border-radius:999px}.d{margin:0 2px;padding:13px 4px;text-align:center;border:2px solid #93c5fd;border-radius:12px;background:#eff6ff;color:#1e3a8a;font-size:25px;font-weight:900}.d small{display:block;margin-top:3px;color:#475569;font-size:13px}.d.keep{background:#ecfdf5!important}.d.dim{opacity:.35}.steps{display:flex;flex-direction:column;gap:12px}.step{padding:16px;border:2px solid #dbe4f0;border-radius:14px;background:#fbfdff}.step strong{color:#1d4ed8;font-size:19px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.mini{padding:17px;border-radius:14px;border:2px solid var(--line)}.mini.a{background:#f8fbff;border-color:#93c5fd}.mini.ps{background:#fdfbff;border-color:#c4b5fd}.practice{padding:18px;border:2px solid #c4b5fd;border-radius:14px;background:#fdfbff}.answerbox{display:none;margin-top:14px;padding:16px;border:1px solid #86efac;border-radius:12px;background:#ecfdf5}.answerbox.show{display:block}.footer{text-align:center;color:#64748b;font-size:15px}@media(max-width:1100px){.grid{grid-template-columns:1fr}.code{max-height:540px}}@media(max-width:900px){main{padding-top:190px}.stats{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}@media(max-width:620px){main{padding:248px 10px 36px}.card{padding:15px}.tools{width:100%}.tools button{flex:1 1 30%}.badge,.world{width:100%;text-align:center}.stats{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div><h1>前綴和（Prefix Sum）｜A 資料索引與 ps 累計位置分清楚</h1><p class="sub">A = [4, 7, 2, 6, 5, 3]｜從 ps[0] = 0 開始</p></div><div class="tools"><button id="prev" class="gray">上一步</button><button id="next">下一步</button><button id="play" class="green">播放</button><button id="pause" class="yellow">暫停</button><button id="reset" class="light">重設</button><span class="badge" id="badge"></span><span class="world a" id="world">目前：A 的資料索引</span></div></div></header>
+<main>
+<section class="card"><h2>一、先只看原陣列 A</h2><div class="task"><strong>原陣列 A = [4, 7, 2, 6, 5, 3]</strong><div>這一排 0～5，全部都是「A 的資料索引」。</div></div><div class="wrap"><table class="matrix"><tr><th>A 的資料索引</th><td class="aidx">0</td><td class="aidx">1</td><td class="aidx">2</td><td class="aidx">3</td><td class="aidx">4</td><td class="aidx">5</td></tr><tr><th>A 的數值</th><td class="aval">4</td><td class="aval">7</td><td class="aval">2</td><td class="aval">6</td><td class="aval">5</td><td class="aval">3</td></tr></table></div><div class="blue-note"><strong>A[1] = 7</strong>。這裡的 1 是「A 的資料索引 1」。</div></section>
+
+<section class="card"><h2>二、再認識前綴和 ps</h2><div class="purple-note"><strong>ps[k] 的固定意思：</strong><br>ps[k] = A 前 k 筆資料的總和。</div><div class="formula">ps[0] = A 前 0 筆資料的總和 = 0
+ps[1] = A 前 1 筆資料的總和 = 4
+ps[2] = A 前 2 筆資料的總和 = 4 + 7 = 11
+ps[3] = A 前 3 筆資料的總和 = 4 + 7 + 2 = 13
+ps[4] = A 前 4 筆資料的總和 = 4 + 7 + 2 + 6 = 19
+ps[5] = A 前 5 筆資料的總和 = 4 + 7 + 2 + 6 + 5 = 24
+ps[6] = A 前 6 筆資料的總和 = 4 + 7 + 2 + 6 + 5 + 3 = 27</div><div class="wrap"><table class="matrix"><tr><th>ps 的累計位置</th><td class="ppos">0</td><td class="ppos">1</td><td class="ppos">2</td><td class="ppos">3</td><td class="ppos">4</td><td class="ppos">5</td><td class="ppos">6</td></tr><tr><th>ps 的累計值</th><td class="pval">0</td><td class="pval">4</td><td class="pval">11</td><td class="pval">13</td><td class="pval">19</td><td class="pval">24</td><td class="pval">27</td></tr></table></div><div class="warn"><strong>A[4] 和 ps[4] 是兩件不同的事。</strong><br>A[4] = 5 → A 的資料索引 4。<br>ps[4] = 19 → A 前 4 筆資料的總和。</div></section>
+
+<section class="card"><h2>三、互動動畫：每一步都標清楚現在是 A 還是 ps</h2>
+<div class="blue-note">
+<strong>建立前綴和時先看 i：</strong><br>
+i 是「這一輪要寫入的 ps 累計位置」；A 的資料索引則是 <strong>i - 1</strong>。<br>
+例如 i = 3：讀取 A[2]，使用上一個 ps[2]，最後寫入 ps[3]。<br><br>
+<strong>進入區間查詢後，i 的工作就完成了，改看 left 與 right。</strong>
+</div><div class="grid"><div class="left"><div class="action"><div class="t" id="title"></div><div class="m" id="mainText"></div><div id="detail"></div></div><div class="wrap"><table class="matrix" id="animTable"><tr><th>A 的資料索引</th><td class="aidx ai" data-i="0">0</td><td class="aidx ai" data-i="1">1</td><td class="aidx ai" data-i="2">2</td><td class="aidx ai" data-i="3">3</td><td class="aidx ai" data-i="4">4</td><td class="aidx ai" data-i="5">5</td></tr><tr><th>A 的數值</th><td class="aval av" data-i="0">4</td><td class="aval av" data-i="1">7</td><td class="aval av" data-i="2">2</td><td class="aval av" data-i="3">6</td><td class="aval av" data-i="4">5</td><td class="aval av" data-i="5">3</td></tr><tr><th>ps 的累計位置</th><td class="ppos pp" data-p="0">0</td><td class="ppos pp" data-p="1">1</td><td class="ppos pp" data-p="2">2</td><td class="ppos pp" data-p="3">3</td><td class="ppos pp" data-p="4">4</td><td class="ppos pp" data-p="5">5</td><td class="ppos pp" data-p="6">6</td></tr><tr><th>ps 的累計值</th><td class="pval pv" data-p="0">0</td><td class="pval pv" data-p="1">4</td><td class="pval pv" data-p="2">11</td><td class="pval pv" data-p="3">13</td><td class="pval pv" data-p="4">19</td><td class="pval pv" data-p="5">24</td><td class="pval pv" data-p="6">27</td></tr></table></div><div class="stats" id="buildStats">
+<div class="stat"><div class="lab">目前 i</div><div class="sv" id="iStat">—</div></div>
+<div class="stat a"><div class="lab">A 的資料索引 i - 1</div><div class="sv" id="aIndexStat">—</div></div>
+<div class="stat a"><div class="lab">這次讀取 A[i - 1]</div><div class="sv" id="aReadStat">—</div></div>
+<div class="stat ps"><div class="lab">上一個 ps[i - 1]</div><div class="sv" id="prevPsStat">—</div></div>
+<div class="stat ans"><div class="lab">這次寫入 ps[i]</div><div class="sv" id="newPsStat">—</div></div>
+</div>
+
+<div class="stats" id="queryStats" style="display:none">
+<div class="stat a"><div class="lab">查詢 A 的資料索引</div><div class="sv" id="queryRangeStat">1 ～ 4</div></div>
+<div class="stat"><div class="lab">left</div><div class="sv" id="leftStat">1</div></div>
+<div class="stat"><div class="lab">right</div><div class="sv" id="rightStat">4</div></div>
+<div class="stat ps"><div class="lab">目前使用 ps</div><div class="sv" id="psUseStat">—</div></div>
+<div class="stat ans"><div class="lab">目前區間答案</div><div class="sv" id="queryAnsStat">—</div></div>
+</div></div>
+<div class="right"><h3>Python 程式碼</h3><div class="code" id="code"><div class="cline" data-line="1"><span class="ln">1</span><span>A = [4, 7, 2, 6, 5, 3]</span></div><div class="cline" data-line="2"><span class="ln">2</span><span>n = len(A)</span></div><div class="cline" data-line="3"><span class="ln">3</span><span></span></div><div class="cline" data-line="4"><span class="ln">4</span><span><span class="c"># ps[0] 是 A 前 0 筆資料的總和</span></span></div><div class="cline" data-line="5"><span class="ln">5</span><span>ps = [0] * (n + 1)</span></div><div class="cline" data-line="6"><span class="ln">6</span><span></span></div><div class="cline" data-line="7"><span class="ln">7</span><span><span class="c"># 建立前綴和</span></span></div><div class="cline" data-line="8"><span class="ln">8</span><span>for i in range(1, n + 1):      <span class="c"># i 依序為 1、2、3、4、5、6</span></span></div><div class="cline" data-line="9"><span class="ln">9</span><span>    <span class="c"># i 是 ps 累計位置；i-1 是 A 的資料索引</span></span></div><div class="cline" data-line="10"><span class="ln">10</span><span>    ps[i] = ps[i - 1] + A[i - 1]</span></div><div class="cline" data-line="11"><span class="ln">11</span><span></span></div><div class="cline" data-line="12"><span class="ln">12</span><span><span class="c"># 查詢 A 的資料索引 1 到 4</span></span></div><div class="cline" data-line="13"><span class="ln">13</span><span>left = 1</span></div><div class="cline" data-line="14"><span class="ln">14</span><span>right = 4</span></div><div class="cline" data-line="15"><span class="ln">15</span><span></span></div><div class="cline" data-line="16"><span class="ln">16</span><span><span class="c"># 右邊累計值 - 左邊累計值</span></span></div><div class="cline" data-line="17"><span class="ln">17</span><span>answer = ps[right + 1] - ps[left]</span></div><div class="cline" data-line="18"><span class="ln">18</span><span>print(ps)</span></div><div class="cline" data-line="19"><span class="ln">19</span><span>print(answer)</span></div></div><div class="purple-note">每一步都會顯示：現在看的數字是 <strong>A 的資料索引</strong>，還是 <strong>ps 的累計位置</strong>。</div></div></div></section>
+
+<section class="card">
+<h2>四、建立前綴和時：每一輪 i 到底是多少？</h2>
+
+<div class="task">
+<strong>固定規則：i 是「要寫入的 ps 累計位置」</strong>
+<div>A 的資料索引 = i - 1</div>
+</div>
+
+<div class="formula">ps[i] = ps[i - 1] + A[i - 1]</div>
+
+<div class="wrap">
+<table class="matrix">
+<tr>
+<th>目前 i</th>
+<td class="ppos">1</td>
+<td class="ppos">2</td>
+<td class="ppos">3</td>
+<td class="ppos">4</td>
+<td class="ppos">5</td>
+<td class="ppos">6</td>
+</tr>
+<tr>
+<th>A 的資料索引 i - 1</th>
+<td class="aidx">0</td>
+<td class="aidx">1</td>
+<td class="aidx">2</td>
+<td class="aidx">3</td>
+<td class="aidx">4</td>
+<td class="aidx">5</td>
+</tr>
+<tr>
+<th>這次讀取 A[i - 1]</th>
+<td class="aval">A[0] = 4</td>
+<td class="aval">A[1] = 7</td>
+<td class="aval">A[2] = 2</td>
+<td class="aval">A[3] = 6</td>
+<td class="aval">A[4] = 5</td>
+<td class="aval">A[5] = 3</td>
+</tr>
+<tr>
+<th>上一個 ps[i - 1]</th>
+<td class="pval">ps[0] = 0</td>
+<td class="pval">ps[1] = 4</td>
+<td class="pval">ps[2] = 11</td>
+<td class="pval">ps[3] = 13</td>
+<td class="pval">ps[4] = 19</td>
+<td class="pval">ps[5] = 24</td>
+</tr>
+<tr>
+<th>寫入 ps[i]</th>
+<td class="pval keep">ps[1] = 4</td>
+<td class="pval keep">ps[2] = 11</td>
+<td class="pval keep">ps[3] = 13</td>
+<td class="pval keep">ps[4] = 19</td>
+<td class="pval keep">ps[5] = 24</td>
+<td class="pval keep">ps[6] = 27</td>
+</tr>
+</table>
+</div>
+
+<div class="good">
+例如 <strong>i = 3</strong>：<br>
+A 的資料索引是 i - 1 = 2，所以讀取 A[2] = 2。<br>
+上一個累計值是 ps[2] = 11。<br>
+因此 ps[3] = 11 + 2 = 13。
+</div>
+</section>
+
+<section class="card"><h2>五、最重要的圖：A 是資料格，ps 是資料格的累計分界位置</h2><div class="boundary-wrap"><div class="track"><div class="b">ps[0]<br>0<div class="mark"></div></div><div class="d">4<small>A[0]</small></div><div class="b">ps[1]<br>4<div class="mark"></div></div><div class="d keep">7<small>A[1]</small></div><div class="b">ps[2]<br>11<div class="mark"></div></div><div class="d keep">2<small>A[2]</small></div><div class="b">ps[3]<br>13<div class="mark"></div></div><div class="d keep">6<small>A[3]</small></div><div class="b">ps[4]<br>19<div class="mark"></div></div><div class="d keep">5<small>A[4]</small></div><div class="b">ps[5]<br>24<div class="mark"></div></div><div class="d dim">3<small>A[5]</small></div><div class="b">ps[6]<br>27<div class="mark"></div></div></div></div><div class="good">查詢的是 <strong>A 的資料索引 1～4</strong>，真正要的資料是 <strong>7、2、6、5</strong>。</div><div class="note">這段資料的左邊累計位置是 <strong>ps[1]</strong>，右邊累計位置是 <strong>ps[5]</strong>。</div></section>
+
+<section class="card"><h2>六、固定案例：計算 A 的資料索引 1 到 4</h2><div class="task"><strong>注意：這裡的 1～4 是「A 的資料索引」</strong><div>A[1] + A[2] + A[3] + A[4]</div><div>= 7 + 2 + 6 + 5 = 20</div></div><div class="steps"><div class="step"><strong>第 1 步：找左邊累計位置</strong><div class="formula">A 的資料從 A[1] 開始。
+
+A[1] 左邊的累計位置：
+ps[1]
+
+ps[1] = 4</div></div><div class="step"><strong>第 2 步：找右邊累計位置</strong><div class="formula">A 的資料到 A[4] 結束。
+
+A[4] 右邊的累計位置：
+ps[5]
+
+ps[5] = 24</div></div><div class="step"><strong>第 3 步：右邊累計值減掉左邊累計值</strong><div class="formula">ps[5] - ps[1]
+= 24 - 4
+= 20</div></div></div><div class="good">展開來看：<br>(4 + 7 + 2 + 6 + 5) − 4<br>= 7 + 2 + 6 + 5<br>= 20</div></section>
+
+<section class="card"><h2>七、為什麼 A[4] 的右邊是 ps[5]？</h2><div class="two"><div class="mini a"><h3>藍色世界：A 的資料索引</h3><div class="formula">A[4] = 5
+
+這裡的 4：
+是 A 的資料索引 4</div></div><div class="mini ps"><h3>紫色世界：ps 的累計位置</h3><div class="formula">ps[5] = 24
+
+這裡的 5：
+表示 A 前 5 筆資料的總和</div></div></div><div class="note">要包含 A[0]、A[1]、A[2]、A[3]、A[4]，一共有 5 筆資料，所以 A[4] 右邊的累計位置就是 ps[5]。</div></section>
+
+<section class="card"><h2>八、最後才整理成一般寫法</h2><div class="task"><strong>查詢 A 的資料索引 left 到 right</strong><div>左邊累計位置：ps[left]</div><div>右邊累計位置：ps[right + 1]</div></div><div class="formula">區間總和
+= 右邊累計值 - 左邊累計值
+
+= ps[right + 1] - ps[left]</div><div class="formula">本例：left = 1，right = 4
+
+ps[4 + 1] - ps[1]
+= ps[5] - ps[1]
+= 24 - 4
+= 20</div></section>
+
+<section class="card"><h2>九、Python 完整範例</h2><div class="formula">A = [4, 7, 2, 6, 5, 3]
+n = len(A)
+
+# ps[0] 表示 A 前 0 筆資料的總和，所以是 0
+ps = [0] * (n + 1)
+
+# 建立前綴和
+for i in range(1, n + 1):
+    # i 是 ps 的累計位置
+    # i - 1 是這次要加入的 A 資料索引
+    ps[i] = ps[i - 1] + A[i - 1]
+
+# 查詢 A 的資料索引 1 到 4
+left = 1
+right = 4
+
+# 右邊累計值 - 左邊累計值
+answer = ps[right + 1] - ps[left]
+
+print(ps)
+print(answer)</div><div class="good">輸出：<br>ps = [0, 4, 11, 13, 19, 24, 27]<br>answer = 20</div></section>
+
+<section class="card"><h2>十、手算練習</h2><div class="practice"><h3>計算 A 的資料索引 2 到 5</h3><div class="task"><strong>這裡的 2～5 是 A 的資料索引</strong><div>A[2] + A[3] + A[4] + A[5]</div><div>= 2 + 6 + 5 + 3</div></div><div class="wrap"><table class="matrix"><tr><th>A 的資料索引</th><td class="aidx">0</td><td class="aidx">1</td><td class="aidx keep">2</td><td class="aidx keep">3</td><td class="aidx keep">4</td><td class="aidx keep">5</td></tr><tr><th>A 的數值</th><td class="aval dim">4</td><td class="aval dim">7</td><td class="aval keep">2</td><td class="aval keep">6</td><td class="aval keep">5</td><td class="aval keep">3</td></tr><tr><th>ps 的累計位置</th><td class="ppos">0</td><td class="ppos">1</td><td class="ppos remove">2</td><td class="ppos">3</td><td class="ppos">4</td><td class="ppos">5</td><td class="ppos keep">6</td></tr><tr><th>ps 的累計值</th><td class="pval">0</td><td class="pval">4</td><td class="pval remove">11</td><td class="pval">13</td><td class="pval">19</td><td class="pval">24</td><td class="pval keep">27</td></tr></table></div><button class="answer" id="showAns" style="margin-top:14px">顯示答案</button><div class="answerbox" id="answerBox"><div class="formula">A 的資料索引 2 到 5：
+2 + 6 + 5 + 3 = 16
+
+左邊累計位置：
+ps[2] = 11
+
+右邊累計位置：
+ps[6] = 27
+
+27 - 11 = 16</div></div></div></section>
+
+<section class="card"><h2>十一、最後只記住這四句</h2><div class="good">1. <strong>A[k]</strong>：A 的資料索引 k。<br><br>2. <strong>ps[k]</strong>：A 前 k 筆資料的總和。<br><br>3. 查詢時先找 A 的資料區段，再找它左右兩邊的 ps 累計位置。<br><br>4. 區間總和 = 右邊累計值 − 左邊累計值。</div><div class="warn"><strong>A[4]</strong> → A 的資料索引 4。<br><strong>ps[4]</strong> → ps 的累計位置 4。<br><br>看到數字時，先看前面是 A 還是 ps。</div></section>
+<div class="footer">前綴和 Prefix Sum｜ps[0] = 0 統一教學版</div>
+</main>
+<script>
+const A=[4,7,2,6,5,3], PS=[0,4,11,13,19,24,27];
+
+const steps=[
+{
+  phase:'build', w:'a',
+  t:'先確認原陣列 A',
+  m:'A = [4, 7, 2, 6, 5, 3]',
+  d:'目前只看 A。A 的資料索引是 0～5；迴圈還沒有開始。',
+  i:null, a:null, prevP:null, p:null, line:1
+},
+{
+  phase:'build', w:'ps',
+  t:'先建立 ps 的起點',
+  m:'ps[0] = 0',
+  d:'ps[0] 表示 A 前 0 筆資料的總和。這一步還不在 for 迴圈裡，所以目前沒有 i。',
+  i:null, a:null, prevP:null, p:0, line:5
+},
+{
+  phase:'build', w:'mix',
+  t:'第 1 輪：目前 i = 1',
+  m:'ps[1] = ps[0] + A[0] = 0 + 4 = 4',
+  d:'i = 1 → A 的資料索引 i-1 = 0。讀取 A[0] = 4；上一個是 ps[0] = 0；寫入 ps[1] = 4。',
+  i:1, a:0, prevP:0, p:1, line:10
+},
+{
+  phase:'build', w:'mix',
+  t:'第 2 輪：目前 i = 2',
+  m:'ps[2] = ps[1] + A[1] = 4 + 7 = 11',
+  d:'i = 2 → A 的資料索引 i-1 = 1。讀取 A[1] = 7；上一個是 ps[1] = 4；寫入 ps[2] = 11。',
+  i:2, a:1, prevP:1, p:2, line:10
+},
+{
+  phase:'build', w:'mix',
+  t:'第 3 輪：目前 i = 3',
+  m:'ps[3] = ps[2] + A[2] = 11 + 2 = 13',
+  d:'i = 3 → A 的資料索引 i-1 = 2。讀取 A[2] = 2；上一個是 ps[2] = 11；寫入 ps[3] = 13。',
+  i:3, a:2, prevP:2, p:3, line:10
+},
+{
+  phase:'build', w:'mix',
+  t:'第 4 輪：目前 i = 4',
+  m:'ps[4] = ps[3] + A[3] = 13 + 6 = 19',
+  d:'i = 4 → A 的資料索引 i-1 = 3。讀取 A[3] = 6；上一個是 ps[3] = 13；寫入 ps[4] = 19。',
+  i:4, a:3, prevP:3, p:4, line:10
+},
+{
+  phase:'build', w:'mix',
+  t:'第 5 輪：目前 i = 5',
+  m:'ps[5] = ps[4] + A[4] = 19 + 5 = 24',
+  d:'i = 5 → A 的資料索引 i-1 = 4。讀取 A[4] = 5；上一個是 ps[4] = 19；寫入 ps[5] = 24。',
+  i:5, a:4, prevP:4, p:5, line:10
+},
+{
+  phase:'build', w:'mix',
+  t:'第 6 輪：目前 i = 6',
+  m:'ps[6] = ps[5] + A[5] = 24 + 3 = 27',
+  d:'i = 6 → A 的資料索引 i-1 = 5。讀取 A[5] = 3；上一個是 ps[5] = 24；寫入 ps[6] = 27。前綴和建立完成。',
+  i:6, a:5, prevP:5, p:6, line:10
+},
+{
+  phase:'query', w:'a',
+  t:'前綴和建立完成，現在進入區間查詢',
+  m:'計算 A 的資料索引 1 到 4',
+  d:'現在不再看 i。接下來使用 left = 1、right = 4。',
+  ar:[1,2,3,4], psText:'尚未使用', ans:'20', line:12
+},
+{
+  phase:'query', w:'ps',
+  t:'先找左邊累計位置',
+  m:'left = 1 → ps[1] = 4',
+  d:'這裡的 1 是 ps 的累計位置 1。它位在 A[1] 的左邊。',
+  ar:[1,2,3,4], p:1, psText:'ps[1] = 4', ans:'20', line:13
+},
+{
+  phase:'query', w:'ps',
+  t:'再找右邊累計位置',
+  m:'right = 4 → A[4] 右邊是 ps[5] = 24',
+  d:'A[4] 是第 5 筆資料，所以它右邊的累計位置是 ps[5]。',
+  ar:[1,2,3,4], p:5, psText:'ps[5] = 24', ans:'20', line:14
+},
+{
+  phase:'query', w:'mix',
+  t:'右邊累計值減左邊累計值',
+  m:'ps[5] - ps[1] = 24 - 4 = 20',
+  d:'留下的就是 A 的資料索引 1～4：7 + 2 + 6 + 5。',
+  ar:[1,2,3,4], pr:[1,5], psText:'ps[5] - ps[1]', ans:'20', line:17
+},
+{
+  phase:'query', w:'mix',
+  t:'最後整理成一般寫法',
+  m:'區間總和 = ps[right + 1] - ps[left]',
+  d:'這只是把剛才實際使用的 ps[5] - ps[1] 改寫成一般形式。',
+  ar:[1,2,3,4], pr:[1,5], psText:'ps[right+1] - ps[left]', ans:'20', line:17
+}
+];
+
+let cur=0, timer=null;
+
+const $=id=>document.getElementById(id);
+const ai=[...document.querySelectorAll('.ai')];
+const av=[...document.querySelectorAll('.av')];
+const pp=[...document.querySelectorAll('.pp')];
+const pv=[...document.querySelectorAll('.pv')];
+const cls=[...document.querySelectorAll('.cline')];
+
+function stop(){
+  if(timer){
+    clearInterval(timer);
+    timer=null;
+  }
+}
+
+function clearHighlights(){
+  [...ai,...av].forEach(x=>{
+    x.classList.remove('active-a','keep','remove','dim');
+  });
+
+  [...pp,...pv].forEach(x=>{
+    x.classList.remove('active-ps','prev-ps','new-ps','keep','remove','dim');
+  });
+}
+
+function highlightCode(n){
+  cls.forEach(x=>{
+    x.classList.remove('active','done');
+    const v=+x.dataset.line;
+    if(v<n) x.classList.add('done');
+    if(v===n) x.classList.add('active');
+  });
+
+  const active=document.querySelector('.cline[data-line="'+n+'"]');
+  if(active){
+    $('code').scrollTo({
+      top:Math.max(0,active.offsetTop-$('code').clientHeight/2),
+      behavior:'smooth'
+    });
+  }
+}
+
+function showBuildStats(s){
+  $('buildStats').style.display='grid';
+  $('queryStats').style.display='none';
+
+  $('iStat').textContent=s.i===null?'尚未進入迴圈':s.i;
+
+  if(Number.isInteger(s.i)){
+    $('aIndexStat').textContent=`${s.i} - 1 = ${s.a}`;
+    $('aReadStat').textContent=`A[${s.a}] = ${A[s.a]}`;
+    $('prevPsStat').textContent=`ps[${s.prevP}] = ${PS[s.prevP]}`;
+    $('newPsStat').textContent=`ps[${s.p}] = ${PS[s.p]}`;
+  }else{
+    $('aIndexStat').textContent='—';
+    $('aReadStat').textContent='—';
+    $('prevPsStat').textContent='—';
+    $('newPsStat').textContent=Number.isInteger(s.p)?`ps[${s.p}] = ${PS[s.p]}`:'—';
+  }
+}
+
+function showQueryStats(s){
+  $('buildStats').style.display='none';
+  $('queryStats').style.display='grid';
+
+  $('queryRangeStat').textContent='1 ～ 4';
+  $('leftStat').textContent='1';
+  $('rightStat').textContent='4';
+  $('psUseStat').textContent=s.psText || '—';
+  $('queryAnsStat').textContent=s.ans || '—';
+}
+
+function render(){
+  clearHighlights();
+
+  const s=steps[cur];
+
+  $('title').textContent=s.t;
+  $('mainText').textContent=s.m;
+  $('detail').textContent=s.d;
+  $('badge').textContent=`步驟 ${cur+1} / ${steps.length}`;
+
+  $('world').className='world '+s.w;
+
+  if(s.phase==='build'){
+    $('world').textContent = Number.isInteger(s.i)
+      ? `目前：建立 ps｜i = ${s.i}`
+      : (s.w==='a' ? '目前：A 的資料索引' : '目前：ps 的累計位置');
+
+    showBuildStats(s);
+  }else{
+    $('world').textContent='目前：區間查詢｜看 left、right';
+    showQueryStats(s);
+  }
+
+  if(Number.isInteger(s.a)){
+    ai[s.a]?.classList.add('active-a');
+    av[s.a]?.classList.add('active-a');
+  }
+
+  if(Array.isArray(s.ar)){
+    s.ar.forEach(i=>{
+      ai[i]?.classList.add('keep');
+      av[i]?.classList.add('keep');
+    });
+  }
+
+  if(Number.isInteger(s.prevP)){
+    pp[s.prevP]?.classList.add('prev-ps');
+    pv[s.prevP]?.classList.add('prev-ps');
+  }
+
+  if(Number.isInteger(s.p)){
+    if(s.phase==='build' && Number.isInteger(s.i)){
+      pp[s.p]?.classList.add('new-ps');
+      pv[s.p]?.classList.add('new-ps');
+    }else{
+      pp[s.p]?.classList.add('active-ps');
+      pv[s.p]?.classList.add('active-ps');
+    }
+  }
+
+  if(Array.isArray(s.pr)){
+    const [l,r]=s.pr;
+
+    pp[l]?.classList.add('remove');
+    pv[l]?.classList.add('remove');
+
+    pp[r]?.classList.add('keep');
+    pv[r]?.classList.add('keep');
+  }
+
+  $('prev').disabled=cur===0;
+  $('next').disabled=cur===steps.length-1;
+
+  highlightCode(s.line);
+}
+
+$('prev').onclick=()=>{
+  stop();
+  if(cur>0){
+    cur--;
+    render();
+  }
+};
+
+$('next').onclick=()=>{
+  stop();
+  if(cur<steps.length-1){
+    cur++;
+    render();
+  }
+};
+
+$('play').onclick=()=>{
+  stop();
+
+  if(cur===steps.length-1){
+    cur=0;
+    render();
+  }
+
+  timer=setInterval(()=>{
+    if(cur<steps.length-1){
+      cur++;
+      render();
+    }else{
+      stop();
+    }
+  },2400);
+};
+
+$('pause').onclick=stop;
+
+$('reset').onclick=()=>{
+  stop();
+  cur=0;
+  render();
+
+  $('answerBox').classList.remove('show');
+  $('showAns').textContent='顯示答案';
+
+  scrollTo({top:0,behavior:'smooth'});
+};
+
+$('showAns').onclick=()=>{
+  $('answerBox').classList.toggle('show');
+  $('showAns').textContent=
+    $('answerBox').classList.contains('show') ? '隱藏答案' : '顯示答案';
+};
+
+render();
+</script>
+</body></html>
