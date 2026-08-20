@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BST 二元搜尋樹刪除動畫｜delete_l()</title>
+<style>
+  :root{
+    --bg:#eef3f8;--panel:#ffffff;--ink:#172033;--muted:#64748b;--line:#d8e1ec;
+    --blue:#2563eb;--blue2:#dbeafe;--green:#15803d;--green2:#dcfce7;
+    --orange:#c2410c;--orange2:#ffedd5;--red:#b91c1c;--red2:#fee2e2;
+    --purple:#7e22ce;--purple2:#f3e8ff;--shadow:0 12px 35px rgba(15,23,42,.10);
+    --headerH:92px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.55}
+  button,select{font:inherit}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+
+  .topbar{position:fixed;inset:0 0 auto 0;height:var(--headerH);z-index:50;background:rgba(15,23,42,.97);color:#fff;box-shadow:0 8px 24px rgba(15,23,42,.25)}
+  .topbar-inner{height:100%;max-width:1680px;margin:auto;padding:10px 18px;display:grid;grid-template-columns:minmax(310px,1fr) auto;gap:18px;align-items:center}
+  .titlebox h1{margin:0;font-size:22px;line-height:1.25}.titlebox p{margin:4px 0 0;color:#cbd5e1;font-size:13px}
+  .toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  .toolbar label{font-size:12px;color:#cbd5e1}
+  select,.btn{border:1px solid #475569;border-radius:9px;background:#111827;color:#fff;padding:8px 10px;cursor:pointer}
+  select{max-width:260px}.btn:hover,select:hover{border-color:#93c5fd}.btn.primary{background:#2563eb;border-color:#2563eb}.btn.warn{background:#7c2d12;border-color:#9a3412}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .kbd{padding:1px 6px;border:1px solid #64748b;border-bottom-width:2px;border-radius:5px;font-size:11px;color:#e2e8f0}
+
+  .page{padding:calc(var(--headerH) + 18px) 18px 36px;max-width:1680px;margin:auto}
+  .overview{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-bottom:14px}
+  .hero,.rule-strip{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  .hero{padding:16px 18px}.hero h2{margin:0 0 6px;font-size:21px}.hero p{margin:4px 0;color:#475569}.hero strong{color:#0f172a}
+  .rule-strip{display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden}
+  .rule{padding:14px;border-right:1px solid var(--line)}.rule:last-child{border-right:0}.rule b{display:block;margin-bottom:4px}.rule small{display:block;color:var(--muted)}
+  .r1{background:#f8fafc}.r2{background:#f0fdf4}.r3{background:#fff7ed}
+
+  .workspace{display:grid;grid-template-columns:minmax(560px,1.08fr) minmax(530px,.92fr);gap:14px;align-items:start}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .panel-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f8fafc}
+  .panel-head h3{margin:0;font-size:17px}.panel-head .sub{font-size:12px;color:var(--muted)}
+  .left-body{padding:12px 14px 16px}
+
+  .scenario-note{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:10px;border-radius:11px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:14px}
+  .scenario-note .dot{width:10px;height:10px;border-radius:50%;background:var(--blue);margin-top:6px;flex:0 0 auto}
+
+  .tree-wrap{position:relative;border:1px solid var(--line);border-radius:14px;min-height:430px;background:linear-gradient(#fff,#f8fafc);overflow:auto}
+  #treeSvg{display:block;width:100%;min-width:650px;height:430px}
+  .edge{stroke:#94a3b8;stroke-width:3;stroke-linecap:round}.edge.active{stroke:#2563eb;stroke-width:5}.edge.return{stroke:#16a34a;stroke-width:5}
+  .node circle{fill:#fff;stroke:#334155;stroke-width:3;filter:drop-shadow(0 3px 4px rgba(15,23,42,.14))}.node text{font-size:20px;font-weight:800;fill:#0f172a;text-anchor:middle;dominant-baseline:middle}
+  .node.focus circle{fill:var(--blue2);stroke:var(--blue);stroke-width:5}.node.pred circle{fill:var(--orange2);stroke:var(--orange);stroke-width:5}.node.remove circle{fill:var(--red2);stroke:var(--red);stroke-width:5}.node.changed circle{fill:var(--purple2);stroke:var(--purple);stroke-width:5}.node.nil circle{stroke-dasharray:6 5;fill:#f8fafc}.node.nil text{fill:#64748b}
+  .label-bg{fill:#0f172a;opacity:.92}.node .label-text{fill:#fff;font-size:12px;font-weight:800;text-anchor:middle;dominant-baseline:auto}
+
+  .state-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+  .state-card{padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;min-height:61px}.state-card span{display:block;color:var(--muted);font-size:11px}.state-card b{font-size:14px;word-break:break-word}
+  .stackbox{border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#f8fafc;margin-bottom:10px}.stackbox .cap{font-size:11px;color:var(--muted);margin-bottom:6px}.stack{display:flex;gap:6px;flex-wrap:wrap}.frame{background:#e2e8f0;border-radius:999px;padding:4px 8px;font-size:12px}.frame:last-child{background:#dbeafe;color:#1d4ed8;font-weight:800}
+
+  .message{border-radius:13px;border:1px solid #cbd5e1;background:#fff;padding:12px 14px;min-height:125px}
+  .message .step-title{font-size:18px;font-weight:850;margin-bottom:5px}.message .detail{color:#334155}.message code{padding:1px 5px;background:#f1f5f9;border-radius:5px;color:#0f172a}.message .why{margin-top:8px;padding:8px 10px;border-left:4px solid var(--blue);background:#eff6ff;color:#1e3a8a;border-radius:6px}
+  .progressline{display:flex;align-items:center;gap:10px;margin-top:10px}.progress{height:8px;flex:1;background:#e2e8f0;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:#2563eb;width:0%;transition:width .2s}.step-count{font-size:12px;color:var(--muted);min-width:70px;text-align:right}
+
+  .code-panel{position:sticky;top:calc(var(--headerH) + 12px)}
+  .code-tools{display:flex;gap:6px;flex-wrap:wrap}.mini-btn{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12px}.mini-btn:hover{background:#f1f5f9}
+  .code-scroll{height:calc(100vh - var(--headerH) - 82px);min-height:560px;overflow:auto;background:#0b1220;padding:10px 0 30px}
+  .code-line{display:grid;grid-template-columns:48px 1fr;min-height:25px;align-items:start;border-left:4px solid transparent;transition:background .18s,border-color .18s}.code-line .ln{color:#64748b;text-align:right;padding:2px 11px 2px 0;user-select:none;font:12px/21px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.code-line .src{white-space:pre;color:#dbeafe;padding:2px 14px 2px 7px;font:13px/21px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.code-line.active{background:#1e3a5f;border-left-color:#60a5fa}.code-line.active .ln{color:#bfdbfe;font-weight:800}.code-line.secondary{background:#3b2f15;border-left-color:#f59e0b}.code-line.returning{background:#123b2a;border-left-color:#22c55e}
+  .kw{color:#c084fc}.fn{color:#67e8f9}.str{color:#fde68a}.num{color:#86efac}.comment{color:#94a3b8;font-style:italic}
+
+  .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:#475569;margin-top:8px}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}.lg-focus{background:#60a5fa}.lg-pred{background:#fb923c}.lg-remove{background:#ef4444}.lg-change{background:#c084fc}
+
+  .footer-note{margin-top:14px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;color:#475569;font-size:13px}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}.modal-backdrop.show{display:flex}.modal{width:min(760px,96vw);max-height:86vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 25px 70px rgba(0,0,0,.35)}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}.modal-head h3{margin:0}.close{border:0;background:#f1f5f9;border-radius:8px;padding:5px 9px;font-size:20px;cursor:pointer}.modal-body{padding:16px 18px}.modal-body h4{margin:18px 0 6px}.modal-body p,.modal-body li{color:#334155}.modal-body .box{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);margin:8px 0}.modal-body .warnbox{background:#fff7ed;border-color:#fed7aa}.modal-body code{background:#f1f5f9;padding:1px 5px;border-radius:5px}
+
+  @media (max-width:1120px){:root{--headerH:132px}.topbar-inner{grid-template-columns:1fr}.toolbar{justify-content:flex-start}.overview,.workspace{grid-template-columns:1fr}.code-panel{position:relative;top:auto}.code-scroll{height:700px}.state-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:680px){:root{--headerH:180px}.page{padding-left:8px;padding-right:8px}.topbar-inner{padding:8px}.titlebox h1{font-size:18px}.overview{display:block}.hero{margin-bottom:10px}.rule-strip{grid-template-columns:1fr}.rule{border-right:0;border-bottom:1px solid var(--line)}.rule:last-child{border-bottom:0}.state-grid{grid-template-columns:1fr 1fr}.workspace{display:block}.panel{margin-bottom:12px}.code-scroll{height:620px}.src{font-size:12px!important}}
+
+
+  /* ===== V2：左側固定樹舞台、右側程式碼隨執行位置捲動 ===== */
+  .page{padding-top:calc(var(--headerH) + 12px);padding-bottom:24px}
+  .workspace{grid-template-columns:minmax(610px,1.08fr) minmax(520px,.92fr);gap:14px;align-items:start}
+  .visual-panel{position:sticky;top:calc(var(--headerH) + 10px);height:calc(100vh - var(--headerH) - 20px);min-height:680px;display:flex;flex-direction:column}
+  .visual-panel .panel-head{flex:0 0 auto}
+  .visual-panel .left-body{padding:0;flex:1;min-height:0;overflow:hidden}
+  .visual-panel .tree-wrap{height:100%;min-height:0;border:0;border-radius:0;overflow:hidden;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 48%,#f8fafc 100%)}
+  #treeSvg{display:block;width:100%;height:100%;min-width:0}
+
+  .tree-top-left{position:absolute;z-index:6;left:12px;top:12px;width:55%;max-width:470px}
+  .tree-top-left .scenario-note{margin:0;background:rgba(239,246,255,.96);box-shadow:0 4px 16px rgba(15,23,42,.06)}
+  .tree-state{position:absolute;z-index:6;right:12px;top:12px;width:39%;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .tree-state .state-card{min-height:58px;padding:7px 9px;background:rgba(255,255,255,.95);box-shadow:0 4px 14px rgba(15,23,42,.05)}
+  .tree-state .state-card span{font-size:10px}.tree-state .state-card b{font-size:13px}
+  .tree-stack{position:absolute;z-index:6;left:12px;top:118px;width:55%;max-width:480px}
+  .tree-stack .stackbox{margin:0;padding:7px 9px;background:rgba(248,250,252,.96);box-shadow:0 4px 14px rgba(15,23,42,.04)}
+  .tree-stack .cap{margin-bottom:4px}.tree-stack .frame{padding:3px 7px;font-size:11px}
+  .tree-legend{position:absolute;z-index:6;right:14px;top:128px;margin:0;padding:5px 8px;border-radius:9px;background:rgba(255,255,255,.9);border:1px solid rgba(203,213,225,.9);gap:7px;font-size:11px}
+
+  .tree-message{position:absolute;z-index:7;left:12px;right:12px;bottom:12px;min-height:0;padding:10px 12px;background:rgba(255,255,255,.96);backdrop-filter:blur(3px);box-shadow:0 6px 22px rgba(15,23,42,.08)}
+  .tree-message .step-title{font-size:16px;margin-bottom:3px}.tree-message .detail{font-size:13px;line-height:1.45}.tree-message .why{font-size:12px;margin-top:6px;padding:6px 8px}
+  .tree-message .progressline{margin-top:7px}.tree-message .progress{height:6px}
+
+  .code-panel{position:relative;top:auto;overflow:visible}
+  .code-scroll{height:auto;min-height:0;overflow:visible;background:#0b1220;padding:10px 0 30px}
+  .code-line{scroll-margin-top:calc(var(--headerH) + 120px)}
+  .code-line.active{box-shadow:inset 0 0 0 1px rgba(96,165,250,.12)}
+
+  .transfer-arrow{stroke:var(--orange);stroke-width:3;stroke-dasharray:8 6;fill:none;opacity:.95}
+  .transfer-text{font-size:12px;font-weight:800;fill:var(--orange);text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}
+
+  @media (max-width:1120px){
+    .workspace{grid-template-columns:1fr}
+    .visual-panel{position:relative;top:auto;height:760px;min-height:760px}
+    .code-scroll{height:auto;overflow:visible}
+  }
+  @media (max-width:680px){
+    .visual-panel{height:820px;min-height:820px}
+    .tree-top-left{width:calc(100% - 24px);max-width:none}
+    .tree-state{top:112px;left:12px;right:12px;width:auto;grid-template-columns:repeat(2,1fr)}
+    .tree-stack{top:244px;width:calc(100% - 24px);max-width:none}
+    .tree-legend{top:300px;left:12px;right:auto}
+  }
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="titlebox">
+      <h1>BST 二元搜尋樹：<span style="color:#93c5fd">delete_l()</span> 刪除動畫</h1>
+      <p>重點只放在「如何找到要刪的節點 → 分情況刪除 → 回傳新子樹根 → 父節點接回」。</p>
+    </div>
+    <div class="toolbar">
+      <label for="scenario">案例</label>
+      <select id="scenario"></select>
+      <button class="btn" id="prevBtn">← 上一步</button>
+      <button class="btn primary" id="playBtn">▶ 播放</button>
+      <button class="btn" id="nextBtn">下一步 →</button>
+      <button class="btn" id="resetBtn">重設</button>
+      <button class="btn warn" data-modal="rulesModal">刪除規則</button>
+      <span class="kbd">←</span><span class="kbd">→</span><span class="kbd">Space</span>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="workspace">
+    <div class="panel visual-panel">
+      <div class="panel-head">
+        <div><h3>左：BST 刪除舞台（固定不動）</h3><div class="sub">所有狀態與解說都直接顯示在樹狀圖內</div></div>
+        <div class="code-tools">
+          <button class="mini-btn" data-modal="returnModal">為什麼要 return？</button>
+          <button class="mini-btn" data-modal="maxModal">maxNode 做什麼？</button>
+        </div>
+      </div>
+      <div class="left-body">
+        <div class="tree-wrap">
+          <div class="tree-top-left">
+            <div class="scenario-note"><div class="dot"></div><div id="scenarioNote"></div></div>
+          </div>
+
+          <div class="tree-state" aria-label="目前刪除狀態">
+            <div class="state-card"><span>刪除 val</span><b id="targetVal">-</b></div>
+            <div class="state-card"><span>目前 self.data</span><b id="currentVal">-</b></div>
+            <div class="state-card"><span>比較 / 動作</span><b id="compareVal">-</b></div>
+            <div class="state-card"><span>return / 接回</span><b id="returnVal">-</b></div>
+          </div>
+
+          <div class="tree-stack">
+            <div class="stackbox"><div class="cap">遞迴路徑</div><div class="stack" id="stack"></div></div>
+          </div>
+
+          <div class="tree-legend legend">
+            <span><i class="lg-focus"></i>目前</span>
+            <span><i class="lg-pred"></i>前驅</span>
+            <span><i class="lg-remove"></i>刪除</span>
+            <span><i class="lg-change"></i>替換</span>
+          </div>
+
+          <svg id="treeSvg" viewBox="0 0 820 760" preserveAspectRatio="xMidYMid meet" aria-label="BST 刪除動畫"></svg>
+
+          <div class="tree-message message" aria-live="polite">
+            <div class="step-title" id="stepTitle">準備中</div>
+            <div class="detail" id="stepDetail"></div>
+            <div class="why" id="stepWhy"></div>
+            <div class="progressline"><div class="progress"><div id="progressBar"></div></div><div class="step-count" id="stepCount">0 / 0</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel code-panel">
+      <div class="panel-head">
+        <div><h3>右：你的完整 Python 程式碼</h3><div class="sub">動畫走到哪一行，這裡就同步高亮</div></div>
+        <div class="code-tools"><button class="mini-btn" data-modal="warningModal">程式注意</button></div>
+      </div>
+      <div class="code-scroll" id="codeScroll"><div id="codeBox"></div></div>
+    </div>
+  </section>
+</main>
+
+<!-- Modals -->
+<div class="modal-backdrop" id="rulesModal"><div class="modal"><div class="modal-head"><h3>BST 刪除的核心規則</h3><button class="close">×</button></div><div class="modal-body">
+  <div class="box"><b>先找節點：</b> <code>val &lt; self.data</code> 往左；<code>val &gt; self.data</code> 往右；相等才真正進入刪除。</div>
+  <h4>情況 A：沒有左子樹</h4><p><code>tmp = self.right</code>，最後 <code>return tmp</code>。父節點拿到這個回傳值後，會把原本指向你的連線改成指向右子樹。</p>
+  <h4>情況 B：沒有右子樹</h4><p>完全相反，<code>return self.left</code>，讓左子樹接替目前節點。</p>
+  <h4>情況 C：左右子樹都有</h4><p>不能直接拔掉，否則左右兩棵樹不知道怎麼接。這份程式採「左子樹最大值」當前驅：先把前驅值複製到目前節點，再到左子樹把那個重複的前驅刪掉。</p>
+</div></div></div>
+
+<div class="modal-backdrop" id="returnModal"><div class="modal"><div class="modal-head"><h3>為什麼一定要 return，再由父節點接回？</h3><button class="close">×</button></div><div class="modal-body">
+  <p>因為刪除後，原本那個位置的「子樹根」可能換人。</p>
+  <div class="box"><code>self.left = self.left.delete_l(val)</code></div>
+  <p>右邊遞迴刪除後會回傳「刪完之後，這棵左子樹的新根」。父節點再用等號把左指標接回去。</p>
+  <div class="box"><b>葉節點：</b>回傳 <code>None</code> → 父節點的 left/right 變 None。<br><b>只有一個子樹：</b>回傳那個孩子 → 孩子直接升上來。<br><b>左右都有：</b>節點本身通常仍是這棵子樹的根 → 最後 <code>return self</code>。</div>
+  <p>所以這裡的 <code>return</code> 不只是「函式結束」，而是在告訴父節點：「刪完後你現在應該指向誰」。</p>
+</div></div></div>
+
+<div class="modal-backdrop" id="maxModal"><div class="modal"><div class="modal-head"><h3>maxNode() 為什麼往右走？</h3><button class="close">×</button></div><div class="modal-body">
+  <p>BST 的規則是「左小右大」。因此在一棵子樹裡，最大值一定一路往右找。</p>
+  <div class="box"><code>ptr = self</code><br><code>while ptr.right:</code><br>&nbsp;&nbsp;&nbsp;&nbsp;<code>ptr = ptr.right</code><br><code>return ptr</code></div>
+  <p>刪除一個左右都有孩子的節點時，本程式用<strong>左子樹最大值</strong>當作替身，也叫「中序前驅 predecessor」。它一定比原節點小，但又是左子樹中最接近原節點的那個值，因此補上後仍能維持 BST 大小關係。</p>
+</div></div></div>
+
+<div class="modal-backdrop" id="warningModal"><div class="modal"><div class="modal-head"><h3>你的程式：兩個值得補充的邊界情況</h3><button class="close">×</button></div><div class="modal-body">
+  <div class="warnbox box"><b>1. 主程式最好接住根節點的回傳值</b><br>目前是 <code>bst.delete_l(n)</code>。若「根節點本身」剛好只有一個子樹或是葉節點，<code>delete_l()</code> 會回傳新的根，但主程式沒有接住。較通用寫法是：<br><code>bst = bst.delete_l(n)</code></div>
+  <div class="warnbox box"><b>2. <code>self.left=None</code> 是較特殊的簡化</b><br>當前驅剛好就是 <code>self.left</code> 時，你的程式直接把左子樹設為 None。若那個前驅本身還有左孩子，就會一起被丟掉。通用寫法通常會統一寫成：<br><code>self.left = self.left.delete_l(tmp.data)</code></div>
+  <p>這份動畫仍以你原本的程式為主；上面只是補充「一般 BST 寫法」需要注意的地方。你目前給的原始資料在示範刪除 20、15、4 等案例時，可以正常觀察核心刪除流程。</p>
+</div></div></div>
+
+<script>
+const PY_CODE = `class Node:
+    def __init__(self, data=None):
+        self.data=data
+        self.left=None
+        self.right=None        
+    def insert(self, data):
+        if self.data:
+            if data < self.data:
+                if self.left:
+                    self.left.insert(data)
+                else:
+                    self.left = Node(data)
+            else:
+                if self.right:
+                    self.right.insert(data)
+                else:
+                    self.right = Node(data)                
+        else:
+            self.data = data
+    def preorder(self):
+        print(self.data, end='->')
+        if self.left:
+            self.left.preorder()
+        if self.right:
+            self.right.preorder()
+    def maxNode(self):
+        ptr = self
+        while ptr.right:
+            ptr = ptr.right
+        return ptr
+    def delete_l(self, val):
+        if val < self.data:
+            if self.left:
+                self.left = self.left.delete_l(val)
+            else:
+                print(val, '不存在')
+        elif val > self.data:
+            if self.right:
+                self.right = self.right.delete_l(val)
+            else:
+                print(val, '不存在')
+        else:
+            if not self.left:
+                tmp = self.right
+                self.data = None
+                return tmp
+            elif not self.right:
+                tmp = self.left
+                self.data = None
+                return tmp
+            else:             
+                tmp = self.left.maxNode()                
+                self.data = tmp.data
+                if self.left.data==tmp.data:
+                    self.left=None
+                else:
+                    self.left.delete_l(tmp.data)
+        return self
+
+bst = Node()  
+datas = [20,15,17,30,32,27,4]
+for d in datas:
+    bst.insert(d)
+bst.preorder()
+print()
+n = eval(input("請輸入欲刪除資料 : "))
+bst.delete_l(n)
+bst.preorder()
+print()`;
+
+let IDSEQ = 1;
+class TNode{
+  constructor(data,id=null){this.data=data;this.id=id??IDSEQ++;this.left=null;this.right=null;}
+}
+function cloneTree(n){if(!n)return null;const c=new TNode(n.data,n.id);c.left=cloneTree(n.left);c.right=cloneTree(n.right);return c}
+function insert(root,v){
+  if(!root) return new TNode(v);
+  if(v<root.data) root.left=insert(root.left,v); else root.right=insert(root.right,v);
+  return root;
+}
+function makeBase(){IDSEQ=1;let r=null;[20,15,17,30,32,27,4].forEach(v=>r=insert(r,v));return r}
+function quietDelete(node,val){
+  if(!node)return null;
+  if(val<node.data){node.left=quietDelete(node.left,val);return node}
+  if(val>node.data){node.right=quietDelete(node.right,val);return node}
+  if(!node.left)return node.right;
+  if(!node.right)return node.left;
+  let p=node.left;while(p.right)p=p.right;node.data=p.data;node.left=quietDelete(node.left,p.data);return node;
+}
+
+const scenarios = {
+  root20:{label:'刪除 20：根節點左右都有',target:20,setup:[],note:'原始樹直接刪除 20。20 左右都有子樹，所以會找左子樹最大值 17 當前驅。這個案例最完整。'},
+  two15:{label:'刪除 15：左右都有（前驅就是 4）',target:15,setup:[],note:'15 的左孩子是 4、右孩子是 17。左子樹最大值就是 4，而且 4 剛好是直接左孩子，所以會走到 self.left=None。'},
+  leaf4:{label:'刪除 4：葉節點',target:4,setup:[],note:'4 沒有左孩子，也沒有右孩子。程式先命中「沒有左子樹」，tmp 會是 None，最後父節點把 left 接成 None。'},
+  oneLeft15:{label:'刪除 15：只剩左子樹',target:15,setup:[17],note:'為了示範單子樹，動畫開始前先把 17 靜默移除。因此 15 只剩左孩子 4，刪除時會 return self.left。'},
+  oneRight15:{label:'刪除 15：只剩右子樹',target:15,setup:[4],note:'為了示範單子樹，動畫開始前先把 4 靜默移除。因此 15 只剩右孩子 17，刪除時會 return self.right。'},
+  missing16:{label:'刪除 16：資料不存在',target:16,setup:[],note:'16 不在樹中。會依序比較 20 → 15 → 17，最後發現 17 沒有左子樹可以再走，因此印出「16 不存在」。'}
+};
+
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function highlightPlainCode(seg){
+  let h=esc(seg);
+  h=h.replace(/\b(class|def|if|elif|else|while|return|for|in|not|None)\b/g,'<span class="kw">$1</span>');
+  h=h.replace(/\b(insert|preorder|maxNode|delete_l|print|eval|input)\b/g,'<span class="fn">$1</span>');
+  h=h.replace(/\b(\d+)\b/g,'<span class="num">$1</span>');
+  return h;
+}
+function syntaxLine(s){
+  // 字串與註解先獨立處理，避免第二輪上色破壞 <span> 標籤。
+  let out='',plain='';
+  const flush=()=>{if(plain){out+=highlightPlainCode(plain);plain='';}};
+  for(let i=0;i<s.length;){
+    const ch=s[i];
+    if(ch==='#'){
+      flush();out+='<span class="comment">'+esc(s.slice(i))+'</span>';break;
+    }
+    if(ch==="'" || ch==='"'){
+      flush();const q=ch;let j=i+1;
+      while(j<s.length){
+        if(s[j]==='\\'){j+=2;continue;}
+        if(s[j]===q){j++;break;}
+        j++;
+      }
+      out+='<span class="str">'+esc(s.slice(i,j))+'</span>';i=j;continue;
+    }
+    plain+=ch;i++;
+  }
+  flush();return out;
+}
+function renderCode(){
+  const box=document.getElementById('codeBox');box.innerHTML='';
+  PY_CODE.split('\n').forEach((line,i)=>{
+    const d=document.createElement('div');d.className='code-line';d.id='L'+(i+1);
+    d.innerHTML=`<div class="ln">${String(i+1).padStart(2,'0')}</div><div class="src">${syntaxLine(line)||'&nbsp;'}</div>`;box.appendChild(d);
+  });
+}
+
+function buildSteps(conf){
+  let root=makeBase();
+  conf.setup.forEach(v=>root=quietDelete(root,v));
+  const holder={root};const steps=[];const target=conf.target;
+  const snap=(o={})=>steps.push({tree:cloneTree(holder.root),target,lines:[],stack:[],title:'',detail:'',why:'',current:'-',compare:'-',ret:'-',focusId:null,predId:null,removeId:null,changedId:null,lineClass:'active',...o});
+  snap({lines:[61,62,63],title:'先建立原始 BST',detail:`依序插入 <code>[20,15,17,30,32,27,4]</code>${conf.setup.length?`，並先移除 ${conf.setup.join('、')} 作為本案例的起始狀態。`: '。'}`,why:'接下來只追蹤 delete_l() 的刪除部分。'});
+  snap({lines:[66,67],title:`準備刪除 ${target}`,detail:`主程式取得 <code>n = ${target}</code>，呼叫 <code>bst.delete_l(${target})</code>。`,why:'真正的刪除工作從 delete_l(val) 開始。'});
+
+  function del(node,val,stack){
+    const callStack=[...stack, node?.data ?? 'None'];
+    if(!node) return null;
+    snap({lines:[31],stack:callStack,title:`進入 delete_l(${val})`,detail:`目前 <code>self.data = ${node.data}</code>。先比較 val 和 self.data。`,current:node.data,compare:`${val} ? ${node.data}`,focusId:node.id,why:'BST 搜尋刪除跟搜尋一樣：小的往左，大的往右。'});
+
+    if(val<node.data){
+      snap({lines:[32,33],stack:callStack,title:`${val} < ${node.data}，往左找`,detail:`條件 <code>val &lt; self.data</code> 成立。檢查左子樹是否存在。`,current:node.data,compare:'val < self.data',focusId:node.id,why:'BST 左子樹的值都比目前節點小。'});
+      if(node.left){
+        snap({lines:[34],stack:callStack,title:'遞迴進入左子樹',detail:`執行 <code>self.left = self.left.delete_l(${val})</code>。`,current:node.data,compare:'往左',focusId:node.left.id,why:'注意等號左邊：遞迴刪完後，父節點還要把「新的左子樹根」接回來。'});
+        const before=node.left;
+        const result=del(node.left,val,callStack);
+        node.left=result;
+        snap({lines:[34],lineClass:'returning',stack:callStack,title:'左子樹回傳，父節點接回',detail:`遞迴回傳 ${result?`節點 <code>${result.data}</code>`:'<code>None</code>'}，所以 <code>self.left</code> 更新完成。`,current:node.data,compare:'接回 left',ret:result?String(result.data):'None',focusId:node.id,removeId:result?null:before.id,why:'這一步就是刪除能真正改變樹連線的關鍵。'});
+      }else{
+        snap({lines:[35,36],stack:callStack,title:`${val} 不存在`,detail:`需要往左，但 ${node.data} 已經沒有左孩子，所以印出 <code>${val} 不存在</code>。`,current:node.data,compare:'左邊已空',focusId:node.id,why:'搜尋路徑已經走到底，BST 中沒有這個值。'});
+      }
+      snap({lines:[58],lineClass:'returning',stack:stack,title:`delete_l(${val}) 回傳 self`,detail:`目前這棵子樹的根仍是 <code>${node.data}</code>，所以 <code>return self</code>。`,current:node.data,ret:String(node.data),focusId:node.id,why:'讓上一層知道：「刪完後這棵子樹仍由我當根」。'});
+      return node;
+    }
+
+    if(val>node.data){
+      snap({lines:[37,38],stack:callStack,title:`${val} > ${node.data}，往右找`,detail:`條件 <code>val &gt; self.data</code> 成立。檢查右子樹是否存在。`,current:node.data,compare:'val > self.data',focusId:node.id,why:'BST 右子樹的值都比目前節點大。'});
+      if(node.right){
+        snap({lines:[39],stack:callStack,title:'遞迴進入右子樹',detail:`執行 <code>self.right = self.right.delete_l(${val})</code>。`,current:node.data,compare:'往右',focusId:node.right.id,why:'刪除可能讓右子樹根改變，因此回來時也必須接回。'});
+        const before=node.right;
+        const result=del(node.right,val,callStack);
+        node.right=result;
+        snap({lines:[39],lineClass:'returning',stack:callStack,title:'右子樹回傳，父節點接回',detail:`遞迴回傳 ${result?`節點 <code>${result.data}</code>`:'<code>None</code>'}，所以 <code>self.right</code> 更新完成。`,current:node.data,compare:'接回 right',ret:result?String(result.data):'None',focusId:node.id,removeId:result?null:before.id,why:'父節點不是「等遞迴做完就好」，還要使用回傳值修正自己的 right。'});
+      }else{
+        snap({lines:[40,41],stack:callStack,title:`${val} 不存在`,detail:`需要往右，但 ${node.data} 已經沒有右孩子，所以印出 <code>${val} 不存在</code>。`,current:node.data,compare:'右邊已空',focusId:node.id,why:'搜尋路徑走到底仍找不到。'});
+      }
+      snap({lines:[58],lineClass:'returning',stack:stack,title:`delete_l(${val}) 回傳 self`,detail:`目前這棵子樹仍由 <code>${node.data}</code> 當根。`,current:node.data,ret:String(node.data),focusId:node.id,why:'回到上一層，讓上一層繼續接回。'});
+      return node;
+    }
+
+    snap({lines:[42],stack:callStack,title:`找到要刪除的節點 ${node.data}`,detail:`現在 <code>val == self.data</code>，搜尋結束，開始判斷這個節點有幾個子樹。`,current:node.data,compare:'相等，命中',focusId:node.id,removeId:node.id,why:'真正的刪除只會在「相等」這一支發生。'});
+
+    if(!node.left){
+      snap({lines:[43],stack:callStack,title:'情況①：沒有左子樹',detail:`<code>not self.left</code> 成立。右子樹可能存在，也可能是 None。`,current:node.data,compare:'left = None',focusId:node.id,removeId:node.id,why:'如果右邊也沒有，就是葉節點；同一段程式可以一起處理。'});
+      const tmp=node.right;
+      snap({lines:[44],stack:callStack,title:'先記住右子樹 tmp',detail:`<code>tmp = self.right</code>，所以 tmp = ${tmp?`節點 ${tmp.data}`:'None'}。`,current:node.data,ret:tmp?String(tmp.data):'None',focusId:node.id,removeId:node.id,why:'因為目前節點要被移除，先保存「誰要接替它」。'});
+      node.data=null;
+      snap({lines:[45],stack:callStack,title:'把目前節點資料清掉',detail:'執行 <code>self.data = None</code>。動畫暫時用 ∅ 顯示這個即將被父節點斷開的節點。',current:'None',focusId:node.id,removeId:node.id,why:'真正讓它從樹上消失的，是下一層父節點收到 return 後重新接指標。'});
+      snap({lines:[46],lineClass:'returning',stack:stack,title:`return ${tmp?tmp.data:'None'}`,detail:`把 ${tmp?`右子樹根 <code>${tmp.data}</code>`:'<code>None</code>'} 回傳給父節點。`,current:'None',ret:tmp?String(tmp.data):'None',removeId:node.id,why:tmp?'右孩子直接升上來，接替被刪除節點的位置。':'葉節點沒有任何孩子，所以回傳 None，父節點會把原連線清掉。'});
+      return tmp;
+    }
+
+    if(!node.right){
+      snap({lines:[47],stack:callStack,title:'情況②：沒有右子樹',detail:'左子樹存在、右子樹不存在，所以讓左子樹直接接替目前節點。',current:node.data,compare:'right = None',focusId:node.id,removeId:node.id,why:'這是「只有左孩子」的標準刪除。'});
+      const tmp=node.left;
+      snap({lines:[48],stack:callStack,title:`tmp 記住左子樹 ${tmp.data}`,detail:`<code>tmp = self.left</code>，先保存之後要升上來的子樹根。`,current:node.data,ret:String(tmp.data),focusId:node.id,removeId:node.id,why:'目前節點刪除後，左孩子要補它的位置。'});
+      node.data=null;
+      snap({lines:[49],stack:callStack,title:'清掉目前節點資料',detail:'執行 <code>self.data = None</code>，準備把這個節點從父節點連線中換掉。',current:'None',focusId:node.id,removeId:node.id,why:'同樣，真正換線要靠 return 值。'});
+      snap({lines:[50],lineClass:'returning',stack:stack,title:`return ${tmp.data}`,detail:`回傳左子樹根 <code>${tmp.data}</code>。上一層接回後，${tmp.data} 就會直接頂上原來的位置。`,current:'None',ret:String(tmp.data),removeId:node.id,predId:tmp.id,why:'一個子樹的情況最簡單：唯一的孩子直接升一層。'});
+      return tmp;
+    }
+
+    snap({lines:[51,52],stack:callStack,title:'情況③：左右子樹都有',detail:`${node.data} 不能直接拔掉。執行 <code>tmp = self.left.maxNode()</code>，準備在左子樹找最大值。`,current:node.data,compare:'左右都有',focusId:node.id,why:'用左子樹最大值補上，可以維持「左小右大」。'});
+    let ptr=node.left;
+    snap({lines:[26,27,52],stack:callStack,title:`maxNode：先從左子樹 ${ptr.data} 出發`,detail:`<code>ptr = self</code>。現在要在這棵左子樹一路往右找。`,current:node.data,focusId:node.id,predId:ptr.id,why:'在 BST 中，越往右值越大。'});
+    while(ptr.right){
+      snap({lines:[28,29],stack:callStack,title:`${ptr.data} 還有右孩子 ${ptr.right.data}`,detail:`<code>while ptr.right</code> 成立，令 ptr 往右移到 ${ptr.right.data}。`,current:node.data,focusId:node.id,predId:ptr.right.id,why:'一直往右，直到再也沒有右孩子。'});
+      ptr=ptr.right;
+    }
+    snap({lines:[30,52],stack:callStack,title:`找到左子樹最大值 ${ptr.data}`,detail:`${ptr.data} 沒有右孩子，所以 <code>maxNode()</code> 回傳它。`,current:node.data,ret:String(ptr.data),focusId:node.id,predId:ptr.id,why:`${ptr.data} 就是要拿來取代 ${node.data} 的前驅。`});
+    const old=node.data;
+    node.data=ptr.data;
+    snap({lines:[53],stack:callStack,title:`把 ${ptr.data} 複製到原節點`,detail:`執行 <code>self.data = tmp.data</code>。原本的 ${old} 位置現在變成 ${ptr.data}。`,current:node.data,focusId:node.id,predId:ptr.id,changedId:node.id,why:`此時樹上暫時會有兩個 ${ptr.data}，下一步要刪掉左子樹裡舊的那一個。`});
+
+    if(node.left.data===ptr.data){
+      snap({lines:[54],stack:callStack,title:'前驅就是直接左孩子',detail:`<code>self.left.data == tmp.data</code> 成立，表示前驅 ${ptr.data} 就是直接左孩子。`,current:node.data,focusId:node.id,predId:ptr.id,why:'你的程式對這種情況做了特別處理。'});
+      const removed=node.left;
+      node.left=null;
+      snap({lines:[55],stack:callStack,title:`移除左孩子 ${ptr.data}`,detail:'執行 <code>self.left = None</code>，舊的前驅節點從這個案例的樹中移除。',current:node.data,focusId:node.id,removeId:removed.id,changedId:node.id,why:'目前節點已經拿到前驅值，所以舊前驅不能再留著。'});
+    }else{
+      snap({lines:[54,56,57],stack:callStack,title:`前驅 ${ptr.data} 在更深的位置`,detail:`直接左孩子不是 ${ptr.data}，所以呼叫 <code>self.left.delete_l(${ptr.data})</code>，到左子樹內把重複值刪掉。`,current:node.data,focusId:node.id,predId:ptr.id,why:'這會再走一次 BST 刪除流程；因為前驅是左子樹最右端，所以它一定沒有右孩子。'});
+      del(node.left,ptr.data,callStack);
+    }
+    snap({lines:[58],lineClass:'returning',stack:stack,title:`${node.data} 成為這棵子樹的新根值`,detail:`雙子樹刪除完成，最後 <code>return self</code>。`,current:node.data,ret:String(node.data),focusId:node.id,changedId:node.id,why:'節點物件本身還在，只是資料由前驅值取代；舊前驅已被刪掉。'});
+    return node;
+  }
+
+  const originalRoot=holder.root;
+  const result=del(holder.root,target,[]);
+  // 模擬目前主程式 bst.delete_l(n) 沒有把 return 指派回 bst。
+  // 目前預設案例不會因此出錯；若 root 被直接替換，warning modal 有說明。
+  if(result===originalRoot){ holder.root=result; }
+  snap({lines:[68],stack:[],title:'刪除流程結束，preorder 再走訪',detail:'現在可以比較刪除前後的樹。動畫停在最終結果。',current:holder.root?.data??'None',ret:'完成',focusId:holder.root?.id??null,why:'你可以按「重設」或切換其他案例，觀察三種刪除情況的差異。'});
+  return steps;
+}
+
+function flattenNodes(root){const arr=[];function go(n,depth,x1,x2,parent=null,side=''){if(!n)return;const x=(x1+x2)/2,y=235+depth*125;arr.push({n,depth,x,y,parent,side});go(n.left,depth+1,x1,x,n,'left');go(n.right,depth+1,x,x2,n,'right')}go(root,0,70,750);return arr}
+function renderTree(step){
+  const svg=document.getElementById('treeSvg');svg.innerHTML='';
+  const root=step.tree;if(!root){svg.innerHTML='<text x="380" y="215" text-anchor="middle" fill="#64748b" font-size="24">樹目前是空的</text>';return}
+  const nodes=flattenNodes(root),map=new Map(nodes.map(o=>[o.n.id,o]));
+  nodes.forEach(o=>{if(!o.parent)return;const p=map.get(o.parent.id);const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',p.x);line.setAttribute('y1',p.y+28);line.setAttribute('x2',o.x);line.setAttribute('y2',o.y-28);line.setAttribute('class','edge');svg.appendChild(line)});
+
+  // 只有真正執行 self.data = tmp.data 時，才畫「前驅值複製」箭頭。
+  if(step.changedId && step.predId && step.focusId && step.predId!==step.focusId){
+    const from=map.get(step.predId),to=map.get(step.focusId);
+    if(from&&to){
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',from.x);line.setAttribute('y1',from.y-28);line.setAttribute('x2',to.x);line.setAttribute('y2',to.y+34);line.setAttribute('class','transfer-arrow');svg.appendChild(line);
+      const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tx.setAttribute('x',(from.x+to.x)/2);tx.setAttribute('y',(from.y+to.y)/2-10);tx.setAttribute('class','transfer-text');tx.textContent='前驅值複製';svg.appendChild(tx);
+    }
+  }
+
+  nodes.forEach(o=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');let cls='node';
+    if(o.n.id===step.focusId)cls+=' focus';if(o.n.id===step.predId)cls+=' pred';if(o.n.id===step.removeId)cls+=' remove';if(o.n.id===step.changedId)cls+=' changed';if(o.n.data===null)cls+=' nil';g.setAttribute('class',cls);g.setAttribute('transform',`translate(${o.x},${o.y})`);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','29');g.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.textContent=o.n.data===null?'∅':o.n.data;g.appendChild(t);
+    let label='';if(o.n.id===step.predId)label='前驅';if(o.n.id===step.removeId)label='刪除';if(o.n.id===step.focusId)label='目前';if(o.n.id===step.changedId)label='已替換';
+    if(label){const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x','-24');r.setAttribute('y','-48');r.setAttribute('width','48');r.setAttribute('height','19');r.setAttribute('rx','8');r.setAttribute('class','label-bg');g.appendChild(r);const lt=document.createElementNS('http://www.w3.org/2000/svg','text');lt.setAttribute('y','-38');lt.setAttribute('class','label-text');lt.textContent=label;g.appendChild(lt)}
+    svg.appendChild(g);
+  });
+}
+
+let steps=[],idx=0,timer=null,currentScenario='root20';
+function setCodeHighlight(step){
+  document.querySelectorAll('.code-line').forEach(x=>x.classList.remove('active','secondary','returning'));
+  step.lines.forEach((ln,i)=>{const e=document.getElementById('L'+ln);if(e)e.classList.add(step.lineClass==='returning'?'returning':(i===0?'active':'secondary'))});
+  const first=document.getElementById('L'+step.lines[0]);if(first)first.scrollIntoView({block:'center',behavior:'smooth'});
+}
+function renderStep(){
+  if(!steps.length)return;const s=steps[idx];renderTree(s);setCodeHighlight(s);
+  document.getElementById('targetVal').textContent=s.target;
+  document.getElementById('currentVal').textContent=s.current;
+  document.getElementById('compareVal').textContent=s.compare;
+  document.getElementById('returnVal').textContent=s.ret;
+  document.getElementById('stepTitle').textContent=s.title;
+  document.getElementById('stepDetail').innerHTML=s.detail;
+  document.getElementById('stepWhy').innerHTML='<b>為什麼：</b> '+s.why;
+  const st=document.getElementById('stack');st.innerHTML='';(s.stack||[]).forEach(v=>{const e=document.createElement('span');e.className='frame';e.textContent=`delete_l @ ${v}`;st.appendChild(e)});if(!(s.stack||[]).length)st.innerHTML='<span style="color:#64748b;font-size:12px">目前在主程式 / 已返回</span>';
+  document.getElementById('progressBar').style.width=((idx+1)/steps.length*100)+'%';document.getElementById('stepCount').textContent=`${idx+1} / ${steps.length}`;
+  document.getElementById('prevBtn').disabled=idx===0;document.getElementById('nextBtn').disabled=idx===steps.length-1;
+}
+function loadScenario(key){stopPlay();currentScenario=key;const conf=scenarios[key];steps=buildSteps(conf);idx=0;document.getElementById('scenarioNote').innerHTML=`<b>${esc(conf.label)}</b><br>${esc(conf.note)}`;renderStep()}
+function next(){if(idx<steps.length-1){idx++;renderStep()}else stopPlay()}
+function prev(){if(idx>0){idx--;renderStep()}}
+function startPlay(){if(timer)return;document.getElementById('playBtn').textContent='⏸ 暫停';timer=setInterval(()=>{if(idx>=steps.length-1){stopPlay();return}next()},1250)}
+function stopPlay(){if(timer){clearInterval(timer);timer=null}document.getElementById('playBtn').textContent='▶ 播放'}
+function togglePlay(){timer?stopPlay():startPlay()}
+
+function setupUI(){
+  renderCode();
+  const sel=document.getElementById('scenario');Object.entries(scenarios).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;sel.appendChild(o)});sel.value=currentScenario;sel.addEventListener('change',e=>loadScenario(e.target.value));
+  document.getElementById('nextBtn').onclick=next;document.getElementById('prevBtn').onclick=prev;document.getElementById('playBtn').onclick=togglePlay;document.getElementById('resetBtn').onclick=()=>loadScenario(currentScenario);
+  document.addEventListener('keydown',e=>{if(['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(e.key==='ArrowRight'){e.preventDefault();next()}if(e.key==='ArrowLeft'){e.preventDefault();prev()}if(e.code==='Space'){e.preventDefault();togglePlay()}});
+  document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.modal).classList.add('show')));
+  document.querySelectorAll('.modal-backdrop').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m||e.target.classList.contains('close'))m.classList.remove('show')})});
+  loadScenario(currentScenario);
+}
+setupUI();
+</script>
+</body>
+</html>

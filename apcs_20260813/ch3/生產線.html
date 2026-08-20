@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>g597 生產線：差分與前綴和一步一步動畫</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{--toolbar-h:104px;--left-w:58%;--bg:#f4f7fb;--panel:#fff;--border:#d8e0ea;--text:#1f2937;--muted:#64748b;--primary:#2563eb;--primary-soft:#dbeafe;--green:#16a34a;--green-soft:#dcfce7;--orange:#ea580c;--orange-soft:#ffedd5;--red:#dc2626;--red-soft:#fee2e2;--code-bg:#0f172a;--code-text:#e5e7eb;--code-active:#facc15}
+*{box-sizing:border-box}body{margin:0;font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.6}.toolbar{position:fixed;top:0;left:0;right:0;height:var(--toolbar-h);z-index:1000;background:#0f172a;color:#fff;border-bottom:4px solid #1d4ed8;padding:10px 14px;display:flex;flex-direction:column;gap:8px}.toolbar-top,.toolbar-bottom{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.title{font-size:21px;font-weight:900;margin-right:8px}button{border:1px solid #93c5fd;background:#1d4ed8;color:#fff;border-radius:10px;padding:7px 12px;font-size:15px;font-weight:800;cursor:pointer}button:hover{background:#2563eb}button.secondary{background:#334155;border-color:#64748b}button.secondary:hover{background:#475569}.sample-btn.active{background:#16a34a;border-color:#86efac}.status-pill{background:#1e293b;border:1px solid #475569;border-radius:999px;padding:5px 10px;font-size:15px;font-weight:800}.message{flex:1;min-width:280px;background:#111827;border:1px solid #334155;border-radius:10px;padding:6px 10px;font-size:16px;color:#f8fafc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.main{padding-top:var(--toolbar-h);height:100vh;display:flex;overflow:hidden}.left-pane{width:var(--left-w);min-width:360px;height:calc(100vh - var(--toolbar-h));overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px}.divider{width:8px;cursor:col-resize;background:linear-gradient(to right,#cbd5e1,#94a3b8,#cbd5e1);flex:0 0 8px}.right-pane{flex:1;min-width:360px;height:calc(100vh - var(--toolbar-h));overflow:hidden;padding:14px 14px 14px 0;display:flex;flex-direction:column}.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative;flex-shrink:0;width:100%;box-shadow:0 4px 14px rgba(15,23,42,.05)}.card h2{margin:0 0 10px;font-size:20px;line-height:1.35;border-left:6px solid var(--primary);padding-left:10px}.card h3{margin:12px 0 8px;font-size:18px}.big-focus{font-size:19px;font-weight:900;background:var(--primary-soft);border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px}.note{background:#f8fafc;border:1px solid var(--border);border-left:5px solid var(--primary);border-radius:10px;padding:10px;margin:8px 0}.note.success{background:var(--green-soft);border-left-color:var(--green)}.note.warning{background:var(--orange-soft);border-left-color:var(--orange)}.note.danger{background:var(--red-soft);border-left-color:var(--red)}.formula{display:inline-block;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;padding:1px 7px;border-radius:7px;font-family:Consolas,Monaco,monospace;font-weight:900}.svg-wrap{width:100%;height:245px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}svg{display:block;width:100%;height:100%}.table-scroll{overflow:auto;max-height:365px;border-radius:12px}table{width:100%;border-collapse:collapse;background:#fff;font-size:15px}th,td{border:1px solid #dbe3ef;padding:7px 9px;text-align:center;vertical-align:middle}th{background:#eff6ff;color:#1e3a8a;font-weight:900}td.rowhead,th.rowhead{text-align:left;font-weight:900;background:#f8fafc;white-space:nowrap}.hl-start{background:#dcfce7!important;color:#14532d;font-weight:900}.hl-stop{background:#fee2e2!important;color:#7f1d1d;font-weight:900}.hl-load{background:#fef3c7!important;color:#78350f;font-weight:900}.hl-active{outline:3px solid #f59e0b;outline-offset:-3px}.code-card{height:100%;display:flex;flex-direction:column;overflow:hidden}.code-title{font-size:19px;font-weight:900;padding:10px 12px;background:#1e293b;color:#fff;border-radius:12px 12px 0 0}.code-box{flex:1;overflow:auto;background:var(--code-bg);color:var(--code-text);border-radius:0 0 12px 12px;padding:10px 0;font-family:Consolas,Monaco,monospace;font-size:15px;line-height:1.55}.code-line{display:grid;grid-template-columns:46px 1fr;min-height:25px;padding:0 12px 0 0;border-left:5px solid transparent}.code-line .ln{text-align:right;padding-right:10px;color:#94a3b8;user-select:none}.code-line .txt{white-space:pre}.code-line.active{background:rgba(250,204,21,.18);border-left-color:var(--code-active)}.code-line.active .ln{color:#fde68a;font-weight:900}pre{background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-size:15px;line-height:1.5}.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}.modal{background:#fff;color:var(--text);width:min(960px,96vw);max-height:70vh;overflow:auto;border-radius:16px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.35)}.modal h2{margin-top:0}.modal-close{float:right;background:#dc2626;border-color:#fecaca}.badge{display:inline-block;background:#e0f2fe;color:#075985;border:1px solid #bae6fd;border-radius:999px;padding:2px 8px;font-weight:900;font-size:14px}@media(max-width:900px){:root{--toolbar-h:142px}.message{white-space:normal}.main{flex-direction:column;overflow:auto;height:auto}.left-pane,.right-pane{width:100%;min-width:0;height:auto;overflow:visible}.divider{display:none}.right-pane{padding:0 14px 14px}.code-card{min-height:520px}}
+</style>
+</head>
+<body>
+<div class="toolbar"><div class="toolbar-top"><div class="title">g597 生產線｜差分與前綴和一步一步動畫</div><button id="problemBtn" class="secondary">題目</button><button id="sample0" class="sample-btn active">範例 1</button><button id="sample1" class="sample-btn">範例 2</button><button id="prevBtn">上一步</button><button id="nextBtn">下一步</button><button id="playBtn">播放</button><button id="resetBtn" class="secondary">重設</button></div><div class="toolbar-bottom"><div id="stepInfo" class="status-pill">步驟 1 / 1</div><div id="resultInfo" class="status-pill">目前狀態</div><div id="stepMessage" class="message">準備開始</div></div></div>
+<div class="main"><div class="left-pane"><section class="card"><h2>核心想法</h2><div id="focusBox" class="big-focus">先算哪個位置最忙，再把最快的機器放到最忙的位置。</div><div class="note success"><strong>兩步驟：</strong><br>1. 用差分 + 前綴和，算出每個位置的工作量。<br>2. 工作量由大到小，機器時間由小到大，依序配對。</div></section><section class="card"><h2>範例輸入輸出與資料說明</h2><div id="samplePanel"></div></section><section class="card"><h2>目前資料視覺化</h2><div class="svg-wrap"><svg id="visualSvg" viewBox="0 0 1000 260" preserveAspectRatio="xMidYMid meet"></svg></div></section><section class="card"><h2>本步驟詳細狀態</h2><div id="detailPanel"></div></section></div><div class="divider" id="divider"></div><div class="right-pane"><section class="card code-card"><div class="code-title">完整 Python 程式碼</div><div id="codeBox" class="code-box"></div></section></div></div>
+<div class="modal-backdrop" id="problemModal"><div class="modal"><button class="modal-close" id="closeModal">關閉</button><h2>題目文字版：g597. 3. 生產線</h2><p>有 <span class="formula">n</span> 台機器排成一條直線，每一台機器都有一個數值 <span class="formula">t[i]</span>。</p><p><span class="formula">t[i]</span> 代表第 <span class="formula">i</span> 台機器要產出 1 單位資料，需要 <span class="formula">t[i]</span> 單位的時間。數字越小，機器越快。</p><p>接下來有 <span class="formula">m</span> 個工作。每個工作給三個數：</p><pre><code>l[i] r[i] w[i]</code></pre><p>意思是：位置從 <span class="formula">l[i]</span> 到 <span class="formula">r[i]</span> 的每一台機器，都要各自生產 <span class="formula">w[i]</span> 單位資料。</p><p>你可以調換機器順序，請讓所有工作完成的總時間最小。</p><h3>輸入說明</h3><pre><code>n m
+l[1] r[1] w[1]
+...
+l[m] r[m] w[m]
+t[1] t[2] ... t[n]</code></pre><h3>輸出說明</h3><p>輸出一個整數，代表最小總花費時間。</p><h3>限制</h3><ul><li>1 ≤ n, m ≤ 200000</li><li>1 ≤ w[i] ≤ 100</li><li>1 ≤ t[i] ≤ 100</li><li>1 ≤ l[i] ≤ r[i] ≤ n</li></ul><h3>範例輸入 #1</h3><pre><code>5 1
+2 4 1
+1 2 3 4 5</code></pre><h3>範例輸出 #1</h3><pre><code>6</code></pre><h3>範例輸入 #2</h3><pre><code>10 3
+2 5 6
+3 6 4
+7 8 1
+1 2 3 4 5 6 7 8 9 10</code></pre><h3>範例輸出 #2</h3><pre><code>117</code></pre></div></div>
+<script>
+const CODE_LINES = ["n, m = map(int, input().split())        #取得機器數n及工作數m", "d = [0]*(n+2)                           #差分數列", "for _ in range(m):", "    l, r, w = map(int, input().split()) #l-r的機器工作量為w", "    d[l] += w                           #左端點l位置+w", "    d[r+1] -= w                         #右端點r下一個位置-w", "#print(d)", "loads = [0]*(n+2)                       #各機器工作負載", "for i in range(1, n+1):", "    loads[i] = loads[i-1]+d[i]          #差分序列作前綴和", "loads.pop(0)                            #取出前後加入的0", "loads.pop()                             ", "#print(loads)", "t = [int(x) for x in input().split()]   #機器工作時間", "loads.sort(reverse=True)                #依機器工作量由大到小排列", "t.sort()                                #機器工作時間由小到大排列                             ", "#print(loads)", "total = 0                               #工作總時間             ", "for i in range(n):", "    total += loads[i]*t[i]", "print(total)"];
+const SAMPLES = [{"name": "範例 1", "input": "5 1\n2 4 1\n1 2 3 4 5", "output": "6", "n": 5, "m": 1, "jobs": [[2, 4, 1]], "t": [1, 2, 3, 4, 5], "steps": [{"title": "讀入 n 與 m", "message": "讀入 n=5、m=1。先知道有幾個位置與幾個工作。", "result": "n=5, m=1", "activeLines": [1], "phase": "intro", "n": 5, "m": 1, "focusText": "先算哪個位置最忙，再把最快的機器放到最忙的位置。"}, {"title": "建立差分數列 d", "message": "建立 d。d 不是答案，它只記錄每個位置的工作量變化。", "result": "d 已建立，全部都是 0。", "activeLines": [2], "phase": "diff", "n": 5, "m": 1, "d": [0, 0, 0, 0, 0, 0], "focusText": "d[i] 只記變化；loads[i] 才是真正工作量。"}, {"title": "處理工作 1：2 到 4 每格加 1", "message": "這次只改兩格：d[2] 加 1，d[5] 減 1。中間不要填，前綴和會算出效果。", "result": "d[2] += 1, d[5] -= 1", "activeLines": [3, 4, 5, 6], "phase": "job", "n": 5, "m": 1, "jobIndex": 1, "l": 2, "r": 4, "w": 1, "beforeD": [0, 0, 0, 0, 0, 0], "changeD": [0, 1, 0, 0, -1, 0], "afterD": [0, 1, 0, 0, -1, 0], "previewLoads": [0, 1, 1, 1, 0, null], "activeCells": [2, 5], "focusText": "計算後 d = 之前 d + 這次變化。"}, {"title": "建立 loads", "message": "建立 loads，用前綴和存每個位置真正的工作量。", "result": "準備開始前綴和。", "activeLines": [8], "phase": "loads-init", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 0, 0, 0, 0, 0], "focusText": "一路累加 d，就會得到真正工作量。"}, {"title": "前綴和：算第 1 個位置", "message": "loads[1] = 前一格 0 + d[1] 的變化 0 = 0。", "result": "loads[1]=0", "activeLines": [9, 10], "phase": "prefix", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 0, 0, 0, 0, 0], "activeCells": [1], "prefixInfo": {"i": 1, "prev": 0, "dval": 0, "value": 0}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 2 個位置", "message": "loads[2] = 前一格 0 + d[2] 的變化 1 = 1。", "result": "loads[2]=1", "activeLines": [9, 10], "phase": "prefix", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 1, 0, 0, 0, 0], "activeCells": [2], "prefixInfo": {"i": 2, "prev": 0, "dval": 1, "value": 1}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 3 個位置", "message": "loads[3] = 前一格 1 + d[3] 的變化 0 = 1。", "result": "loads[3]=1", "activeLines": [9, 10], "phase": "prefix", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 1, 1, 0, 0, 0], "activeCells": [3], "prefixInfo": {"i": 3, "prev": 1, "dval": 0, "value": 1}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 4 個位置", "message": "loads[4] = 前一格 1 + d[4] 的變化 0 = 1。", "result": "loads[4]=1", "activeLines": [9, 10], "phase": "prefix", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 1, 1, 1, 0, 0], "activeCells": [4], "prefixInfo": {"i": 4, "prev": 1, "dval": 0, "value": 1}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 5 個位置", "message": "loads[5] = 前一格 1 + d[5] 的變化 -1 = 0。", "result": "loads[5]=0", "activeLines": [9, 10], "phase": "prefix", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 1, 1, 1, 0, 0], "activeCells": [5], "prefixInfo": {"i": 5, "prev": 1, "dval": -1, "value": 0}, "focusText": "一路累加，答案出現。"}, {"title": "移除輔助格", "message": "只留下正式位置 1 到 n 的工作量。", "result": "工作量：0 1 1 1 0", "activeLines": [11, 12], "phase": "trim", "n": 5, "m": 1, "d": [0, 1, 0, 0, -1, 0], "loads": [0, 1, 1, 1, 0], "focusText": "現在知道哪個位置最忙了。"}, {"title": "讀入機器時間 t", "message": "讀入每台機器做 1 單位資料需要的時間。數字越小，機器越快。", "result": "機器時間：1 2 3 4 5", "activeLines": [14], "phase": "time", "n": 5, "m": 1, "loads": [0, 1, 1, 1, 0], "t": [1, 2, 3, 4, 5], "focusText": "t 越小，機器越快。"}, {"title": "工作量由大排到小", "message": "先找哪個位置最忙，所以把工作量由大到小排序。", "result": "工作量排序：1 1 1 0 0", "activeLines": [15], "phase": "sort-loads", "n": 5, "m": 1, "loads": [0, 1, 1, 1, 0], "sortedLoads": [1, 1, 1, 0, 0], "t": [1, 2, 3, 4, 5], "focusText": "最忙的位置排在最前面。"}, {"title": "機器時間由小排到大", "message": "最快的機器排到前面。時間越小，代表越快。", "result": "機器時間排序：1 2 3 4 5", "activeLines": [16], "phase": "sort-time", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "focusText": "最快的機器排在最前面。"}, {"title": "配對第 1 組", "message": "工作量 1 配時間 1，本組花 1，目前總時間 1。", "result": "目前總時間：1", "activeLines": [19, 20], "phase": "pair", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}], "activePair": 0, "focusText": "工作量大，配時間小。"}, {"title": "配對第 2 組", "message": "工作量 1 配時間 2，本組花 2，目前總時間 3。", "result": "目前總時間：3", "activeLines": [19, 20], "phase": "pair", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}, {"i": 2, "load": 1, "time": 2, "cost": 2, "total": 3}], "activePair": 1, "focusText": "工作量大，配時間小。"}, {"title": "配對第 3 組", "message": "工作量 1 配時間 3，本組花 3，目前總時間 6。", "result": "目前總時間：6", "activeLines": [19, 20], "phase": "pair", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}, {"i": 2, "load": 1, "time": 2, "cost": 2, "total": 3}, {"i": 3, "load": 1, "time": 3, "cost": 3, "total": 6}], "activePair": 2, "focusText": "工作量大，配時間小。"}, {"title": "配對第 4 組", "message": "工作量 0 配時間 4，本組花 0，目前總時間 6。", "result": "目前總時間：6", "activeLines": [19, 20], "phase": "pair", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}, {"i": 2, "load": 1, "time": 2, "cost": 2, "total": 3}, {"i": 3, "load": 1, "time": 3, "cost": 3, "total": 6}, {"i": 4, "load": 0, "time": 4, "cost": 0, "total": 6}], "activePair": 3, "focusText": "工作量大，配時間小。"}, {"title": "配對第 5 組", "message": "工作量 0 配時間 5，本組花 0，目前總時間 6。", "result": "目前總時間：6", "activeLines": [19, 20], "phase": "pair", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}, {"i": 2, "load": 1, "time": 2, "cost": 2, "total": 3}, {"i": 3, "load": 1, "time": 3, "cost": 3, "total": 6}, {"i": 4, "load": 0, "time": 4, "cost": 0, "total": 6}, {"i": 5, "load": 0, "time": 5, "cost": 0, "total": 6}], "activePair": 4, "focusText": "工作量大，配時間小。"}, {"title": "輸出答案", "message": "全部配對完成，最小總時間是 6。", "result": "答案：6", "activeLines": [21], "phase": "output", "n": 5, "m": 1, "sortedLoads": [1, 1, 1, 0, 0], "sortedT": [1, 2, 3, 4, 5], "pairs": [{"i": 1, "load": 1, "time": 1, "cost": 1, "total": 1}, {"i": 2, "load": 1, "time": 2, "cost": 2, "total": 3}, {"i": 3, "load": 1, "time": 3, "cost": 3, "total": 6}, {"i": 4, "load": 0, "time": 4, "cost": 0, "total": 6}, {"i": 5, "load": 0, "time": 5, "cost": 0, "total": 6}], "answer": 6, "focusText": "先算最忙，再放最快。"}]}, {"name": "範例 2", "input": "10 3\n2 5 6\n3 6 4\n7 8 1\n1 2 3 4 5 6 7 8 9 10", "output": "117", "n": 10, "m": 3, "jobs": [[2, 5, 6], [3, 6, 4], [7, 8, 1]], "t": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "steps": [{"title": "讀入 n 與 m", "message": "讀入 n=10、m=3。先知道有幾個位置與幾個工作。", "result": "n=10, m=3", "activeLines": [1], "phase": "intro", "n": 10, "m": 3, "focusText": "先算哪個位置最忙，再把最快的機器放到最忙的位置。"}, {"title": "建立差分數列 d", "message": "建立 d。d 不是答案，它只記錄每個位置的工作量變化。", "result": "d 已建立，全部都是 0。", "activeLines": [2], "phase": "diff", "n": 10, "m": 3, "d": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "focusText": "d[i] 只記變化；loads[i] 才是真正工作量。"}, {"title": "處理工作 1：2 到 5 每格加 6", "message": "這次只改兩格：d[2] 加 6，d[6] 減 6。中間不要填，前綴和會算出效果。", "result": "d[2] += 6, d[6] -= 6", "activeLines": [3, 4, 5, 6], "phase": "job", "n": 10, "m": 3, "jobIndex": 1, "l": 2, "r": 5, "w": 6, "beforeD": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "changeD": [0, 6, 0, 0, 0, -6, 0, 0, 0, 0, 0], "afterD": [0, 6, 0, 0, 0, -6, 0, 0, 0, 0, 0], "previewLoads": [0, 6, 6, 6, 6, 0, 0, 0, 0, 0, null], "activeCells": [2, 6], "focusText": "計算後 d = 之前 d + 這次變化。"}, {"title": "處理工作 2：3 到 6 每格加 4", "message": "這次只改兩格：d[3] 加 4，d[7] 減 4。中間不要填，前綴和會算出效果。", "result": "d[3] += 4, d[7] -= 4", "activeLines": [3, 4, 5, 6], "phase": "job", "n": 10, "m": 3, "jobIndex": 2, "l": 3, "r": 6, "w": 4, "beforeD": [0, 6, 0, 0, 0, -6, 0, 0, 0, 0, 0], "changeD": [0, 0, 4, 0, 0, 0, -4, 0, 0, 0, 0], "afterD": [0, 6, 4, 0, 0, -6, -4, 0, 0, 0, 0], "previewLoads": [0, 6, 10, 10, 10, 4, 0, 0, 0, 0, null], "activeCells": [3, 7], "focusText": "計算後 d = 之前 d + 這次變化。"}, {"title": "處理工作 3：7 到 8 每格加 1", "message": "這次只改兩格：d[7] 加 1，d[9] 減 1。中間不要填，前綴和會算出效果。", "result": "d[7] += 1, d[9] -= 1", "activeLines": [3, 4, 5, 6], "phase": "job", "n": 10, "m": 3, "jobIndex": 3, "l": 7, "r": 8, "w": 1, "beforeD": [0, 6, 4, 0, 0, -6, -4, 0, 0, 0, 0], "changeD": [0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0], "afterD": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "previewLoads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0, null], "activeCells": [7, 9], "focusText": "計算後 d = 之前 d + 這次變化。"}, {"title": "建立 loads", "message": "建立 loads，用前綴和存每個位置真正的工作量。", "result": "準備開始前綴和。", "activeLines": [8], "phase": "loads-init", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "focusText": "一路累加 d，就會得到真正工作量。"}, {"title": "前綴和：算第 1 個位置", "message": "loads[1] = 前一格 0 + d[1] 的變化 0 = 0。", "result": "loads[1]=0", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "activeCells": [1], "prefixInfo": {"i": 1, "prev": 0, "dval": 0, "value": 0}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 2 個位置", "message": "loads[2] = 前一格 0 + d[2] 的變化 6 = 6。", "result": "loads[2]=6", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0], "activeCells": [2], "prefixInfo": {"i": 2, "prev": 0, "dval": 6, "value": 6}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 3 個位置", "message": "loads[3] = 前一格 6 + d[3] 的變化 4 = 10。", "result": "loads[3]=10", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 0, 0, 0, 0, 0, 0, 0, 0], "activeCells": [3], "prefixInfo": {"i": 3, "prev": 6, "dval": 4, "value": 10}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 4 個位置", "message": "loads[4] = 前一格 10 + d[4] 的變化 0 = 10。", "result": "loads[4]=10", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 0, 0, 0, 0, 0, 0, 0], "activeCells": [4], "prefixInfo": {"i": 4, "prev": 10, "dval": 0, "value": 10}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 5 個位置", "message": "loads[5] = 前一格 10 + d[5] 的變化 0 = 10。", "result": "loads[5]=10", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 0, 0, 0, 0, 0, 0], "activeCells": [5], "prefixInfo": {"i": 5, "prev": 10, "dval": 0, "value": 10}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 6 個位置", "message": "loads[6] = 前一格 10 + d[6] 的變化 -6 = 4。", "result": "loads[6]=4", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 0, 0, 0, 0, 0], "activeCells": [6], "prefixInfo": {"i": 6, "prev": 10, "dval": -6, "value": 4}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 7 個位置", "message": "loads[7] = 前一格 4 + d[7] 的變化 -3 = 1。", "result": "loads[7]=1", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 1, 0, 0, 0, 0], "activeCells": [7], "prefixInfo": {"i": 7, "prev": 4, "dval": -3, "value": 1}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 8 個位置", "message": "loads[8] = 前一格 1 + d[8] 的變化 0 = 1。", "result": "loads[8]=1", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0, 0], "activeCells": [8], "prefixInfo": {"i": 8, "prev": 1, "dval": 0, "value": 1}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 9 個位置", "message": "loads[9] = 前一格 1 + d[9] 的變化 -1 = 0。", "result": "loads[9]=0", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0, 0], "activeCells": [9], "prefixInfo": {"i": 9, "prev": 1, "dval": -1, "value": 0}, "focusText": "一路累加，答案出現。"}, {"title": "前綴和：算第 10 個位置", "message": "loads[10] = 前一格 0 + d[10] 的變化 0 = 0。", "result": "loads[10]=0", "activeLines": [9, 10], "phase": "prefix", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0, 0], "activeCells": [10], "prefixInfo": {"i": 10, "prev": 0, "dval": 0, "value": 0}, "focusText": "一路累加，答案出現。"}, {"title": "移除輔助格", "message": "只留下正式位置 1 到 n 的工作量。", "result": "工作量：0 6 10 10 10 4 1 1 0 0", "activeLines": [11, 12], "phase": "trim", "n": 10, "m": 3, "d": [0, 6, 4, 0, 0, -6, -3, 0, -1, 0, 0], "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0], "focusText": "現在知道哪個位置最忙了。"}, {"title": "讀入機器時間 t", "message": "讀入每台機器做 1 單位資料需要的時間。數字越小，機器越快。", "result": "機器時間：1 2 3 4 5 6 7 8 9 10", "activeLines": [14], "phase": "time", "n": 10, "m": 3, "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0], "t": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "focusText": "t 越小，機器越快。"}, {"title": "工作量由大排到小", "message": "先找哪個位置最忙，所以把工作量由大到小排序。", "result": "工作量排序：10 10 10 6 4 1 1 0 0 0", "activeLines": [15], "phase": "sort-loads", "n": 10, "m": 3, "loads": [0, 6, 10, 10, 10, 4, 1, 1, 0, 0], "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "t": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "focusText": "最忙的位置排在最前面。"}, {"title": "機器時間由小排到大", "message": "最快的機器排到前面。時間越小，代表越快。", "result": "機器時間排序：1 2 3 4 5 6 7 8 9 10", "activeLines": [16], "phase": "sort-time", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "focusText": "最快的機器排在最前面。"}, {"title": "配對第 1 組", "message": "工作量 10 配時間 1，本組花 10，目前總時間 10。", "result": "目前總時間：10", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}], "activePair": 0, "focusText": "工作量大，配時間小。"}, {"title": "配對第 2 組", "message": "工作量 10 配時間 2，本組花 20，目前總時間 30。", "result": "目前總時間：30", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}], "activePair": 1, "focusText": "工作量大，配時間小。"}, {"title": "配對第 3 組", "message": "工作量 10 配時間 3，本組花 30，目前總時間 60。", "result": "目前總時間：60", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}], "activePair": 2, "focusText": "工作量大，配時間小。"}, {"title": "配對第 4 組", "message": "工作量 6 配時間 4，本組花 24，目前總時間 84。", "result": "目前總時間：84", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}], "activePair": 3, "focusText": "工作量大，配時間小。"}, {"title": "配對第 5 組", "message": "工作量 4 配時間 5，本組花 20，目前總時間 104。", "result": "目前總時間：104", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}], "activePair": 4, "focusText": "工作量大，配時間小。"}, {"title": "配對第 6 組", "message": "工作量 1 配時間 6，本組花 6，目前總時間 110。", "result": "目前總時間：110", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}], "activePair": 5, "focusText": "工作量大，配時間小。"}, {"title": "配對第 7 組", "message": "工作量 1 配時間 7，本組花 7，目前總時間 117。", "result": "目前總時間：117", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}, {"i": 7, "load": 1, "time": 7, "cost": 7, "total": 117}], "activePair": 6, "focusText": "工作量大，配時間小。"}, {"title": "配對第 8 組", "message": "工作量 0 配時間 8，本組花 0，目前總時間 117。", "result": "目前總時間：117", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}, {"i": 7, "load": 1, "time": 7, "cost": 7, "total": 117}, {"i": 8, "load": 0, "time": 8, "cost": 0, "total": 117}], "activePair": 7, "focusText": "工作量大，配時間小。"}, {"title": "配對第 9 組", "message": "工作量 0 配時間 9，本組花 0，目前總時間 117。", "result": "目前總時間：117", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}, {"i": 7, "load": 1, "time": 7, "cost": 7, "total": 117}, {"i": 8, "load": 0, "time": 8, "cost": 0, "total": 117}, {"i": 9, "load": 0, "time": 9, "cost": 0, "total": 117}], "activePair": 8, "focusText": "工作量大，配時間小。"}, {"title": "配對第 10 組", "message": "工作量 0 配時間 10，本組花 0，目前總時間 117。", "result": "目前總時間：117", "activeLines": [19, 20], "phase": "pair", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}, {"i": 7, "load": 1, "time": 7, "cost": 7, "total": 117}, {"i": 8, "load": 0, "time": 8, "cost": 0, "total": 117}, {"i": 9, "load": 0, "time": 9, "cost": 0, "total": 117}, {"i": 10, "load": 0, "time": 10, "cost": 0, "total": 117}], "activePair": 9, "focusText": "工作量大，配時間小。"}, {"title": "輸出答案", "message": "全部配對完成，最小總時間是 117。", "result": "答案：117", "activeLines": [21], "phase": "output", "n": 10, "m": 3, "sortedLoads": [10, 10, 10, 6, 4, 1, 1, 0, 0, 0], "sortedT": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "pairs": [{"i": 1, "load": 10, "time": 1, "cost": 10, "total": 10}, {"i": 2, "load": 10, "time": 2, "cost": 20, "total": 30}, {"i": 3, "load": 10, "time": 3, "cost": 30, "total": 60}, {"i": 4, "load": 6, "time": 4, "cost": 24, "total": 84}, {"i": 5, "load": 4, "time": 5, "cost": 20, "total": 104}, {"i": 6, "load": 1, "time": 6, "cost": 6, "total": 110}, {"i": 7, "load": 1, "time": 7, "cost": 7, "total": 117}, {"i": 8, "load": 0, "time": 8, "cost": 0, "total": 117}, {"i": 9, "load": 0, "time": 9, "cost": 0, "total": 117}, {"i": 10, "load": 0, "time": 10, "cost": 0, "total": 117}], "answer": 117, "focusText": "先算最忙，再放最快。"}]}];
+
+// ------------------------------------------------------------
+// 教學修正：把原本合在一起的「移除輔助格」拆成兩個真正的 Python 步驟。
+// 1. loads.pop(0) 先刪頭部輔助 0
+// 2. loads.pop()  再刪尾部輔助 0
+// ------------------------------------------------------------
+function expandPopSteps(){
+  SAMPLES.forEach(sample=>{
+    const newSteps=[];
+    sample.steps.forEach(step=>{
+      if(step.phase!=='trim'){
+        newSteps.push(step);
+        return;
+      }
+
+      // 原本 trim step 內的 loads 已經是正式 n 格。
+      // Python 在 pop 前真正的 loads 是：左邊多一個 0、右邊也多一個 0。
+      const formalLoads=[...(step.loads||[])];
+      const beforeHead=[0,...formalLoads,0];
+      const afterHead=[...formalLoads,0];
+      const afterTail=[...formalLoads];
+
+      newSteps.push({
+        ...step,
+        title:'移除頭部輔助格：loads.pop(0)',
+        message:'先執行 loads.pop(0)，刪掉最前面的輔助 0。刪掉後，剩下的數字全部往左補一格。',
+        result:`頭部刪除：${beforeHead.length} 格 → ${afterHead.length} 格`,
+        activeLines:[11],
+        phase:'trim-head',
+        beforeLoads:beforeHead,
+        afterLoads:afterHead,
+        removePos:0,
+        focusText:'loads.pop(0)：刪掉 list 最前面的第 0 格。'
+      });
+
+      newSteps.push({
+        ...step,
+        title:'移除尾部輔助格：loads.pop()',
+        message:'接著執行 loads.pop()，刪掉目前 list 最後面的輔助 0。現在剛好只剩 n 格正式資料。',
+        result:`尾部刪除：${afterHead.length} 格 → ${afterTail.length} 格`,
+        activeLines:[12],
+        phase:'trim-tail',
+        beforeLoads:afterHead,
+        afterLoads:afterTail,
+        removePos:afterHead.length-1,
+        loads:afterTail,
+        focusText:'loads.pop()：沒有寫位置，就是刪掉 list 最後一格。'
+      });
+    });
+    sample.steps=newSteps;
+  });
+}
+expandPopSteps();
+
+let currentSampleIndex=0,stepIndex=0,timer=null,playing=false;
+const codeBox=document.getElementById('codeBox'),visualSvg=document.getElementById('visualSvg'),detailPanel=document.getElementById('detailPanel'),samplePanel=document.getElementById('samplePanel'),stepInfo=document.getElementById('stepInfo'),resultInfo=document.getElementById('resultInfo'),stepMessage=document.getElementById('stepMessage'),focusBox=document.getElementById('focusBox');
+function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
+function renderCode(){codeBox.innerHTML=CODE_LINES.map((line,idx)=>{const no=idx+1;return `<div class="code-line" id="code-line-${no}" data-line="${no}"><div class="ln">${no}</div><div class="txt">${escapeHtml(line)}</div></div>`}).join('')}
+function setActiveLines(lines){document.querySelectorAll('.code-line').forEach(el=>el.classList.remove('active'));lines.forEach(no=>{const el=document.getElementById(`code-line-${no}`);if(el)el.classList.add('active')});const target=document.getElementById(`code-line-${lines[0]}`);if(target)target.scrollIntoView({block:'center',behavior:'smooth'})}
+function currentSample(){return SAMPLES[currentSampleIndex]}function currentStep(){return currentSample().steps[stepIndex]}function formatArray(arr){if(!arr)return '';return arr.map(v=>v===null?'不用管':v).join(' ')}
+function cellClass(value,idx,active=[]){if(active.includes(idx)){return Number(value)<0?'hl-stop hl-active':'hl-start hl-active'}if(Number(value)<0)return 'hl-stop';if(Number(value)>0)return 'hl-start';return ''}
+function renderArrayTable(title,arrays,n,active=[]){const len=arrays[0]?.values?.length||n+1;let h=`<h3>${title}</h3><div class="table-scroll"><table><tr><th class="rowhead">列別</th>`;for(let i=1;i<=len;i++){h+=`<th>${i===n+1?i+'<br><span class="badge">輔助</span>':i}</th>`}h+='</tr>';arrays.forEach(row=>{h+=`<tr><td class="rowhead">${row.label}</td>`;row.values.forEach((v,j)=>{const idx=j+1;let cls='';if(row.kind==='change')cls=cellClass(v||0,idx,active);if((row.kind==='after'||row.kind==='loads')&&active.includes(idx))cls='hl-load';h+=`<td class="${cls}">${v===null?'不用管':v}</td>`});h+='</tr>'});h+='</table></div>';return h}
+function renderPairTable(step){let rows='';(step.pairs||[]).forEach((p,idx)=>{const cls=idx===step.activePair?'hl-load':'';rows+=`<tr class="${cls}"><td>${p.i}</td><td>${p.load}</td><td>${p.time}</td><td>${p.cost}</td><td>${p.total}</td></tr>`});return `<div class="table-scroll"><table><tr><th>第幾組</th><th>工作量</th><th>機器時間</th><th>本組時間</th><th>累計總時間</th></tr>${rows}</table></div>`}
+function drawSvgArray(svg,label,values,y,active=[],n=0){if(!values)return;const len=values.length,x0=95,w=Math.min(72,Math.max(42,820/len)),h=42;svg.innerHTML+=`<text x="24" y="${y+27}" font-size="20" font-weight="800" fill="#1f2937">${label}</text>`;for(let i=0;i<len;i++){const idx=i+1,x=x0+i*w,v=values[i]===null?'':values[i];let fill='#fff',stroke='#94a3b8';if(idx===n+1)fill='#f1f5f9';if(active.includes(idx)){fill=Number(v)<0?'#fee2e2':'#dcfce7';stroke='#f59e0b'}else if(Number(v)>0){fill='#dcfce7';stroke='#16a34a'}else if(Number(v)<0){fill='#fee2e2';stroke='#dc2626'}svg.innerHTML+=`<rect x="${x}" y="${y}" width="${w-4}" height="${h}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${active.includes(idx)?4:2}"></rect><text x="${x+(w-4)/2}" y="${y+27}" text-anchor="middle" font-size="18" font-weight="900" fill="#1f2937">${v}</text><text x="${x+(w-4)/2}" y="${y-8}" text-anchor="middle" font-size="13" fill="#64748b">${idx}</text>`}}
+
+// pop() 專用：直接畫 Python list 的「目前索引 0..len-1」。
+// removePos 會用紅色框出這一步真正要刪掉的元素。
+function drawPopArray(svg,label,values,y,removePos=-1,auxPositions=[]){
+  if(!values)return;
+  const len=values.length;
+  const x0=145;
+  const w=Math.min(66,Math.max(42,800/Math.max(len,1)));
+  const h=42;
+  svg.innerHTML+=`<text x="24" y="${y+27}" font-size="19" font-weight="900" fill="#1f2937">${label}</text>`;
+  for(let i=0;i<len;i++){
+    const x=x0+i*w;
+    const v=values[i];
+    const removing=i===removePos;
+    const auxiliary=auxPositions.includes(i);
+    let fill=auxiliary?'#f1f5f9':'#ffffff';
+    let stroke=auxiliary?'#64748b':'#94a3b8';
+    let sw=2;
+    if(removing){fill='#fee2e2';stroke='#dc2626';sw=4;}
+    svg.innerHTML+=`<rect x="${x}" y="${y}" width="${w-5}" height="${h}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"></rect>`;
+    svg.innerHTML+=`<text x="${x+(w-5)/2}" y="${y+27}" text-anchor="middle" font-size="18" font-weight="900" fill="#1f2937">${v}</text>`;
+    svg.innerHTML+=`<text x="${x+(w-5)/2}" y="${y-8}" text-anchor="middle" font-size="13" fill="#64748b">${i}</text>`;
+    if(removing){svg.innerHTML+=`<text x="${x+(w-5)/2}" y="${y+61}" text-anchor="middle" font-size="15" font-weight="900" fill="#dc2626">刪除 ↑</text>`;}
+  }
+}
+
+function renderSvg(step){
+  visualSvg.innerHTML='';
+  const n=step.n||currentSample().n,active=step.activeCells||[];
+  visualSvg.innerHTML+=`<text x="24" y="32" font-size="23" font-weight="900" fill="#0f172a">${step.title}</text><text x="24" y="58" font-size="16" fill="#475569">${escapeHtml(step.message).slice(0,95)}</text>`;
+
+  if(step.phase==='job'){
+    drawSvgArray(visualSvg,'之前 d',step.beforeD,105,[],n);
+    drawSvgArray(visualSvg,'這次變化',step.changeD,165,active,n);
+    drawSvgArray(visualSvg,'計算後 d',step.afterD,225,active,n);
+  }else if(step.phase==='trim-head'){
+    visualSvg.innerHTML+=`<text x="24" y="88" font-size="15" font-weight="800" fill="#64748b">上方小字是目前 Python list 索引</text>`;
+    drawPopArray(visualSvg,'刪除前',step.beforeLoads,120,step.removePos,[0,step.beforeLoads.length-1]);
+    drawPopArray(visualSvg,'刪除後',step.afterLoads,205,-1,[step.afterLoads.length-1]);
+  }else if(step.phase==='trim-tail'){
+    visualSvg.innerHTML+=`<text x="24" y="88" font-size="15" font-weight="800" fill="#64748b">pop() 沒寫位置，所以刪最後一格</text>`;
+    drawPopArray(visualSvg,'刪除前',step.beforeLoads,120,step.removePos,[step.beforeLoads.length-1]);
+    drawPopArray(visualSvg,'刪除後',step.afterLoads,205,-1,[]);
+  }else if(step.d||step.loads){
+    if(step.d)drawSvgArray(visualSvg,'d',step.d,105,active,n);
+    if(step.loads)drawSvgArray(visualSvg,'loads',step.loads,175,active,n);
+  }else if(step.sortedLoads||step.sortedT){
+    drawSvgArray(visualSvg,'工作量',step.sortedLoads||step.loads,105,[],n);
+    drawSvgArray(visualSvg,'機器時間',step.sortedT||step.t,175,[],n);
+  }else{
+    visualSvg.innerHTML+=`<text x="24" y="128" font-size="22" font-weight="900" fill="#1d4ed8">先算哪個位置最忙，再把最快的機器放到最忙的位置。</text>`;
+  }
+}
+
+function renderDetails(step){
+  const n=step.n||currentSample().n;
+  let h=`<div class="note"><strong>${escapeHtml(step.message)}</strong></div>`;
+  if(step.phase==='job'){
+    h+=`<div class="note success"><strong>這次工作：</strong>第 <span class="formula">${step.l}</span> 到第 <span class="formula">${step.r}</span> 格，每格加 <span class="formula">${step.w}</span>。<br>差分只記兩格：<span class="formula">d[${step.l}] += ${step.w}</span>，<span class="formula">d[${step.r+1}] -= ${step.w}</span>。</div>`;
+    h+=renderArrayTable('差分更新：之前 d + 這次變化 = 計算後 d',[{label:'之前 d',values:step.beforeD,kind:'before'},{label:'這次變化',values:step.changeD,kind:'change'},{label:'計算後 d',values:step.afterD,kind:'after'},{label:'前綴和預覽',values:step.previewLoads,kind:'loads'}],n,step.activeCells||[]);
+  }else if(step.phase==='prefix'){
+    const p=step.prefixInfo;
+    h+=`<div class="note success"><strong>前綴和公式：</strong><br>loads[${p.i}] = loads[${p.i-1}] + d[${p.i}]<br>loads[${p.i}] = ${p.prev} + ${p.dval} = <span class="formula">${p.value}</span></div>`;
+    if(p.i===1){
+      h+=`<div class="note warning"><strong>注意 loads[0]：</strong>程式一開始就有 <span class="formula">loads[0] = 0</span>。所以 i=1 時，可以直接拿前一格 loads[0] 來算，不用另外判斷。</div>`;
+    }
+    h+=renderArrayTable('目前 d 與 loads',[{label:'d',values:step.d,kind:'before'},{label:'loads',values:step.loads,kind:'loads'}],n,step.activeCells||[]);
+  }else if(['diff','loads-init'].includes(step.phase)){
+    const arr=[];
+    if(step.d)arr.push({label:'d',values:step.d,kind:'before'});
+    if(step.loads)arr.push({label:'loads',values:step.loads,kind:'loads'});
+    if(arr.length)h+=renderArrayTable('目前陣列',arr,n,step.activeCells||[]);
+  }else if(step.phase==='trim-head'){
+    h+=`<div class="note warning"><strong>這一步只執行第 11 行：</strong> <span class="formula">loads.pop(0)</span><br>它會刪掉 <strong>最前面的元素</strong>。這個 0 是為了讓前面可以方便使用 loads[i-1] 而保留的輔助格。</div>`;
+    h+=`<h3>刪除前：完整 loads（包含左右輔助 0）</h3><pre><code>${formatArray(step.beforeLoads)}</code></pre>`;
+    h+=`<h3>執行 loads.pop(0) 後</h3><pre><code>${formatArray(step.afterLoads)}</code></pre>`;
+    h+=`<div class="note success">可以直接看：<strong>最左邊那個 0 消失了</strong>，其餘元素往左補。</div>`;
+  }else if(step.phase==='trim-tail'){
+    h+=`<div class="note warning"><strong>這一步只執行第 12 行：</strong> <span class="formula">loads.pop()</span><br>沒有寫位置，所以 Python 會刪掉 <strong>最後一個元素</strong>。</div>`;
+    h+=`<h3>刪除前</h3><pre><code>${formatArray(step.beforeLoads)}</code></pre>`;
+    h+=`<h3>執行 loads.pop() 後</h3><pre><code>${formatArray(step.afterLoads)}</code></pre>`;
+    h+=`<div class="note success"><strong>現在剛好剩 ${n} 格：</strong> ${formatArray(step.afterLoads)}。這才是後面要拿去排序的正式 loads。</div>`;
+  }else if(step.phase==='time'){
+    h+=`<h3>機器時間</h3><pre><code>${formatArray(step.t)}</code></pre>`;
+  }else if(step.phase==='sort-loads'){
+    h+=`<h3>排序前工作量</h3><pre><code>${formatArray(step.loads)}</code></pre><h3>排序後工作量：大到小</h3><pre><code>${formatArray(step.sortedLoads)}</code></pre>`;
+  }else if(step.phase==='sort-time'){
+    h+=`<h3>工作量：大到小</h3><pre><code>${formatArray(step.sortedLoads)}</code></pre><h3>機器時間：小到大</h3><pre><code>${formatArray(step.sortedT)}</code></pre>`;
+  }else if(step.phase==='pair'||step.phase==='output'){
+    h+=renderPairTable(step);
+  }else{
+    h+=`<div class="note success">先讀資料，再開始建立差分數列。</div>`;
+  }
+  detailPanel.innerHTML=h;
+}
+
+function renderSamplePanel(){
+  const s=currentSample();
+  const jobRows=(s.jobs||[]).map((job,idx)=>{
+    const l=job[0], r=job[1], w=job[2];
+    return `<tr><td class="rowhead">第 ${idx+1} 個工作</td><td><code>${l} ${r} ${w}</code></td><td>第 <span class="formula">${l}</span> 到第 <span class="formula">${r}</span> 個位置，每個位置加 <span class="formula">${w}</span> 工作量</td></tr>`;
+  }).join("");
+  samplePanel.innerHTML=`
+    <h3>${s.name}</h3>
+    <div class="note success">
+      <strong>先看懂這筆資料，後面動畫才好懂。</strong><br>
+      這題的輸入分成三段：<span class="formula">n m</span>、每個工作、每台機器時間。
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <tr><th>輸入位置</th><th>資料</th><th>意思</th></tr>
+        <tr>
+          <td class="rowhead">第 1 行</td>
+          <td><code>${s.n} ${s.m}</code></td>
+          <td>有 <span class="formula">${s.n}</span> 個正式位置，<span class="formula">${s.m}</span> 個工作</td>
+        </tr>
+        ${jobRows}
+        <tr>
+          <td class="rowhead">最後一行</td>
+          <td><code>${escapeHtml(s.t.join(" "))}</code></td>
+          <td>每台機器做 1 單位資料需要的時間；數字越小，機器越快</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>範例輸入</strong>
+      <pre><code>${escapeHtml(s.input)}</code></pre>
+      <strong>範例輸出</strong>
+      <pre><code>${escapeHtml(s.output)}</code></pre>
+    </div>
+
+    <div class="note success">
+      <strong>輸出代表什麼？</strong><br>
+      <span class="formula">${s.output}</span> 代表重新安排機器後，完成所有工作的最小總時間是 <span class="formula">${s.output}</span>。
+    </div>
+  `;
+}
+function render(){const s=currentSample(),step=currentStep();stepInfo.textContent=`步驟 ${stepIndex+1} / ${s.steps.length}`;resultInfo.textContent=step.result||'目前狀態';stepMessage.textContent=step.message||'';focusBox.textContent=step.focusText||'先算哪個位置最忙，再把最快的機器放到最忙的位置。';setActiveLines(step.activeLines||[]);renderSvg(step);renderDetails(step);renderSamplePanel();document.querySelectorAll('.sample-btn').forEach((btn,idx)=>btn.classList.toggle('active',idx===currentSampleIndex))}
+function nextStep(){const s=currentSample();if(stepIndex<s.steps.length-1){stepIndex++;render()}else stopPlay()}function prevStep(){if(stepIndex>0){stepIndex--;render()}}function resetStep(){stepIndex=0;render()}function startPlay(){if(playing)return;playing=true;document.getElementById('playBtn').textContent='暫停';timer=setInterval(nextStep,950)}function stopPlay(){playing=false;document.getElementById('playBtn').textContent='播放';if(timer)clearInterval(timer);timer=null}function togglePlay(){playing?stopPlay():startPlay()}
+document.getElementById('nextBtn').addEventListener('click',nextStep);document.getElementById('prevBtn').addEventListener('click',prevStep);document.getElementById('resetBtn').addEventListener('click',()=>{stopPlay();resetStep()});document.getElementById('playBtn').addEventListener('click',togglePlay);document.getElementById('sample0').addEventListener('click',()=>{stopPlay();currentSampleIndex=0;stepIndex=0;render()});document.getElementById('sample1').addEventListener('click',()=>{stopPlay();currentSampleIndex=1;stepIndex=0;render()});document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')nextStep();if(e.key==='ArrowLeft')prevStep();if(e.code==='Space'){e.preventDefault();togglePlay()}});const modal=document.getElementById('problemModal');document.getElementById('problemBtn').addEventListener('click',()=>modal.style.display='flex');document.getElementById('closeModal').addEventListener('click',()=>modal.style.display='none');modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'});
+const divider=document.getElementById('divider');let dragging=false;divider.addEventListener('mousedown',()=>{dragging=true;document.body.style.userSelect='none'});document.addEventListener('mouseup',()=>{dragging=false;document.body.style.userSelect=''});document.addEventListener('mousemove',e=>{if(!dragging)return;const min=360,max=window.innerWidth-420,x=Math.min(Math.max(e.clientX,min),max);document.documentElement.style.setProperty('--left-w',x+'px')});
+renderCode();render();
+</script>
+</body>
+</html>
